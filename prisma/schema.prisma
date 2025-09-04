@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
- 
+  output   = "./generated/client"
 }
 
 datasource db {
@@ -8,21 +8,527 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============= MODELOS PRINCIPALES =============
+
 model User {
-  id            Int           @id @default(autoincrement())
-  name          String
-  email         String        @unique
-  password      String
-  createdAt     DateTime      @default(now())
-  transacciones Transaccion[]
+  id                    Int                     @id @default(autoincrement())
+  name                  String
+  email                 String                  @unique
+  password              String
+  avatar                String?
+  telefono              String?
+  fechaNacimiento       DateTime?
+  ocupacion             String?
+  salarioMensual        Float?
+  monedaPrincipal       String                  @default("USD")
+  configuracion         Json?                   // Configuraciones personalizadas
+  emailVerificado       Boolean                 @default(false)
+  activo                Boolean                 @default(true)
+  ultimoAcceso          DateTime?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  
+  // Relaciones
+  transacciones         Transaccion[]
+  metas                 Meta[]
+  presupuestos          Presupuesto[]
+  cuentas               Cuenta[]
+  categorias            CategoriaPersonalizada[]
+  notificaciones        Notificacion[]
+  sesiones              SesionUsuario[]
+  auditoria             AuditoriaAcceso[]
+  recordatorios         Recordatorio[]
+  transaccionesRecurrentes TransaccionRecurrente[]
+  inversiones           Inversion[]
+  deudas                Deuda[]
+  
+  // Gamificación
+  puntosAcumulados      Int                     @default(0)
+  nivel                 Int                     @default(1)
+  logros                UserLogro[]
+  
+  @@map("usuarios")
+}
+
+model Cuenta {
+  id                  Int                 @id @default(autoincrement())
+  nombre              String
+  tipo                TipoCuenta
+  banco               String?
+  numeroCuenta        String?
+  saldoInicial        Float               @default(0)
+  saldoActual         Float               @default(0)
+  moneda              String              @default("USD")
+  color               String?             @default("#3B82F6")
+  icono               String?
+  activa              Boolean             @default(true)
+  incluirEnBalance    Boolean             @default(true)
+  descripcion         String?
+  fechaApertura       DateTime?
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  // Relaciones
+  transaccionesOrigen Transaccion[]       @relation("CuentaOrigen")
+  transaccionesDestino Transaccion[]      @relation("CuentaDestino")
+  
+  @@map("cuentas")
 }
 
 model Transaccion {
-  id          Int       @id @default(autoincrement())
-  tipo        String
-  monto       Float
-  descripcion String?
-  fecha       DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id])
-  userId      Int
+  id                  Int                 @id @default(autoincrement())
+  tipo                TipoTransaccion
+  monto               Float
+  descripcion         String?
+  categoria           String?
+  subcategoria        String?
+  fecha               DateTime            @default(now())
+  ubicacion           String?             // GPS o descripción del lugar
+  notas               String?
+  etiquetas           String[]            // Array de etiquetas
+  montoOriginal       Float?              // Para conversiones de moneda
+  monedaOriginal      String?
+  tasaCambio          Float?
+  comprobante         String?             // URL del archivo
+  metodoPago          MetodoPago?
+  esTransferencia     Boolean             @default(false)
+  verificada          Boolean             @default(false)
+  
+  // Relaciones
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  cuentaOrigen        Cuenta?             @relation("CuentaOrigen", fields: [cuentaOrigenId], references: [id])
+  cuentaOrigenId      Int?
+  cuentaDestino       Cuenta?             @relation("CuentaDestino", fields: [cuentaDestinoId], references: [id])
+  cuentaDestinoId     Int?
+  transaccionRecurrente TransaccionRecurrente? @relation(fields: [transaccionRecurrenteId], references: [id])
+  transaccionRecurrenteId Int?
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@index([userId, fecha])
+  @@index([categoria])
+  @@index([tipo])
+  @@map("transacciones")
+}
+
+model TransaccionRecurrente {
+  id                  Int                 @id @default(autoincrement())
+  nombre              String
+  descripcion         String?
+  tipo                TipoTransaccion
+  monto               Float
+  categoria           String?
+  frecuencia          FrecuenciaRecurrencia
+  diaEjecucion        Int?                // Día del mes (1-31)
+  diaSemana           Int?                // Día de la semana (0-6)
+  fechaInicio         DateTime
+  fechaFin            DateTime?
+  proximaEjecucion    DateTime
+  activa              Boolean             @default(true)
+  ejecutadas          Int                 @default(0)
+  configuracion       Json?               // Configuraciones específicas
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  transacciones       Transaccion[]       // Transacciones generadas
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@map("transacciones_recurrentes")
+}
+
+model Meta {
+  id                  Int                 @id @default(autoincrement())
+  titulo              String
+  descripcion         String?
+  tipo                TipoMeta            @default(AHORRO)
+  montoObjetivo       Float
+  montoActual         Float               @default(0)
+  fechaInicio         DateTime            @default(now())
+  fechaLimite         DateTime
+  categoria           String?
+  prioridad           PrioridadMeta       @default(MEDIA)
+  completada          Boolean             @default(false)
+  fechaCompletada     DateTime?
+  progreso            Float               @default(0)     // Porcentaje 0-100
+  recordatorios       Boolean             @default(true)
+  publica             Boolean             @default(false) // Para compartir con familia
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@map("metas")
+}
+
+model Presupuesto {
+  id                  Int                 @id @default(autoincrement())
+  categoria           String
+  limite              Float
+  gastado             Float               @default(0)
+  mes                 Int                 // 1-12
+  año                 Int
+  alertaEn            Float?              // Porcentaje para alerta (ej: 80%)
+  notificacionEnviada Boolean             @default(false)
+  activo              Boolean             @default(true)
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@unique([userId, categoria, mes, año])
+  @@map("presupuestos")
+}
+
+// ============= CATEGORIZACIÓN AVANZADA =============
+
+model CategoriaPersonalizada {
+  id                  Int                 @id @default(autoincrement())
+  nombre              String
+  icono               String?
+  color               String              @default("#6B7280")
+  descripcion         String?
+  tipo                TipoTransaccion     // Para ingresos o gastos
+  activa              Boolean             @default(true)
+  orden               Int?                // Para ordenar en la UI
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@unique([userId, nombre])
+  @@map("categorias_personalizadas")
+}
+
+// ============= INVERSIONES Y DEUDAS =============
+
+model Inversion {
+  id                  Int                 @id @default(autoincrement())
+  nombre              String
+  tipo                TipoInversion
+  simbolo             String?             // Para acciones/crypto
+  montoInvertido      Float
+  valorActual         Float?
+  cantidad            Float?              // Número de acciones/unidades
+  fechaCompra         DateTime
+  fechaVenta          DateTime?
+  broker              String?
+  comisiones          Float               @default(0)
+  dividendos          Float               @default(0)
+  notas               String?
+  activa              Boolean             @default(true)
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  historialValores    HistorialInversion[]
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@map("inversiones")
+}
+
+model HistorialInversion {
+  id                  Int                 @id @default(autoincrement())
+  valor               Float
+  fecha               DateTime            @default(now())
+  
+  inversion           Inversion           @relation(fields: [inversionId], references: [id], onDelete: Cascade)
+  inversionId         Int
+  
+  @@map("historial_inversiones")
+}
+
+model Deuda {
+  id                  Int                 @id @default(autoincrement())
+  nombre              String
+  tipo                TipoDeuda
+  montoInicial        Float
+  montoActual         Float
+  tasaInteres         Float?              // Porcentaje anual
+  fechaInicio         DateTime
+  fechaVencimiento    DateTime?
+  pagoMinimo          Float?
+  acreedor            String              // Banco, persona, etc.
+  notas               String?
+  pagada              Boolean             @default(false)
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  pagos               PagoDeuda[]
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@map("deudas")
+}
+
+model PagoDeuda {
+  id                  Int                 @id @default(autoincrement())
+  monto               Float
+  fecha               DateTime
+  capital             Float               // Parte que va al capital
+  interes             Float               // Parte que va a intereses
+  notas               String?
+  
+  deuda               Deuda               @relation(fields: [deudaId], references: [id], onDelete: Cascade)
+  deudaId             Int
+  
+  createdAt           DateTime            @default(now())
+  
+  @@map("pagos_deudas")
+}
+
+// ============= GAMIFICACIÓN =============
+
+model Logro {
+  id                  Int                 @id @default(autoincrement())
+  nombre              String              @unique
+  descripcion         String
+  icono               String
+  tipo                TipoLogro
+  condicion           Json                // Condiciones para obtenerlo
+  puntos              Int                 @default(0)
+  rareza              RarezaLogro         @default(COMUN)
+  activo              Boolean             @default(true)
+  
+  usuarios            UserLogro[]
+  
+  createdAt           DateTime            @default(now())
+  
+  @@map("logros")
+}
+
+model UserLogro {
+  id                  Int                 @id @default(autoincrement())
+  fechaObtenido       DateTime            @default(now())
+  progreso            Float               @default(100)  // 0-100
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  logro               Logro               @relation(fields: [logroId], references: [id], onDelete: Cascade)
+  logroId             Int
+  
+  @@unique([userId, logroId])
+  @@map("user_logros")
+}
+
+// ============= NOTIFICACIONES Y RECORDATORIOS =============
+
+model Notificacion {
+  id                  Int                 @id @default(autoincrement())
+  titulo              String
+  mensaje             String
+  tipo                TipoNotificacion
+  leida               Boolean             @default(false)
+  datos               Json?               // Datos adicionales
+  fechaEnvio          DateTime            @default(now())
+  fechaLeida          DateTime?
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  
+  @@index([userId, leida])
+  @@map("notificaciones")
+}
+
+model Recordatorio {
+  id                  Int                 @id @default(autoincrement())
+  titulo              String
+  descripcion         String?
+  tipo                TipoRecordatorio
+  fechaRecordatorio   DateTime
+  repetir             Boolean             @default(false)
+  frecuencia          String?             // 'diario', 'semanal', 'mensual'
+  completado          Boolean             @default(false)
+  activo              Boolean             @default(true)
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@map("recordatorios")
+}
+
+// ============= AUDITORÍA Y SEGURIDAD =============
+
+model SesionUsuario {
+  id                  Int                 @id @default(autoincrement())
+  token               String              @unique
+  dispositivo         String?
+  ip                  String?
+  ubicacion           String?
+  userAgent           String?
+  activa              Boolean             @default(true)
+  fechaExpiracion     DateTime
+  
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@index([token])
+  @@index([userId, activa])
+  @@map("sesiones_usuario")
+}
+
+model AuditoriaAcceso {
+  id                  Int                 @id @default(autoincrement())
+  accion              String              // 'login', 'logout', 'password_change', etc.
+  ip                  String?
+  dispositivo         String?
+  ubicacion           String?
+  userAgent           String?
+  exitoso             Boolean
+  detalles            Json?
+  
+  user                User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId              Int?
+  
+  createdAt           DateTime            @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("auditoria_acceso")
+}
+
+// ============= CONFIGURACIÓN DEL SISTEMA =============
+
+model ConfiguracionSistema {
+  id                  Int                 @id @default(autoincrement())
+  clave               String              @unique
+  valor               String
+  descripcion         String?
+  tipo                String              @default("string") // 'string', 'number', 'boolean', 'json'
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@map("configuracion_sistema")
+}
+
+// ============= ENUMS =============
+
+enum TipoCuenta {
+  EFECTIVO
+  BANCO_CORRIENTE
+  BANCO_AHORROS
+  TARJETA_CREDITO
+  TARJETA_DEBITO
+  INVERSION
+  CRYPTO
+  OTRO
+}
+
+enum TipoTransaccion {
+  INGRESO
+  GASTO
+  TRANSFERENCIA
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TARJETA_DEBITO
+  TARJETA_CREDITO
+  TRANSFERENCIA
+  CHEQUE
+  CRYPTO
+  OTRO
+}
+
+enum FrecuenciaRecurrencia {
+  DIARIA
+  SEMANAL
+  QUINCENAL
+  MENSUAL
+  BIMESTRAL
+  TRIMESTRAL
+  SEMESTRAL
+  ANUAL
+}
+
+enum TipoMeta {
+  AHORRO
+  GASTO
+  INVERSION
+  DEUDA
+  EMERGENCIA
+}
+
+enum PrioridadMeta {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum TipoInversion {
+  ACCIONES
+  BONOS
+  FONDOS_MUTUOS
+  ETF
+  CRIPTOMONEDAS
+  BIENES_RAICES
+  COMMODITIES
+  OTRO
+}
+
+enum TipoDeuda {
+  TARJETA_CREDITO
+  PRESTAMO_PERSONAL
+  HIPOTECA
+  PRESTAMO_AUTO
+  PRESTAMO_ESTUDIANTIL
+  LINEA_CREDITO
+  OTRO
+}
+
+enum TipoLogro {
+  AHORRO
+  PRESUPUESTO
+  META
+  HABITO
+  INVERSION
+  DEUDA
+  GAMIFICACION
+}
+
+enum RarezaLogro {
+  COMUN
+  POCO_COMUN
+  RARO
+  EPICO
+  LEGENDARIO
+}
+
+enum TipoNotificacion {
+  INFO
+  ALERTA
+  RECORDATORIO
+  LOGRO
+  SISTEMA
+  PROMOCION
+}
+
+enum TipoRecordatorio {
+  PAGO
+  META
+  PRESUPUESTO
+  INVERSION
+  DEUDA
+  GENERAL
 }

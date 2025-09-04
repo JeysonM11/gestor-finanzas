@@ -72,6 +72,7 @@ exports.obtenerTransacciones = async (req, res) => {
       where: {
         userId,
         ...(tipo && { tipo }),
+        ...(categoria && { categoria }),
         ...(fechaDesde &&
           fechaHasta && {
             fecha: {
@@ -100,6 +101,7 @@ exports.obtenerTransacciones = async (req, res) => {
         descripcion: true,
         monto: true,
         tipo: true,
+        categoria: true,
         fecha: true,
       },
     });
