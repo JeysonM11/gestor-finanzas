@@ -1,0 +1,66 @@
+{
+  port: 3000,
+  environment: 'development',
+  timestamp: '2025-09-18 17:41:50',
+  level: 'info',
+  message: 'Servidor iniciado'
+}
+{
+  message: '::1 - - [18/Sep/2025:22:43:04 +0000] "GET / HTTP/1.1" 200 416 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"',
+  level: 'http',
+  timestamp: '2025-09-18 17:43:04'
+}
+{
+  message: '::1 - - [18/Sep/2025:22:43:04 +0000] "GET /favicon.ico HTTP/1.1" 404 150 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"',
+  level: 'http',
+  timestamp: '2025-09-18 17:43:04'
+}
+{
+  message: '::1 - - [18/Sep/2025:22:43:09 +0000] "GET /api/auth HTTP/1.1" 404 147 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"',
+  level: 'http',
+  timestamp: '2025-09-18 17:43:09'
+}
+{
+  message: '::1 - - [18/Sep/2025:22:43:11 +0000] "GET /api/finanzas/cuentas HTTP/1.1" 401 85 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"',
+  level: 'http',
+  timestamp: '2025-09-18 17:43:11'
+}
+{
+  message: '::1 - - [18/Sep/2025:22:43:16 +0000] "GET /api/finanzas/inversiones HTTP/1.1" 401 85 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"',
+  level: 'http',
+  timestamp: '2025-09-18 17:43:16'
+}
+{
+  message: '::1 - - [18/Sep/2025:22:43:18 +0000] "GET /api/finanzas/deudas HTTP/1.1" 401 85 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"',
+  level: 'http',
+  timestamp: '2025-09-18 17:43:18'
+}
+{
+  port: 3000,
+  environment: 'development',
+  timestamp: '2025-09-18 17:45:05',
+  level: 'info',
+  message: 'Servidor iniciado'
+}
+{
+  message: '::1 - - [18/Sep/2025:22:45:07 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"',
+  level: 'http',
+  timestamp: '2025-09-18 17:45:07'
+}
+{
+  message: '::1 - - [18/Sep/2025:22:45:12 +0000] "GET /api/sistema/recurrentes HTTP/1.1" 401 85 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"',
+  level: 'http',
+  timestamp: '2025-09-18 17:45:12'
+}
+{
+  message: '::1 - - [18/Sep/2025:22:45:14 +0000] "GET /api/sistema/notificaciones HTTP/1.1" 401 85 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"',
+  level: 'http',
+  timestamp: '2025-09-18 17:45:14'
+}
+{
+  port: 3000,
+  environment: 'development',
+  timestamp: '2025-09-18 17:47:24',
+  level: 'info',
+  message: 'Servidor iniciado'
+}
