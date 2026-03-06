@@ -4,7 +4,10 @@ import {
   ArrowLeftRight,
   Repeat,
   CreditCard,
-  BarChart3, 
+  TrendingUp,
+  AlertCircle,
+  BarChart3,
+  Trophy,
   Settings,
   Wallet
 } from 'lucide-react'
@@ -15,7 +18,10 @@ const Sidebar = () => {
     { path: '/transacciones', label: 'Transacciones', icon: ArrowLeftRight },
     { path: '/recurrentes', label: 'Recurrentes', icon: Repeat },
     { path: '/cuentas', label: 'Cuentas', icon: CreditCard },
+    { path: '/inversiones', label: 'Inversiones', icon: TrendingUp },
+    { path: '/deudas', label: 'Deudas', icon: AlertCircle },
     { path: '/reportes', label: 'Reportes', icon: BarChart3 },
+    { path: '/gamificacion', label: 'Gamificación', icon: Trophy },
     { path: '/configuracion', label: 'Configuración', icon: Settings },
   ]
 

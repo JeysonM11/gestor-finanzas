@@ -9,6 +9,9 @@ import TransaccionesRecurrentes from './pages/TransaccionesRecurrentes'
 import Cuentas from './pages/Cuentas'
 import Notificaciones from './pages/Notificaciones'
 import Reportes from './pages/Reportes'
+import Inversiones from './pages/Inversiones'
+import Deudas from './pages/Deudas'
+import Gamificacion from './pages/Gamificacion'
 import Configuracion from './pages/Configuracion'
 
 function App() {
@@ -25,8 +28,11 @@ function App() {
             <Route path="transacciones" element={<Transacciones />} />
             <Route path="recurrentes" element={<TransaccionesRecurrentes />} />
             <Route path="cuentas" element={<Cuentas />} />
+            <Route path="inversiones" element={<Inversiones />} />
+            <Route path="deudas" element={<Deudas />} />
             <Route path="notificaciones" element={<Notificaciones />} />
             <Route path="reportes" element={<Reportes />} />
+            <Route path="gamificacion" element={<Gamificacion />} />
             <Route path="configuracion" element={<Configuracion />} />
           </Route>
           
