@@ -8,40 +8,12 @@ Sistema completo de gestión de finanzas personales con funcionalidades avanzada
 gestor-finanzas/
 ├── backend/          # API REST con Node.js + Express + Prisma
 ├── frontend/         # Aplicación React + Vite + Tailwind CSS
-├── GUIA_EJECUCION.md # Guía detallada de configuración y ejecución
-└── iniciar.ps1       # Script para iniciar ambos servicios
+└── README.md         # Este archivo
 ```
 
 ## 🚀 Inicio Rápido
 
-### Opción 1: Script Automático (Windows - Recomendado)
-
-```powershell
-# Ejecutar desde la raíz del proyecto
-.\iniciar.ps1
-```
-
-Este script:
-- ✅ Verifica que Node.js esté instalado
-- ✅ Instala dependencias automáticamente si faltan
-- ✅ Inicia el backend en el puerto 5000
-- ✅ Inicia el frontend en el puerto 5173
-
-### Opción 2: Verificar Conectividad
-
-```powershell
-# Verificar que todo esté configurado correctamente
-.\verificar.ps1
-```
-
-Este script verifica:
-- ✅ Backend corriendo
-- ✅ Frontend corriendo
-- ✅ PostgreSQL activo
-- ✅ Archivos de configuración presentes
-- ✅ Dependencies instaladas
-
-### Opción 3: Manual
+### Modo Manual
 
 **Terminal 1 - Backend:**
 ```powershell
@@ -83,20 +55,44 @@ npm run dev
 
 ## 📚 Documentación
 
-- [**GUIA_EJECUCION.md**](GUIA_EJECUCION.md) - Guía completa de configuración y ejecución
-- [**CONECTIVIDAD.md**](CONECTIVIDAD.md) - Mapa detallado de conectividad backend-frontend
 - [**backend/README.md**](backend/README.md) - Documentación del backend
 - [**frontend/README.md**](frontend/README.md) - Documentación del frontend
 
 ## 📡 Puertos
 
 | Servicio | Puerto | URL |
-|-Frontend | 5173 | http://localhost:5173 |
-| Backend | 5000 | http://localhost:5000|
+|----------|--------|-----|
+| Backend | 5000 | http://localhost:5000 |
 | Frontend | 5173 | http://localhost:5173 |
 | PostgreSQL | 5432 | localhost:5432 |
 
 ## ✨ Características
+
+### Gestión de Transacciones
+- ✅ Registro de ingresos y gastos
+- ✅ Categorización automática
+- ✅ Transacciones recurrentes
+- ✅ Múltiples cuentas bancarias
+
+### Análisis y Reportes
+- ✅ Dashboard con métricas clave
+- ✅ Gráficos de gastos por categoría
+- ✅ Reportes personalizados
+- ✅ Exportación de datos
+
+### Funcionalidades Avanzadas
+- ✅ Sistema de metas financieras
+- ✅ Presupuestos por categoría
+- ✅ Gamificación con puntos y logros
+- ✅ Tracking de inversiones y deudas
+
+## 👨‍💻 Autor
+
+**Jeyson Miranda**
+
+## 📄 Licencia
+
+ISC
 
 ### Gestión Básica
 - ✅ Registro e inicio de sesión
