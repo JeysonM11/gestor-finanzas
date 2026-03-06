@@ -19,7 +19,7 @@ gestor-finanzas/
 ```powershell
 cd backend
 npm install
-# Configurar .env (ver GUIA_EJECUCION.md)
+# Configurar .env con las credenciales de PostgreSQL
 npm run dev
 ```
 
@@ -67,32 +67,6 @@ npm run dev
 | PostgreSQL | 5432 | localhost:5432 |
 
 ## ✨ Características
-
-### Gestión de Transacciones
-- ✅ Registro de ingresos y gastos
-- ✅ Categorización automática
-- ✅ Transacciones recurrentes
-- ✅ Múltiples cuentas bancarias
-
-### Análisis y Reportes
-- ✅ Dashboard con métricas clave
-- ✅ Gráficos de gastos por categoría
-- ✅ Reportes personalizados
-- ✅ Exportación de datos
-
-### Funcionalidades Avanzadas
-- ✅ Sistema de metas financieras
-- ✅ Presupuestos por categoría
-- ✅ Gamificación con puntos y logros
-- ✅ Tracking de inversiones y deudas
-
-## 👨‍💻 Autor
-
-**Jeyson Miranda**
-
-## 📄 Licencia
-
-ISC
 
 ### Gestión Básica
 - ✅ Registro e inicio de sesión
@@ -158,8 +132,7 @@ taskkill /PID <PID> /F
 3. **Instalar dependencias:**
    - Backend: `cd backend && npm install`
    - Frontend: `cd frontend && npm install`
-4. **Iniciar servicios:**
-   - Usar `.\iniciar.ps1` o iniciar manualmente
+4. **Iniciar servicios:** Seguir la sección "Inicio Rápido"
 
 ## 👨‍💻 Desarrollo
 
@@ -178,7 +151,3 @@ ISC
 ## 👤 Autor
 
 Jeyson Miranda
-
----
-
-Para más detalles, consulta la [**Guía de Ejecución**](GUIA_EJECUCION.md) completa.
