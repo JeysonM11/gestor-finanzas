@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { transaccionService } from '../../services/transaccion.service'
 
-const ModalTransaccion = ({ isOpen, onClose, onSuccess }) => {
+const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
+  const isEditing = !!transaccion
+  
   const [formData, setFormData] = useState({
     tipo: 'GASTO',
     monto: '',
@@ -16,6 +18,33 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess }) => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Cargar datos de transacción si estamos editando
+  useEffect(() => {
+    if (transaccion && isOpen) {
+      setFormData({
+        tipo: transaccion.tipo || 'GASTO',
+        monto: transaccion.monto || '',
+        descripcion: transaccion.descripcion || '',
+        categoria: transaccion.categoria || '',
+        fecha: transaccion.fecha ? new Date(transaccion.fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        metodoPago: transaccion.metodoPago || 'EFECTIVO',
+        notas: transaccion.notas || ''
+      })
+    } else if (!isOpen) {
+      // Resetear formulario al cerrar
+      setFormData({
+        tipo: 'GASTO',
+        monto: '',
+        descripcion: '',
+        categoria: '',
+        fecha: new Date().toISOString().split('T')[0],
+        metodoPago: 'EFECTIVO',
+        notas: ''
+      })
+      setError('')
+    }
+  }, [transaccion, isOpen])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -37,31 +66,24 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess }) => {
         monto: parseFloat(formData.monto)
       }
 
-      await transaccionService.create(dataToSend)
-      
-      // Resetear formulario
-      setFormData({
-        tipo: 'GASTO',
-        monto: '',
-        descripcion: '',
-        categoria: '',
-        fecha: new Date().toISOString().split('T')[0],
-        metodoPago: 'EFECTIVO',
-        notas: ''
-      })
+      if (isEditing) {
+        await transaccionService.update(transaccion.id, dataToSend)
+      } else {
+        await transaccionService.create(dataToSend)
+      }
       
       onSuccess?.()
       onClose()
     } catch (err) {
-      console.error('Error al crear transacción:', err)
-      setError(err.response?.data?.message || 'Error al crear la transacción')
+      console.error('Error al guardar transacción:', err)
+      setError(err.response?.data?.message || `Error al ${isEditing ? 'actualizar' : 'crear'} la transacción`)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nueva Transacción">
+    <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? "Editar Transacción" : "Nueva Transacción"}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -200,7 +222,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess }) => {
             type="submit"
             disabled={loading}
           >
-            {loading ? 'Creando...' : 'Crear Transacción'}
+            {loading ? (isEditing ? 'Actualizando...' : 'Creando...') : (isEditing ? 'Actualizar Transacción' : 'Crear Transacción')}
           </Button>
         </div>
       </form>

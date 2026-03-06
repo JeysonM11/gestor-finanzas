@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
+import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalTransaccion from '../components/transacciones/ModalTransaccion'
 import { transaccionService } from '../services/transaccion.service'
-import { Plus, Search, Filter } from 'lucide-react'
+import { Plus, Search, Filter, Edit, Trash2 } from 'lucide-react'
 import dayjs from 'dayjs'
 
 const Transacciones = () => {
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [transaccionSeleccionada, setTransaccionSeleccionada] = useState(null)
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [transaccionAEliminar, setTransaccionAEliminar] = useState(null)
   const [filtros, setFiltros] = useState({
     tipo: '',
     fechaInicio: '',
@@ -50,6 +54,32 @@ const Transacciones = () => {
     cargarTransacciones()
   }
 
+  const handleEditar = (transaccion) => {
+    setTransaccionSeleccionada(transaccion)
+    setModalAbierto(true)
+  }
+
+  const handleEliminar = (transaccion) => {
+    setTransaccionAEliminar(transaccion)
+    setConfirmDialogOpen(true)
+  }
+
+  const confirmarEliminar = async () => {
+    if (!transaccionAEliminar) return
+    
+    try {
+      await transaccionService.delete(transaccionAEliminar.id)
+      cargarTransacciones()
+    } catch (error) {
+      console.error('Error al eliminar transacción:', error)
+    }
+  }
+
+  const handleCloseModal = () => {
+    setModalAbierto(false)
+    setTransaccionSeleccionada(null)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -74,8 +104,21 @@ const Transacciones = () => {
       {/* Modal */}
       <ModalTransaccion 
         isOpen={modalAbierto}
-        onClose={() => setModalAbierto(false)}
+        onClose={handleCloseModal}
         onSuccess={handleTransaccionCreada}
+        transaccion={transaccionSeleccionada}
+      />
+
+      {/* Dialog de confirmación para eliminar */}
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={confirmarEliminar}
+        title="¿Eliminar transacción?"
+        message="Esta acción no se puede deshacer. La transacción será eliminada permanentemente."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
       />
 
       {/* Filtros */}
@@ -154,6 +197,9 @@ const Transacciones = () => {
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Monto
                 </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -183,11 +229,29 @@ const Transacciones = () => {
                     }`}>
                       {transaccion.tipo === 'INGRESO' ? '+' : '-'}${transaccion.monto.toFixed(2)}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleEditar(transaccion)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="Editar"
+                        >
+                          <Edit className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handleEliminar(transaccion)}
+                          className="text-red-600 hover:text-red-800 transition-colors"
+                          title="Eliminar"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                     No se encontraron transacciones
                   </td>
                 </tr>

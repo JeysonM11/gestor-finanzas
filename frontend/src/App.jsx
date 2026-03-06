@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Transacciones from './pages/Transacciones'
+import Cuentas from './pages/Cuentas'
 import Reportes from './pages/Reportes'
 import Configuracion from './pages/Configuracion'
 
@@ -20,6 +21,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="transacciones" element={<Transacciones />} />
+            <Route path="cuentas" element={<Cuentas />} />
             <Route path="reportes" element={<Reportes />} />
             <Route path="configuracion" element={<Configuracion />} />
           </Route>
