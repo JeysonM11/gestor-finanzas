@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom'
 import { 
   LayoutDashboard, 
-  ArrowLeftRight, 
+  ArrowLeftRight,
+  Repeat,
   CreditCard,
   BarChart3, 
   Settings,
@@ -12,6 +13,7 @@ const Sidebar = () => {
   const menuItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/transacciones', label: 'Transacciones', icon: ArrowLeftRight },
+    { path: '/recurrentes', label: 'Recurrentes', icon: Repeat },
     { path: '/cuentas', label: 'Cuentas', icon: CreditCard },
     { path: '/reportes', label: 'Reportes', icon: BarChart3 },
     { path: '/configuracion', label: 'Configuración', icon: Settings },

@@ -1,4 +1,5 @@
 import { useAuth } from '../../context/AuthContext'
+import NotificationBell from '../notifications/NotificationBell'
 import { LogOut, User } from 'lucide-react'
 
 const Header = () => {
@@ -22,6 +23,8 @@ const Header = () => {
         </div>
         
         <div className="flex items-center gap-4">
+          <NotificationBell />
+          
           <div className="flex items-center gap-2 text-sm">
             <User className="h-5 w-5 text-gray-500" />
             <span className="text-gray-700">{user?.name || user?.email}</span>
