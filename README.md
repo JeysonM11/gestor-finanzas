@@ -2,7 +2,7 @@
 
 Aplicación full-stack de finanzas personales: autenticación JWT, transacciones con sync de saldos, cuentas, inversiones, deudas, recurrentes (cron), notificaciones, reportes/CSV, gamificación básica y configuración real.
 
-> **MVP cerrado** (Sprints 0–4 + 6). Metas/presupuestos y features del schema sin UI quedan en backlog (Sprint 5).
+> **MVP + Sprint 5:** Metas y Presupuestos implementados. Recordatorios / sesiones / email verification siguen en backlog.
 
 ## Arquitectura
 
@@ -57,8 +57,9 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 | Reportes / agregados / export CSV | ✅ |
 | Categorías API | ✅ (UI usa lista default; service listo) |
 | Gamificación (logros/resumen/historial) | ✅ básica |
-| Metas / Presupuestos / Recordatorios | ❌ backlog Sprint 5 |
-| Análisis predictivo | ❌ no existe |
+| Metas de ahorro | ✅ |
+| Presupuestos + alertas | ✅ |
+| Recordatorios / Sesiones / Email verify | ❌ backlog |
 
 ## Documentación
 

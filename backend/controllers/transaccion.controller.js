@@ -5,6 +5,7 @@ const {
   aplicarEfectoSaldo,
   validarCuentasTransaccion,
 } = require('../utils/saldo');
+const { sincronizarPorTransaccion } = require('../utils/presupuesto');
 
 async function calcularResumen(where) {
   const [ingresos, gastos] = await Promise.all([
@@ -84,6 +85,8 @@ exports.crearTransaccion = catchAsync(async (req, res) => {
       await aplicarEfectoSaldo(tx, creada, 1);
       return creada;
     });
+
+    await sincronizarPorTransaccion(userId, transaccion).catch(() => {});
 
     res.status(201).json({
       success: true,
@@ -203,10 +206,13 @@ exports.actualizarTransaccion = catchAsync(async (req, res) => {
       });
 
       await aplicarEfectoSaldo(tx, actualizada, 1);
-      return actualizada;
+      return { existente, actualizada };
     });
 
-    res.json({ success: true, transaccion });
+    await sincronizarPorTransaccion(userId, transaccion.existente).catch(() => {});
+    await sincronizarPorTransaccion(userId, transaccion.actualizada).catch(() => {});
+
+    res.json({ success: true, transaccion: transaccion.actualizada });
   } catch (error) {
     throw toAppError(error);
   }
@@ -217,7 +223,7 @@ exports.eliminarTransaccion = catchAsync(async (req, res) => {
   const userId = req.user.id;
 
   try {
-    await prisma.$transaction(async (tx) => {
+    const eliminada = await prisma.$transaction(async (tx) => {
       const existente = await tx.transaccion.findFirst({
         where: { id: parseInt(id), userId },
       });
@@ -227,7 +233,10 @@ exports.eliminarTransaccion = catchAsync(async (req, res) => {
 
       await aplicarEfectoSaldo(tx, existente, -1);
       await tx.transaccion.delete({ where: { id: parseInt(id) } });
+      return existente;
     });
+
+    await sincronizarPorTransaccion(userId, eliminada).catch(() => {});
 
     res.json({
       success: true,

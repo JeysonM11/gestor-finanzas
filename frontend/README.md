@@ -49,6 +49,8 @@ src/
 | `/transacciones` | CRUD + filtros + búsqueda |
 | `/recurrentes` | CRUD + forzar ahora |
 | `/cuentas`, `/inversiones`, `/deudas` | CRUD |
+| `/metas` | Metas de ahorro + aportes |
+| `/presupuestos` | Límites mensuales + sync |
 | `/notificaciones` | Listado / leídas |
 | `/reportes` | Gráficos vía agregados |
 | `/gamificacion` | Logros / puntos |

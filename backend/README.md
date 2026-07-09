@@ -51,6 +51,8 @@ Servidor: `http://localhost:5000`
 | `/api/finanzas/cuentas` | CRUD / soft delete |
 | `/api/finanzas/inversiones` | CRUD |
 | `/api/finanzas/deudas` | CRUD + pagos |
+| `/api/finanzas/metas` | CRUD + aportar |
+| `/api/finanzas/presupuestos` | CRUD + sincronizar + alertas |
 | `/api/finanzas/logros` | listado, resumen, historial, verificar |
 | `/api/sistema/recurrentes` | CRUD, toggle, ejecutar (usuario), ejecutar-interno (cron) |
 | `/api/sistema/notificaciones` | listado, CRUD, marcar leídas |

@@ -210,6 +210,35 @@ Enums en agregaciones: siempre `INGRESO` / `GASTO` (nunca minúsculas).
 
 ---
 
+## Metas — `/api/finanzas/metas`
+
+Campos: `titulo`, `descripcion`, `tipo` (`AHORRO|GASTO|INVERSION|DEUDA|EMERGENCIA`), `montoObjetivo`, `montoActual`, `fechaLimite`, `categoria`, `prioridad`, `progreso`, `completada`.
+
+| Ruta | Estado |
+|------|--------|
+| GET/POST `/` | ✅ |
+| GET/PUT/DELETE `/:id` | ✅ |
+| POST `/:id/aportar` | ✅ `{ monto }` |
+
+---
+
+## Presupuestos — `/api/finanzas/presupuestos`
+
+Campos: `categoria`, `limite`, `gastado` (calculado), `mes`, `año` (API también acepta `anio`), `alertaEn`, `activo`.
+
+DTO: `anio`, `porcentajeUsado`, `restante`, `excedido`.
+
+| Ruta | Estado |
+|------|--------|
+| GET `?mes=&anio=` | ✅ |
+| POST `/` | ✅ |
+| PUT/DELETE `/:id` | ✅ |
+| POST `/sincronizar` | ✅ |
+
+Al crear/editar/eliminar un `GASTO`, se recalcula `gastado` y puede emitir notificación `ALERTA`.
+
+---
+
 ## Checklist de alineación (por sprint)
 
 - [x] **Sprint 0:** este documento creado
@@ -217,6 +246,7 @@ Enums en agregaciones: siempre `INGRESO` / `GASTO` (nunca minúsculas).
 - [x] **Sprint 2:** inversiones, recurrentes CRUD, notificaciones, gamificación, config
 - [x] **Sprint 3:** reportes montados, categorías, metodoPago unificado
 - [x] **Sprint 4:** cron recurrentes, helmet/rate-limit, catchAsync, CI, toasts
+- [x] **Sprint 5:** metas + presupuestos (API + UI + alertas)
 - [x] **Sprint 6:** limpieza, README honesto, 404, búsqueda transacciones
 
 ---

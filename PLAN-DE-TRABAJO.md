@@ -18,7 +18,7 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 | Gamificación | Roto (endpoints y contrato distintos) |
 | Reportes | Parcial (agregación en cliente, sin rutas backend) |
 | Configuración | Simulado (TODOs, sin persistencia) |
-| Metas / Presupuestos / Recordatorios | Solo en schema, sin API ni UI |
+| Metas / Presupuestos / Recordatorios | Metas + Presupuestos ✅; Recordatorios solo schema |
 
 ---
 
@@ -219,14 +219,14 @@ Priorizar solo lo que aporte valor de producto. El resto se puede **eliminar del
 
 | Módulo | Esfuerzo estimado | Notas |
 |--------|-------------------|--------|
-| Metas de ahorro | Medio | Modelo `Meta` ya existe |
-| Presupuestos + alertas | Medio-Alto | Modelo `Presupuesto` + notificaciones |
-| Recordatorios | Medio | Modelo `Recordatorio` |
-| Categorías personalizadas | Bajo-Medio | Modelo `CategoriaPersonalizada` |
-| Sesiones / auditoría en BD | Medio | `SesionUsuario`, `AuditoriaAcceso` |
-| Verificación de email | Medio | Campo `emailVerificado` |
+| Metas de ahorro | Medio | ✅ CRUD + aportes + UI |
+| Presupuestos + alertas | Medio-Alto | ✅ CRUD + sync gastado + notificación |
+| Recordatorios | Medio | Modelo `Recordatorio` — pendiente |
+| Categorías personalizadas | Bajo-Medio | API ya en Sprint 3; UI parcial |
+| Sesiones / auditoría en BD | Medio | `SesionUsuario`, `AuditoriaAcceso` — pendiente |
+| Verificación de email | Medio | Campo `emailVerificado` — pendiente |
 
-**Decisión recomendada:** implementar Metas + Presupuestos en una fase 2 de producto; el resto solo si hay demanda.
+**Hecho en Sprint 5:** Metas + Presupuestos (API `/api/finanzas/metas|presupuestos`, páginas UI, sync al crear/editar/eliminar gastos).
 
 ---
 

@@ -92,10 +92,43 @@ const createRecurrenteSchema = Joi.object({
   activa: Joi.boolean().optional(),
 });
 
+const createMetaSchema = Joi.object({
+  titulo: Joi.string().trim().min(1).max(150).required(),
+  descripcion: Joi.string().trim().max(500).allow('', null).optional(),
+  tipo: Joi.string()
+    .valid('AHORRO', 'GASTO', 'INVERSION', 'DEUDA', 'EMERGENCIA')
+    .optional(),
+  montoObjetivo: Joi.number().positive().required(),
+  montoActual: Joi.number().min(0).optional(),
+  fechaInicio: Joi.date().optional(),
+  fechaLimite: Joi.date().required(),
+  categoria: Joi.string().trim().max(100).allow('', null).optional(),
+  prioridad: Joi.string().valid('BAJA', 'MEDIA', 'ALTA', 'CRITICA').optional(),
+  recordatorios: Joi.boolean().optional(),
+  publica: Joi.boolean().optional(),
+});
+
+const aporteMetaSchema = Joi.object({
+  monto: Joi.number().positive().required(),
+});
+
+const createPresupuestoSchema = Joi.object({
+  categoria: Joi.string().trim().min(1).max(100).required(),
+  limite: Joi.number().positive().required(),
+  mes: Joi.number().integer().min(1).max(12).optional(),
+  anio: Joi.number().integer().min(2000).max(2100).optional(),
+  año: Joi.number().integer().min(2000).max(2100).optional(),
+  alertaEn: Joi.number().min(1).max(100).allow(null).optional(),
+  activo: Joi.boolean().optional(),
+});
+
 module.exports = {
   createCuentaSchema,
   updateSaldoSchema,
   createInversionSchema,
   createDeudaSchema,
   createRecurrenteSchema,
+  createMetaSchema,
+  aporteMetaSchema,
+  createPresupuestoSchema,
 };

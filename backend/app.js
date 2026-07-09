@@ -65,6 +65,8 @@ app.get('/', (req, res) => {
       cuentas: '/api/finanzas/cuentas',
       inversiones: '/api/finanzas/inversiones',
       deudas: '/api/finanzas/deudas',
+      metas: '/api/finanzas/metas',
+      presupuestos: '/api/finanzas/presupuestos',
       gamificacion: '/api/finanzas/logros',
       recurrentes: '/api/sistema/recurrentes',
       notificaciones: '/api/sistema/notificaciones',

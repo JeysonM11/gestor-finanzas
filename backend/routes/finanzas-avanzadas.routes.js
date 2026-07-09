@@ -8,7 +8,12 @@ const {
   updateSaldoSchema,
   createInversionSchema,
   createDeudaSchema,
+  createMetaSchema,
+  aporteMetaSchema,
+  createPresupuestoSchema,
 } = require('../validators/finanzas.validator');
+const metaController = require('../controllers/meta.controller');
+const presupuestoController = require('../controllers/presupuesto.controller');
 
 // ============= RUTAS DE CUENTAS =============
 router.get('/cuentas', authenticateToken, finanzasAvanzadasController.obtenerCuentas);
@@ -48,6 +53,40 @@ router.post(
 router.put('/deudas/:id', authenticateToken, finanzasAvanzadasController.actualizarDeuda);
 router.delete('/deudas/:id', authenticateToken, finanzasAvanzadasController.eliminarDeuda);
 router.post('/deudas/:deudaId/pagos', authenticateToken, finanzasAvanzadasController.registrarPagoDeuda);
+
+// ============= RUTAS DE METAS =============
+router.get('/metas', authenticateToken, metaController.obtenerMetas);
+router.get('/metas/:id', authenticateToken, metaController.obtenerMetaPorId);
+router.post(
+  '/metas',
+  authenticateToken,
+  validateBody(createMetaSchema),
+  metaController.crearMeta
+);
+router.put('/metas/:id', authenticateToken, metaController.actualizarMeta);
+router.post(
+  '/metas/:id/aportar',
+  authenticateToken,
+  validateBody(aporteMetaSchema),
+  metaController.aportarMeta
+);
+router.delete('/metas/:id', authenticateToken, metaController.eliminarMeta);
+
+// ============= RUTAS DE PRESUPUESTOS =============
+router.get('/presupuestos', authenticateToken, presupuestoController.obtenerPresupuestos);
+router.post(
+  '/presupuestos/sincronizar',
+  authenticateToken,
+  presupuestoController.sincronizarPresupuestos
+);
+router.post(
+  '/presupuestos',
+  authenticateToken,
+  validateBody(createPresupuestoSchema),
+  presupuestoController.crearPresupuesto
+);
+router.put('/presupuestos/:id', authenticateToken, presupuestoController.actualizarPresupuesto);
+router.delete('/presupuestos/:id', authenticateToken, presupuestoController.eliminarPresupuesto);
 
 // ============= RUTAS DE GAMIFICACION =============
 router.get('/logros', authenticateToken, finanzasAvanzadasController.obtenerLogrosUsuario);
