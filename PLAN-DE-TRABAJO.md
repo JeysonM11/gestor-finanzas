@@ -234,25 +234,25 @@ Priorizar solo lo que aporte valor de producto. El resto se puede **eliminar del
 
 ### Código muerto a eliminar o conectar
 
-- [ ] `frontend/src/services/categoria.service.js` (si no se montan rutas)
-- [ ] `frontend/src/hooks/useFetch.js`
-- [ ] `frontend/src/utils/constants.js` / `format.js` (usar o borrar; `format.js` importa `dayjs` sin import)
-- [ ] Dependencia `clsx` si no se usa
-- [ ] Controladores sin rutas (`categoria`, `reporte`) — montar o borrar
-- [ ] Encoding corrupto en comentarios de recurrentes
+- [x] `frontend/src/services/categoria.service.js` — se mantiene (API montada en Sprint 3).
+- [x] `frontend/src/hooks/useFetch.js` — eliminado (no usado).
+- [x] `frontend/src/utils/constants.js` / `format.js` — corregidos y usados en modales.
+- [x] Dependencia `clsx` eliminada (`cn` en format.js).
+- [x] Controladores reportes/categorías — montados en Sprint 3.
+- [x] Encoding corrupto en comentarios de recurrentes — limpio en Sprint 4 rewrite.
 
 ### Documentación
 
-- [ ] Actualizar `README.md` con estado real por módulo (quitar “análisis predictivo” si no existe).
-- [ ] Crear o restaurar `backend/README.md` (endpoints, env, seed).
-- [ ] Documentar enums y contratos de campos.
-- [ ] Checklist de despliegue (PostgreSQL, migrate, seed, `JWT_SECRET`, CORS).
+- [x] Actualizar `README.md` con estado real por módulo (quitar “análisis predictivo” si no existe).
+- [x] Crear o restaurar `backend/README.md` (endpoints, env, seed).
+- [x] Documentar enums y contratos de campos (`docs/CONTRATOS-API.md`).
+- [x] Checklist de despliegue (PostgreSQL, migrate, seed, `JWT_SECRET`, CORS).
 
 ### UX menor
 
-- [ ] Página 404 en lugar de redirigir `*` a dashboard.
-- [ ] Botón “Buscar” en Transacciones: implementar o quitar.
-- [ ] Unificar props de `ConfirmDialog` (`type` vs `variant`).
+- [x] Página 404 en lugar de redirigir `*` a dashboard.
+- [x] Botón “Buscar” en Transacciones: implementado (`search` + filtros).
+- [x] Unificar props de `ConfirmDialog` (`type` vs `variant`).
 
 **Criterio de salida:** repo limpio, README honesto, sin archivos huérfanos evidentes.
 

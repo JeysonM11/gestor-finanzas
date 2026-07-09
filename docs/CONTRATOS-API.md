@@ -3,7 +3,7 @@
 Documento de referencia para alinear **frontend**, **backend** y **Prisma**.  
 Fuente de verdad de nombres de campos y enums: `backend/prisma/schema.prisma`.
 
-> Estado: Sprint 0. Los desalineamientos listados aquí se corrigen en Sprints 1–2.
+> Estado: MVP (Sprints 0–4 + 6). Fuente de verdad: Prisma + este documento.
 
 ---
 
@@ -29,9 +29,9 @@ Fuente de verdad de nombres de campos y enums: `backend/prisma/schema.prisma`.
 | POST | `/register` | ✅ |
 | POST | `/login` | ✅ |
 | GET | `/me` | ✅ |
-| PUT | `/profile` | ❌ Sprint 2 |
-| PUT | `/change-password` | ❌ Sprint 2 |
-| PUT | `/preferences` | ❌ Sprint 2 |
+| PUT | `/profile` | ✅ |
+| PUT | `/change-password` | ✅ |
+| PUT | `/preferences` | ✅ |
 
 **User (respuesta pública):** `id`, `name`, `email`, `rol`, `telefono`, `ocupacion`, `salarioMensual`, `monedaPrincipal`, `puntosAcumulados`, `nivel`, …
 
@@ -50,7 +50,7 @@ Fuente de verdad de nombres de campos y enums: `backend/prisma/schema.prisma`.
 
 `EFECTIVO` | `TARJETA_DEBITO` | `TARJETA_CREDITO` | `TRANSFERENCIA` | `CHEQUE` | `CRYPTO` | `OTRO`
 
-> **Desalineado hoy:** UI/validator usan `DIGITAL` / `CRIPTOMONEDA`. Corregir en Sprint 2 → usar `CRYPTO` u `OTRO`.
+> Alineado: UI y validator usan el enum Prisma (sin `DIGITAL`).
 
 ---
 
@@ -166,7 +166,7 @@ El JWT incluye `rol` (`ADMIN` | `USUARIO`). `requireRole('ADMIN')` se usa en rut
 
 `?soloNoLeidas=true` | `limit` | `offset`
 
-> No usar `?leida=false` hasta unificar en Sprint 2.
+> Query: `?soloNoLeidas=true` | `?leida=true|false` | `limit` | `offset`
 
 ---
 
@@ -201,9 +201,10 @@ El JWT incluye `rol` (`ADMIN` | `USUARIO`). `requireRole('ADMIN')` se usa en rut
 
 | Recurso | Estado |
 |---------|--------|
-| Controlador reportes | Existe, **sin rutas** — Sprint 3 |
-| Controlador categorías | Existe, **sin rutas** — Sprint 3 |
-| Frontend reportes | Agrega en cliente vía `/transacciones` |
+| `/api/reportes` (mensual, agregados, export) | ✅ |
+| `/api/categorias` (CRUD + estadísticas) | ✅ |
+| Frontend reportes | Usa `/reportes/agregados` |
+| Frontend categorías en modales | Lista default (`constants.js`); service listo |
 
 Enums en agregaciones: siempre `INGRESO` / `GASTO` (nunca minúsculas).
 
@@ -216,6 +217,7 @@ Enums en agregaciones: siempre `INGRESO` / `GASTO` (nunca minúsculas).
 - [x] **Sprint 2:** inversiones, recurrentes CRUD, notificaciones, gamificación, config
 - [x] **Sprint 3:** reportes montados, categorías, metodoPago unificado
 - [x] **Sprint 4:** cron recurrentes, helmet/rate-limit, catchAsync, CI, toasts
+- [x] **Sprint 6:** limpieza, README honesto, 404, búsqueda transacciones
 
 ---
 

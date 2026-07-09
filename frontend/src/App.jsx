@@ -14,6 +14,7 @@ import Inversiones from './pages/Inversiones'
 import Deudas from './pages/Deudas'
 import Gamificacion from './pages/Gamificacion'
 import Configuracion from './pages/Configuracion'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -38,7 +39,7 @@ function App() {
               <Route path="configuracion" element={<Configuracion />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
       </ToastProvider>

@@ -3,6 +3,7 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { transaccionRecurrenteService } from '../../services/transaccion-recurrente.service'
+import { CATEGORIAS_DEFAULT, categoriasParaTipo } from '../../utils/constants'
 
 const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
@@ -159,17 +160,15 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
               className="w-full input-field"
             >
               <option value="">Sin categoría</option>
-              <option value="Alimentación">Alimentación</option>
-              <option value="Transporte">Transporte</option>
-              <option value="Entretenimiento">Entretenimiento</option>
-              <option value="Salud">Salud</option>
-              <option value="Educación">Educación</option>
-              <option value="Servicios">Servicios</option>
-              <option value="Compras">Compras</option>
-              <option value="Hogar">Hogar</option>
-              <option value="Trabajo">Trabajo</option>
-              <option value="Inversión">Inversión</option>
-              <option value="Otros">Otros</option>
+              {categoriasParaTipo(formData.tipo).map((c) => (
+                <option key={c.nombre} value={c.nombre}>
+                  {c.nombre}
+                </option>
+              ))}
+              {formData.categoria &&
+                !CATEGORIAS_DEFAULT.some((c) => c.nombre === formData.categoria) && (
+                  <option value={formData.categoria}>{formData.categoria}</option>
+                )}
             </select>
           </div>
 

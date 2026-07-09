@@ -4,10 +4,12 @@ import Button from '../components/common/Button'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalTransaccion from '../components/transacciones/ModalTransaccion'
 import { transaccionService } from '../services/transaccion.service'
+import { useToast } from '../context/ToastContext'
 import { Plus, Search, Filter, Edit, Trash2 } from 'lucide-react'
 import dayjs from 'dayjs'
 
 const Transacciones = () => {
+  const toast = useToast()
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -17,8 +19,10 @@ const Transacciones = () => {
   const [filtros, setFiltros] = useState({
     tipo: '',
     fechaInicio: '',
-    fechaFin: ''
+    fechaFin: '',
+    search: '',
   })
+  const [searchInput, setSearchInput] = useState('')
 
   useEffect(() => {
     cargarTransacciones()
@@ -26,18 +30,18 @@ const Transacciones = () => {
 
   const cargarTransacciones = async () => {
     try {
-      // Filtrar parámetros vacíos
+      setLoading(true)
       const params = Object.entries(filtros).reduce((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
+          acc[key] = value
         }
-        return acc;
-      }, {});
+        return acc
+      }, {})
 
       const data = await transaccionService.getAll(params)
       setTransacciones(data.transacciones || data)
     } catch (error) {
-      console.error('Error al cargar transacciones:', error)
+      toast.error(error.response?.data?.message || 'Error al cargar transacciones')
     } finally {
       setLoading(false)
     }
@@ -46,8 +50,13 @@ const Transacciones = () => {
   const handleFiltroChange = (e) => {
     setFiltros({
       ...filtros,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     })
+  }
+
+  const handleBuscar = (e) => {
+    e?.preventDefault?.()
+    setFiltros((prev) => ({ ...prev, search: searchInput.trim() }))
   }
 
   const handleTransaccionCreada = () => {
@@ -66,12 +75,13 @@ const Transacciones = () => {
 
   const confirmarEliminar = async () => {
     if (!transaccionAEliminar) return
-    
+
     try {
       await transaccionService.delete(transaccionAEliminar.id)
+      toast.success('Transacción eliminada')
       cargarTransacciones()
     } catch (error) {
-      console.error('Error al eliminar transacción:', error)
+      toast.error(error.response?.data?.message || 'Error al eliminar')
     }
   }
 
@@ -80,7 +90,7 @@ const Transacciones = () => {
     setTransaccionSeleccionada(null)
   }
 
-  if (loading) {
+  if (loading && transacciones.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -101,15 +111,13 @@ const Transacciones = () => {
         </Button>
       </div>
 
-      {/* Modal */}
-      <ModalTransaccion 
+      <ModalTransaccion
         isOpen={modalAbierto}
         onClose={handleCloseModal}
         onSuccess={handleTransaccionCreada}
         transaccion={transaccionSeleccionada}
       />
 
-      {/* Dialog de confirmación para eliminar */}
       <ConfirmDialog
         isOpen={confirmDialogOpen}
         onClose={() => setConfirmDialogOpen(false)}
@@ -121,9 +129,8 @@ const Transacciones = () => {
         type="danger"
       />
 
-      {/* Filtros */}
       <Card>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form onSubmit={handleBuscar} className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Filter className="h-4 w-4 inline mr-2" />
@@ -138,6 +145,7 @@ const Transacciones = () => {
               <option value="">Todos</option>
               <option value="INGRESO">Ingresos</option>
               <option value="GASTO">Gastos</option>
+              <option value="TRANSFERENCIA">Transferencias</option>
             </select>
           </div>
 
@@ -167,16 +175,28 @@ const Transacciones = () => {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Buscar
+            </label>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Descripción o notas..."
+              className="w-full input-field"
+            />
+          </div>
+
           <div className="flex items-end">
-            <Button variant="secondary" className="w-full">
+            <Button type="submit" variant="secondary" className="w-full">
               <Search className="h-5 w-5 mr-2" />
               Buscar
             </Button>
           </div>
-        </div>
+        </form>
       </Card>
 
-      {/* Lista de transacciones */}
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -216,18 +236,27 @@ const Transacciones = () => {
                       {transaccion.categoria || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        transaccion.tipo === 'INGRESO' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          transaccion.tipo === 'INGRESO'
+                            ? 'bg-green-100 text-green-800'
+                            : transaccion.tipo === 'TRANSFERENCIA'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-red-100 text-red-800'
+                        }`}
+                      >
                         {transaccion.tipo}
                       </span>
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${
-                      transaccion.tipo === 'INGRESO' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {transaccion.tipo === 'INGRESO' ? '+' : '-'}${transaccion.monto.toFixed(2)}
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${
+                        transaccion.tipo === 'INGRESO'
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }`}
+                    >
+                      {transaccion.tipo === 'INGRESO' ? '+' : '-'}$
+                      {Number(transaccion.monto).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                       <div className="flex items-center justify-center gap-2">

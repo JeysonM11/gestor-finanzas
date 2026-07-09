@@ -1,6 +1,7 @@
 export const TIPOS_TRANSACCION = {
   INGRESO: 'INGRESO',
-  GASTO: 'GASTO'
+  GASTO: 'GASTO',
+  TRANSFERENCIA: 'TRANSFERENCIA',
 }
 
 export const CATEGORIAS_DEFAULT = [
@@ -13,11 +14,27 @@ export const CATEGORIAS_DEFAULT = [
   { nombre: 'Salario', tipo: 'INGRESO' },
   { nombre: 'Freelance', tipo: 'INGRESO' },
   { nombre: 'Inversiones', tipo: 'INGRESO' },
-  { nombre: 'Otros', tipo: 'AMBOS' }
+  { nombre: 'Otros', tipo: 'AMBOS' },
+]
+
+export const METODOS_PAGO = [
+  'EFECTIVO',
+  'TARJETA_DEBITO',
+  'TARJETA_CREDITO',
+  'TRANSFERENCIA',
+  'CHEQUE',
+  'CRYPTO',
+  'OTRO',
 ]
 
 export const PERIODOS = {
   MENSUAL: 'MENSUAL',
   TRIMESTRAL: 'TRIMESTRAL',
-  ANUAL: 'ANUAL'
+  ANUAL: 'ANUAL',
+}
+
+export function categoriasParaTipo(tipo) {
+  return CATEGORIAS_DEFAULT.filter(
+    (c) => c.tipo === tipo || c.tipo === 'AMBOS'
+  )
 }
