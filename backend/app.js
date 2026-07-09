@@ -53,14 +53,14 @@ app.get('/', (req, res) => {
   });
 });
 
-// Middleware para rutas no encontradas (temporalmente deshabilitado por compatibilidad)
-// app.all('*', notFoundHandler);
+// Middleware para rutas no encontradas (debe ir antes del error handler)
+app.use(notFoundHandler);
 
 // Middleware global de manejo de errores (debe ir al final)
 app.use(globalErrorHandler);
 
 // Servidor
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   logger.info('Servidor iniciado', {
     port: PORT,

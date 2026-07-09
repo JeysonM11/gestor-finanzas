@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 // ============= CONTROLADOR DE TRANSACCIONES RECURRENTES =============
 
@@ -13,7 +12,7 @@ exports.obtenerTransaccionesRecurrentes = async (req, res) => {
       include: {
         transacciones: {
           orderBy: { fecha: 'desc' },
-          take: 5 // Últimas 5 ejecuciones
+          take: 5 // Ultimas 5 ejecuciones
         }
       },
       orderBy: { proximaEjecucion: 'asc' }
@@ -38,7 +37,7 @@ exports.obtenerTransaccionesRecurrentes = async (req, res) => {
   }
 };
 
-// Crear transacción recurrente
+// Crear transacci?n recurrente
 exports.crearTransaccionRecurrente = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -54,7 +53,7 @@ exports.crearTransaccionRecurrente = async (req, res) => {
       });
     }
 
-    // Calcular próxima ejecución
+    // Calcular pr?xima ejecuci?n
     const proximaEjecucion = calcularProximaEjecucion(
       frecuencia, fechaInicio, diaEjecucion, diaSemana
     );
@@ -77,11 +76,11 @@ exports.crearTransaccionRecurrente = async (req, res) => {
     });
 
     res.status(201).json({
-      message: 'Transacción recurrente creada exitosamente',
+      message: 'Transacci?n recurrente creada exitosamente',
       transaccionRecurrente
     });
   } catch (error) {
-    console.error('Error al crear transacción recurrente:', error);
+    console.error('Error al crear transacci?n recurrente:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -109,24 +108,24 @@ exports.ejecutarTransaccionesRecurrentes = async (req, res) => {
 
     for (const tr of transaccionesPendientes) {
       try {
-        // Crear la transacción
+        // Crear la transacci?n
         const nuevaTransaccion = await prisma.transaccion.create({
           data: {
             tipo: tr.tipo,
             monto: tr.monto,
-            descripcion: tr.descripcion || `${tr.nombre} (Automática)`,
+            descripcion: tr.descripcion || `${tr.nombre} (Autom?tica)`,
             categoria: tr.categoria,
             userId: tr.userId,
             transaccionRecurrenteId: tr.id
           }
         });
 
-        // Calcular siguiente ejecución
+        // Calcular siguiente ejecuci?n
         const siguienteEjecucion = calcularProximaEjecucion(
           tr.frecuencia, tr.proximaEjecucion, tr.diaEjecucion, tr.diaSemana
         );
 
-        // Actualizar transacción recurrente
+        // Actualizar transacci?n recurrente
         await prisma.transaccionRecurrente.update({
           where: { id: tr.id },
           data: {
@@ -143,10 +142,10 @@ exports.ejecutarTransaccionesRecurrentes = async (req, res) => {
         });
 
       } catch (error) {
-        console.error(`Error al ejecutar transacción recurrente ${tr.id}:`, error);
+        console.error(`Error al ejecutar transacci?n recurrente ${tr.id}:`, error);
         resultados.push({
           transaccionRecurrente: tr.nombre,
-          error: 'Error al crear transacción'
+          error: 'Error al crear transacci?n'
         });
       }
     }
@@ -163,7 +162,7 @@ exports.ejecutarTransaccionesRecurrentes = async (req, res) => {
   }
 };
 
-// Función auxiliar para calcular próxima ejecución
+// Funci?n auxiliar para calcular pr?xima ejecuci?n
 function calcularProximaEjecucion(frecuencia, fechaBase, diaEjecucion, diaSemana) {
   const fecha = new Date(fechaBase);
 
@@ -259,7 +258,7 @@ exports.obtenerNotificaciones = async (req, res) => {
   }
 };
 
-// Crear notificación
+// Crear notificaci?n
 exports.crearNotificacion = async (req, res) => {
   try {
     const { userId, titulo, mensaje, tipo, datos } = req.body;
@@ -275,16 +274,16 @@ exports.crearNotificacion = async (req, res) => {
     });
 
     res.status(201).json({
-      message: 'Notificación creada exitosamente',
+      message: 'Notificaci?n creada exitosamente',
       notificacion
     });
   } catch (error) {
-    console.error('Error al crear notificación:', error);
+    console.error('Error al crear notificaci?n:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
-// Marcar notificación como leída
+// Marcar notificaci?n como le?da
 exports.marcarComoLeida = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -302,17 +301,17 @@ exports.marcarComoLeida = async (req, res) => {
     });
 
     if (notificacion.count === 0) {
-      return res.status(404).json({ message: 'Notificación no encontrada' });
+      return res.status(404).json({ message: 'Notificaci?n no encontrada' });
     }
 
-    res.status(200).json({ message: 'Notificación marcada como leída' });
+    res.status(200).json({ message: 'Notificaci?n marcada como le?da' });
   } catch (error) {
-    console.error('Error al marcar notificación:', error);
+    console.error('Error al marcar notificaci?n:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
-// Marcar todas las notificaciones como leídas
+// Marcar todas las notificaciones como le?das
 exports.marcarTodasLeidas = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -328,7 +327,7 @@ exports.marcarTodasLeidas = async (req, res) => {
       }
     });
 
-    res.status(200).json({ message: 'Todas las notificaciones marcadas como leídas' });
+    res.status(200).json({ message: 'Todas las notificaciones marcadas como le?das' });
   } catch (error) {
     console.error('Error al marcar todas las notificaciones:', error);
     res.status(500).json({ message: 'Error interno del servidor' });

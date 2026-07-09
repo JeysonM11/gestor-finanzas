@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 // Obtener todas las categorías del usuario
 exports.obtenerCategorias = async (req, res) => {

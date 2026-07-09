@@ -1,11 +1,9 @@
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { catchAsync } = require('../middlewares/error.middleware');
 const { AppError, ConflictError, AuthenticationError } = require('../utils/errors');
 const { logUserAction, logSecurityEvent } = require('../utils/logger');
-
-const prisma = new PrismaClient();
 
 // Registro de usuario
 exports.register = catchAsync(async (req, res, next) => {
