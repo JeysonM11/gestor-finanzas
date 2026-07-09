@@ -5,8 +5,10 @@ import ModalDeuda from '../components/deudas/ModalDeuda'
 import ModalPago from '../components/deudas/ModalPago'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { deudaService } from '../services/deuda.service'
+import { useToast } from '../context/ToastContext'
 
 const Deudas = () => {
+  const toast = useToast()
   const [deudas, setDeudas] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalDeudaOpen, setModalDeudaOpen] = useState(false)
@@ -24,7 +26,7 @@ const Deudas = () => {
       const response = await deudaService.getAll()
       setDeudas(response.deudas || [])
     } catch (error) {
-      console.error('Error al cargar deudas:', error)
+      toast.error(error.response?.data?.message || 'Error al cargar deudas')
     } finally {
       setLoading(false)
     }
@@ -37,14 +39,14 @@ const Deudas = () => {
 
   const handleDeleteDeuda = async () => {
     if (!deudaToDelete) return
-    
+
     try {
       await deudaService.delete(deudaToDelete.id)
       setDeudaToDelete(null)
+      toast.success('Deuda eliminada')
       fetchDeudas()
     } catch (error) {
-      console.error('Error al eliminar deuda:', error)
-      alert('Error al eliminar la deuda')
+      toast.error(error.response?.data?.message || 'Error al eliminar la deuda')
     }
   }
 

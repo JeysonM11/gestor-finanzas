@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { notificacionService } from '../services/notificacion.service'
+import { useToast } from '../context/ToastContext'
 import { Bell, Check, CheckCheck, Trash2, AlertCircle, Info, CheckCircle } from 'lucide-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -11,6 +12,7 @@ dayjs.extend(relativeTime)
 dayjs.locale('es')
 
 const Notificaciones = () => {
+  const toast = useToast()
   const [notificaciones, setNotificaciones] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState('todas') // 'todas', 'noLeidas', 'leidas'
@@ -24,7 +26,7 @@ const Notificaciones = () => {
       const data = await notificacionService.getAll()
       setNotificaciones(data.notificaciones || data)
     } catch (error) {
-      console.error('Error al cargar notificaciones:', error)
+      toast.error(error.response?.data?.message || 'Error al cargar notificaciones')
     } finally {
       setLoading(false)
     }
@@ -35,7 +37,7 @@ const Notificaciones = () => {
       await notificacionService.marcarLeida(id)
       cargarNotificaciones()
     } catch (error) {
-      console.error('Error al marcar como leída:', error)
+      toast.error(error.response?.data?.message || 'Error al marcar como leída')
     }
   }
 
@@ -44,7 +46,7 @@ const Notificaciones = () => {
       await notificacionService.marcarTodasLeidas()
       cargarNotificaciones()
     } catch (error) {
-      console.error('Error al marcar todas como leídas:', error)
+      toast.error(error.response?.data?.message || 'Error al marcar todas')
     }
   }
 
@@ -53,7 +55,7 @@ const Notificaciones = () => {
       await notificacionService.delete(id)
       cargarNotificaciones()
     } catch (error) {
-      console.error('Error al eliminar notificación:', error)
+      toast.error(error.response?.data?.message || 'Error al eliminar notificación')
     }
   }
 

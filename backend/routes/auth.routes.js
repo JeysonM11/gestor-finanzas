@@ -3,6 +3,7 @@ const router = express.Router();
 const authController = require('../controllers/auth.controller');
 const { authMiddleware: authenticateToken } = require('../middlewares/auth.middleware');
 const { validateBody } = require('../middlewares/validation.middleware');
+const { authLimiter } = require('../middlewares/rateLimit.middleware');
 const {
   registerSchema,
   loginSchema,
@@ -11,9 +12,9 @@ const {
   updatePreferencesSchema,
 } = require('../validators/auth.validator');
 
-// Registro y login
-router.post('/register', validateBody(registerSchema), authController.register);
-router.post('/login', validateBody(loginSchema), authController.login);
+// Registro y login (rate limit anti fuerza bruta)
+router.post('/register', authLimiter, validateBody(registerSchema), authController.register);
+router.post('/login', authLimiter, validateBody(loginSchema), authController.login);
 
 // Obtener usuario actual (protegido)
 router.get('/me', authenticateToken, authController.getCurrentUser);

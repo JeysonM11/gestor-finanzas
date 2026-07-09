@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Trophy, Star, Target, TrendingUp, Award, Zap, Lock, CheckCircle } from 'lucide-react'
 import { logroService } from '../services/logro.service'
+import { useToast } from '../context/ToastContext'
 
 const Gamificacion = () => {
+  const toast = useToast()
   const [resumen, setResumen] = useState(null)
   const [logros, setLogros] = useState([])
   const [historial, setHistorial] = useState([])
@@ -25,7 +27,7 @@ const Gamificacion = () => {
       setLogros(logrosData.logros || [])
       setHistorial(historialData.historial || [])
     } catch (error) {
-      console.error('Error al cargar datos de gamificación:', error)
+      toast.error(error.response?.data?.message || 'Error al cargar gamificación')
     } finally {
       setLoading(false)
     }

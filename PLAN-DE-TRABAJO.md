@@ -184,30 +184,30 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 
 ### 4.1 Recurrentes automáticas
 
-- [ ] Job con `node-cron` (o worker) que ejecute pendientes sin depender del botón del usuario.
-- [ ] Endpoint interno protegido o solo cron; el botón UI puede quedar como “forzar ahora”.
+- [x] Job con `node-cron` (o worker) que ejecute pendientes sin depender del botón del usuario.
+- [x] Endpoint interno protegido o solo cron; el botón UI puede quedar como “forzar ahora”.
 
 ### 4.2 Tests y CI
 
-- [ ] Crear `backend/tests/` (auth, ownership, saldos, recurrentes).
-- [ ] Asegurar que `npm test` pase.
-- [ ] (Opcional) GitHub Action básica: install + test + lint.
+- [x] Crear `backend/tests/` (auth, ownership, saldos, recurrentes).
+- [x] Asegurar que `npm test` pase.
+- [x] (Opcional) GitHub Action básica: install + test + lint.
 
 ### 4.3 Errores y logging
 
-- [ ] Estandarizar controladores con `catchAsync` + `AppError`.
-- [ ] Reducir `console.error` a favor de Winston.
-- [ ] Toasts o mensajes de error visibles en frontend (no solo `console.error`).
+- [x] Estandarizar controladores con `catchAsync` + `AppError`.
+- [x] Reducir `console.error` a favor de Winston.
+- [x] Toasts o mensajes de error visibles en frontend (no solo `console.error`).
 
 ### 4.4 Seguridad adicional
 
-- [ ] Rate limiting en `/auth/login` y `/auth/register`.
-- [ ] `helmet` en Express.
+- [x] Rate limiting en `/auth/login` y `/auth/register`.
+- [x] `helmet` en Express.
 - [ ] Evaluar refresh tokens / revocación con `SesionUsuario` (si se prioriza).
 
 ### 4.5 Roles
 
-- [ ] Usar `requireRole('ADMIN')` en rutas admin, o documentar que el rol es solo informativo.
+- [x] Usar `requireRole('ADMIN')` en rutas admin, o documentar que el rol es solo informativo.
 
 **Criterio de salida:** tests verdes; recurrentes se ejecutan solas; errores consistentes.
 

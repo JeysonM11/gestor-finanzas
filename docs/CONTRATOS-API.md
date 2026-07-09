@@ -136,9 +136,18 @@ Campos: `nombre`, `descripcion`, `tipo`, `monto`, `categoria`, `frecuencia`, `di
 | Ruta | Estado |
 |------|--------|
 | GET/POST `/` | ✅ |
-| POST `/ejecutar` | ✅ (debe filtrar por user — Sprint 1) |
-| PUT/DELETE `/:id` | ❌ Sprint 2 |
-| toggle activa | ❌ Sprint 2 |
+| PUT/DELETE `/:id` | ✅ |
+| PUT `/:id/toggle` | ✅ |
+| POST `/ejecutar` | ✅ (usuario: solo sus pendientes; UI = “Forzar ahora”) |
+| POST `/ejecutar-interno` | ✅ (header `X-Cron-Secret`; global; también job `node-cron`) |
+
+> Cron: cada hora (`CRON_RECURRENTES_SCHEDULE`, default `0 * * * *`). Desactivar con `CRON_RECURRENTES=false`.
+
+---
+
+## Roles
+
+El JWT incluye `rol` (`ADMIN` | `USUARIO`). `requireRole('ADMIN')` se usa en rutas admin (ej. `GET /api/sistema/admin/health`). El resto de la API es por ownership (`userId`), no por rol.
 
 ---
 
@@ -206,6 +215,7 @@ Enums en agregaciones: siempre `INGRESO` / `GASTO` (nunca minúsculas).
 - [x] **Sprint 1:** cuentas (tipo + saldo), deudas (campos + POST), ownership
 - [x] **Sprint 2:** inversiones, recurrentes CRUD, notificaciones, gamificación, config
 - [x] **Sprint 3:** reportes montados, categorías, metodoPago unificado
+- [x] **Sprint 4:** cron recurrentes, helmet/rate-limit, catchAsync, CI, toasts
 
 ---
 
