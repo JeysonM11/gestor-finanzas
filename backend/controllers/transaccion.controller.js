@@ -121,53 +121,85 @@ exports.obtenerTransacciones = async (req, res) => {
   }
 };
 
-// Obtener transacción por ID
+// Obtener transacción por ID (solo del usuario autenticado)
 exports.obtenerTransaccionPorId = async (req, res) => {
   const { id } = req.params;
+  const userId = req.user.id;
   try {
-    const transaccion = await prisma.transaccion.findUnique({
-      where: { id: parseInt(id) },
+    const transaccion = await prisma.transaccion.findFirst({
+      where: { id: parseInt(id), userId },
     });
     if (!transaccion) {
-      return res.status(404).json({ message: "Transacción no encontrada" });
+      return res.status(404).json({
+        success: false,
+        message: "Transacción no encontrada",
+      });
     }
-    return res.json(transaccion);
+    return res.json({ success: true, transaccion });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error al obtener la transacción", error });
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener la transacción",
+      error: error.message,
+    });
   }
 };
 
-// Actualizar transacción
+// Actualizar transacción (solo del usuario autenticado)
 exports.actualizarTransaccion = async (req, res) => {
   const { id } = req.params;
+  const userId = req.user.id;
   const data = req.body;
   try {
+    const existente = await prisma.transaccion.findFirst({
+      where: { id: parseInt(id), userId },
+    });
+    if (!existente) {
+      return res.status(404).json({
+        success: false,
+        message: "Transacción no encontrada",
+      });
+    }
+
+    const { userId: _ignoreUserId, id: _ignoreId, ...safeData } = data;
     const transaccion = await prisma.transaccion.update({
       where: { id: parseInt(id) },
-      data,
+      data: safeData,
     });
-    return res.json(transaccion);
+    return res.json({ success: true, transaccion });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error al actualizar la transacción", error });
+    return res.status(500).json({
+      success: false,
+      message: "Error al actualizar la transacción",
+      error: error.message,
+    });
   }
 };
 
-// Eliminar transacción
+// Eliminar transacción (solo del usuario autenticado)
 exports.eliminarTransaccion = async (req, res) => {
   const { id } = req.params;
+  const userId = req.user.id;
   try {
-    await prisma.transaccion.delete({
-      where: { id: parseInt(id) },
+    const resultado = await prisma.transaccion.deleteMany({
+      where: { id: parseInt(id), userId },
     });
-    return res.json({ message: "Transacción eliminada correctamente" });
+    if (resultado.count === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Transacción no encontrada",
+      });
+    }
+    return res.json({
+      success: true,
+      message: "Transacción eliminada correctamente",
+    });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error al eliminar la transacción", error });
+    return res.status(500).json({
+      success: false,
+      message: "Error al eliminar la transacción",
+      error: error.message,
+    });
   }
 };
 

@@ -22,7 +22,7 @@ const Deudas = () => {
     try {
       setLoading(true)
       const response = await deudaService.getAll()
-      setDeudas(response.data)
+      setDeudas(response.deudas || [])
     } catch (error) {
       console.error('Error al cargar deudas:', error)
     } finally {
@@ -66,27 +66,35 @@ const Deudas = () => {
   const getTipoBadge = (tipo) => {
     const badges = {
       PRESTAMO: { label: 'Préstamo', color: 'bg-blue-100 text-blue-800' },
+      PRESTAMO_PERSONAL: { label: 'Préstamo', color: 'bg-blue-100 text-blue-800' },
       HIPOTECA: { label: 'Hipoteca', color: 'bg-purple-100 text-purple-800' },
       TARJETA_CREDITO: { label: 'Tarjeta', color: 'bg-pink-100 text-pink-800' },
       PRESTAMO_ESTUDIANTIL: { label: 'Estudiantil', color: 'bg-indigo-100 text-indigo-800' },
       PRESTAMO_AUTO: { label: 'Auto', color: 'bg-cyan-100 text-cyan-800' },
-      OTROS: { label: 'Otros', color: 'bg-gray-100 text-gray-800' }
+      LINEA_CREDITO: { label: 'Línea de crédito', color: 'bg-amber-100 text-amber-800' },
+      OTROS: { label: 'Otros', color: 'bg-gray-100 text-gray-800' },
+      OTRO: { label: 'Otros', color: 'bg-gray-100 text-gray-800' },
     }
-    return badges[tipo] || badges.OTROS
+    return badges[tipo] || badges.OTRO
   }
 
   const calcularProgreso = (deuda) => {
-    const porcentaje = (deuda.montoPagado / deuda.montoTotal) * 100
-    return Math.min(porcentaje, 100)
+    const total = deuda.montoTotal ?? deuda.montoInicial ?? 0
+    const pagado = deuda.montoPagado ?? 0
+    if (!total) return 0
+    return Math.min((pagado / total) * 100, 100)
   }
 
   const calcularRestante = (deuda) => {
-    return deuda.montoTotal - deuda.montoPagado
+    const total = deuda.montoTotal ?? deuda.montoInicial ?? 0
+    const pagado = deuda.montoPagado ?? 0
+    return total - pagado
   }
 
   const calcularTotales = () => {
-    const total = deudas.reduce((acc, deuda) => acc + deuda.montoTotal, 0)
-    const pagado = deudas.reduce((acc, deuda) => acc + deuda.montoPagado, 0)
+    const lista = Array.isArray(deudas) ? deudas : []
+    const total = lista.reduce((acc, deuda) => acc + (deuda.montoTotal ?? deuda.montoInicial ?? 0), 0)
+    const pagado = lista.reduce((acc, deuda) => acc + (deuda.montoPagado ?? 0), 0)
     const restante = total - pagado
     const progresoTotal = total > 0 ? (pagado / total) * 100 : 0
     
@@ -181,11 +189,13 @@ const Deudas = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {deudas.map((deuda) => {
+          {(Array.isArray(deudas) ? deudas : []).map((deuda) => {
             const progreso = calcularProgreso(deuda)
             const restante = calcularRestante(deuda)
             const tipoBadge = getTipoBadge(deuda.tipo)
             const estaVencida = deuda.fechaVencimiento && new Date(deuda.fechaVencimiento) < new Date()
+            const montoTotal = deuda.montoTotal ?? deuda.montoInicial ?? 0
+            const montoPagado = deuda.montoPagado ?? 0
             
             return (
               <div key={deuda.id} className="bg-white rounded-xl shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
@@ -234,11 +244,11 @@ const Deudas = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-600">Monto Total</p>
-                      <p className="font-semibold text-gray-900">${deuda.montoTotal.toFixed(2)}</p>
+                      <p className="font-semibold text-gray-900">${montoTotal.toFixed(2)}</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Pagado</p>
-                      <p className="font-semibold text-green-600">${deuda.montoPagado.toFixed(2)}</p>
+                      <p className="font-semibold text-green-600">${montoPagado.toFixed(2)}</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Restante</p>

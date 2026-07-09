@@ -9,7 +9,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
   
   const [formData, setFormData] = useState({
     nombre: '',
-    tipoCuenta: 'AHORRO',
+    tipo: 'BANCO_AHORROS',
     banco: '',
     moneda: 'USD',
     saldoActual: '',
@@ -22,7 +22,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
     if (cuenta && isOpen) {
       setFormData({
         nombre: cuenta.nombre || '',
-        tipoCuenta: cuenta.tipoCuenta || 'AHORRO',
+        tipo: cuenta.tipo || 'BANCO_AHORROS',
         banco: cuenta.banco || '',
         moneda: cuenta.moneda || 'USD',
         saldoActual: cuenta.saldoActual || '',
@@ -31,7 +31,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
     } else if (!isOpen) {
       setFormData({
         nombre: '',
-        tipoCuenta: 'AHORRO',
+        tipo: 'BANCO_AHORROS',
         banco: '',
         moneda: 'USD',
         saldoActual: '',
@@ -55,16 +55,19 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
     setLoading(true)
 
     try {
-      const dataToSend = {
-        ...formData,
-        saldoActual: parseFloat(formData.saldoActual) || 0
-      }
+      const saldo = parseFloat(formData.saldoActual) || 0
 
       if (isEditing) {
-        // Para editar solo actualizamos el saldo
-        await cuentaService.updateSaldo(cuenta.id, dataToSend.saldoActual)
+        await cuentaService.updateSaldo(cuenta.id, saldo)
       } else {
-        await cuentaService.create(dataToSend)
+        await cuentaService.create({
+          nombre: formData.nombre,
+          tipo: formData.tipo,
+          banco: formData.banco,
+          moneda: formData.moneda,
+          saldoInicial: saldo,
+          color: formData.color
+        })
       }
       
       onSuccess?.()
@@ -112,18 +115,21 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
               Tipo de Cuenta *
             </label>
             <select
-              name="tipoCuenta"
-              value={formData.tipoCuenta}
+              name="tipo"
+              value={formData.tipo}
               onChange={handleChange}
               className="w-full input-field"
               required
               disabled={isEditing}
             >
-              <option value="AHORRO">Ahorro</option>
-              <option value="CORRIENTE">Corriente</option>
+              <option value="BANCO_AHORROS">Ahorro</option>
+              <option value="BANCO_CORRIENTE">Corriente</option>
+              <option value="TARJETA_CREDITO">Tarjeta de crédito</option>
+              <option value="TARJETA_DEBITO">Tarjeta de débito</option>
               <option value="INVERSION">Inversión</option>
-              <option value="CREDITO">Crédito</option>
               <option value="EFECTIVO">Efectivo</option>
+              <option value="CRYPTO">Crypto</option>
+              <option value="OTRO">Otro</option>
             </select>
           </div>
 

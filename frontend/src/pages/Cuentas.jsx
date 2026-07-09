@@ -61,9 +61,13 @@ const Cuentas = () => {
 
   const getTipoIcon = (tipo) => {
     switch (tipo) {
+      case 'BANCO_AHORROS':
+      case 'BANCO_CORRIENTE':
       case 'AHORRO':
       case 'CORRIENTE':
         return <Wallet className="h-6 w-6" />
+      case 'TARJETA_CREDITO':
+      case 'TARJETA_DEBITO':
       case 'CREDITO':
         return <CreditCard className="h-6 w-6" />
       case 'INVERSION':
@@ -165,7 +169,7 @@ const Cuentas = () => {
                       style={{ backgroundColor: cuenta.color + '20' || '#3B82F620' }}
                     >
                       <div style={{ color: cuenta.color || '#3B82F6' }}>
-                        {getTipoIcon(cuenta.tipoCuenta)}
+                        {getTipoIcon(cuenta.tipo)}
                       </div>
                     </div>
                     <div>
@@ -178,13 +182,13 @@ const Cuentas = () => {
                 <div className="mb-4">
                   <p className="text-sm text-gray-500 mb-1">Saldo Actual</p>
                   <p className="text-3xl font-bold text-gray-900">
-                    {cuenta.moneda} {cuenta.saldoActual.toFixed(2)}
+                    {cuenta.moneda} {(cuenta.saldoActual ?? 0).toFixed(2)}
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">{cuenta.tipoCuenta}</span>
+                    <span className="font-medium">{cuenta.tipo}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button

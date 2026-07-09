@@ -55,8 +55,11 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 | C2 | Filtrar ejecución de recurrentes por `req.user.id` | `transacciones-recurrentes.controller.js` |
 | C3 | Forzar `userId = req.user.id` al crear notificaciones | mismo controlador |
 
-- [ ] Tests: usuario A no puede leer/editar/borrar recursos de B.
-- [ ] Tests: ejecutar recurrentes solo afecta al usuario autenticado.
+- [x] Ownership en get/update/delete de transacciones.
+- [x] Ejecutar recurrentes solo del usuario autenticado.
+- [x] Crear notificaciones solo para `req.user.id`.
+- [x] Tests unitarios de mappers (aliases UI ↔ Prisma).
+- [ ] Tests de integración ownership (requiere DB) — pendiente Sprint 4 / CI.
 
 ### 1.2 Deudas (módulo roto)
 
@@ -68,6 +71,10 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 | — | Añadir `PUT` y `DELETE` de deudas, o quitar botones hasta tenerlos |
 | — | Alinear enums (`PRESTAMO_PERSONAL`, `OTRO`, etc.) |
 
+- [x] Parsing `response.deudas`.
+- [x] `POST` / `PUT` / `DELETE` deudas.
+- [x] DTO con `montoTotal` / `montoPagado` + mapeo de enums.
+
 ### 1.3 Cuentas (payload y enums)
 
 | ID | Tarea |
@@ -76,6 +83,10 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 | C7 | Mapear enums UI ↔ Prisma (`BANCO_AHORROS`, etc.) y campo `tipo` |
 | — | Implementar `DELETE /cuentas/:id` o deshabilitar botón |
 
+- [x] Aceptar `nuevoSaldo` o `saldoActual`; frontend envía `nuevoSaldo`.
+- [x] Mapear `tipo` / aliases UI; UI usa enums Prisma.
+- [x] `DELETE /cuentas/:id` (soft-delete `activa: false`).
+
 ### 1.4 Seguridad básica
 
 | ID | Tarea |
@@ -83,6 +94,10 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 | C8 | Eliminar `console.log` de Authorization / token / decoded |
 | — | Restringir CORS a origen del frontend en producción |
 | — | Validar que `JWT_SECRET` sea obligatorio al arrancar |
+
+- [x] C8 hecho en Sprint 0.
+- [x] CORS restringido cuando `NODE_ENV=production`.
+- [x] Fail-fast si falta `JWT_SECRET`.
 
 **Criterio de salida:** no hay IDOR obvio; deudas y cuentas se pueden crear/listar sin 404 ni `NaN`; tokens no aparecen en logs.
 

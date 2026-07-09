@@ -7,6 +7,7 @@ const { authMiddleware: authenticateToken } = require('../middlewares/auth.middl
 router.get('/cuentas', authenticateToken, finanzasAvanzadasController.obtenerCuentas);
 router.post('/cuentas', authenticateToken, finanzasAvanzadasController.crearCuenta);
 router.put('/cuentas/:id/saldo', authenticateToken, finanzasAvanzadasController.actualizarSaldo);
+router.delete('/cuentas/:id', authenticateToken, finanzasAvanzadasController.eliminarCuenta);
 
 // ============= RUTAS DE INVERSIONES =============
 router.get('/inversiones', authenticateToken, finanzasAvanzadasController.obtenerInversiones);
@@ -14,6 +15,9 @@ router.post('/inversiones', authenticateToken, finanzasAvanzadasController.crear
 
 // ============= RUTAS DE DEUDAS =============
 router.get('/deudas', authenticateToken, finanzasAvanzadasController.obtenerDeudas);
+router.post('/deudas', authenticateToken, finanzasAvanzadasController.crearDeuda);
+router.put('/deudas/:id', authenticateToken, finanzasAvanzadasController.actualizarDeuda);
+router.delete('/deudas/:id', authenticateToken, finanzasAvanzadasController.eliminarDeuda);
 router.post('/deudas/:deudaId/pagos', authenticateToken, finanzasAvanzadasController.registrarPagoDeuda);
 
 // ============= RUTAS DE GAMIFICACIÓN =============
