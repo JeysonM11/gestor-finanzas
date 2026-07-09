@@ -107,44 +107,43 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 
 ### 2.1 Inversiones
 
-- [ ] Mapear `montoInvertido` / `valorActual` / `cantidad` ↔ UI.
-- [ ] Alinear enums (`FONDOS_MUTUOS`, `OTRO`).
-- [ ] Implementar `PUT` y `DELETE` `/finanzas/inversiones/:id`.
-- [ ] Corregir cálculos de rendimiento en `Inversiones.jsx`.
+- [x] Mapear `montoInvertido` / `valorActual` / `cantidad` ↔ UI.
+- [x] Alinear enums (`FONDOS_MUTUOS`, `OTRO`).
+- [x] Implementar `PUT` y `DELETE` `/finanzas/inversiones/:id`.
+- [x] Corregir cálculos de rendimiento en `Inversiones.jsx`.
 
 ### 2.2 Recurrentes
 
-- [ ] `PUT /sistema/recurrentes/:id`
-- [ ] `DELETE /sistema/recurrentes/:id`
-- [ ] `PUT /sistema/recurrentes/:id/toggle` (o incluir `activa` en update)
-- [ ] Validación Joi del body de creación/edición
+- [x] `PUT /sistema/recurrentes/:id`
+- [x] `DELETE /sistema/recurrentes/:id`
+- [x] `PUT /sistema/recurrentes/:id/toggle` (o incluir `activa` en update)
+- [ ] Validación Joi del body de creación/edición (opcional; validación manual activa)
 
 ### 2.3 Notificaciones
 
-- [ ] Usar `fechaEnvio` (o alias en respuesta) en UI.
-- [ ] Unificar filtro: `soloNoLeidas=true` vs `leida=false`.
-- [ ] Alinear tipos (`INFO`, `ALERTA`, …) con el enum Prisma.
-- [ ] Implementar `DELETE /sistema/notificaciones/:id`.
-- [ ] Opcional: enlace a Notificaciones en el Sidebar.
+- [x] Usar `fechaEnvio` (o alias en respuesta) en UI.
+- [x] Unificar filtro: `soloNoLeidas=true` vs `leida=false`.
+- [x] Alinear tipos (`INFO`, `ALERTA`, …) con el enum Prisma.
+- [x] Implementar `DELETE /sistema/notificaciones/:id`.
+- [x] Enlace a Notificaciones en el Sidebar.
 
 ### 2.4 Gamificación
 
-- [ ] Adaptar frontend al contrato real de `GET /finanzas/logros`, **o**
-- [ ] Crear `GET /logros/resumen` y `GET /logros/historial` con DTO estable.
-- [ ] Completar `verificarLogros` (más de “Primera Transacción”).
-- [ ] Actualizar `puntosAcumulados` y `nivel` en `User`.
-- [ ] Evitar división por cero si no hay logros.
+- [x] Adaptar frontend al contrato real + `GET /logros/resumen` y `/historial`.
+- [x] Completar `verificarLogros` (más de “Primera Transacción”).
+- [x] Actualizar `puntosAcumulados` y `nivel` en `User`.
+- [x] Evitar división por cero si no hay logros.
 
 ### 2.5 Configuración (dejar de simular)
 
-- [ ] `PUT /api/auth/profile` + `updateProfileSchema`
-- [ ] `PUT /api/auth/change-password`
-- [ ] `PUT /api/auth/preferences` (o persistir en `User.configuracion` / `monedaPrincipal`)
-- [ ] Conectar botones de exportar / eliminar cuenta (o ocultarlos hasta existir)
+- [x] `PUT /api/auth/profile` + `updateProfileSchema`
+- [x] `PUT /api/auth/change-password`
+- [x] `PUT /api/auth/preferences` (persistir en `User.configuracion` / `monedaPrincipal`)
+- [x] Ocultar/deshabilitar exportar y eliminar cuenta hasta Sprint 3
 
 ### 2.6 Login UX
 
-- [ ] Mostrar `message` del backend en `Login.jsx` (igual que Register).
+- [x] Mostrar `message` del backend en `Login.jsx` (igual que Register).
 
 **Criterio de salida:** cada botón de la UI llama a un endpoint existente; no hay mensajes de éxito falsos en Configuración; gamificación muestra datos reales.
 

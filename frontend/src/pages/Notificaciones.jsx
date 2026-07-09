@@ -59,12 +59,15 @@ const Notificaciones = () => {
 
   const getTipoIcon = (tipo) => {
     switch(tipo) {
+      case 'LOGRO':
       case 'EXITO':
         return <CheckCircle className="h-5 w-5 text-green-600" />
+      case 'ALERTA':
       case 'ADVERTENCIA':
-        return <AlertCircle className="h-5 w-5 text-yellow-600" />
       case 'ERROR':
-        return <AlertCircle className="h-5 w-5 text-red-600" />
+        return <AlertCircle className="h-5 w-5 text-yellow-600" />
+      case 'RECORDATORIO':
+        return <AlertCircle className="h-5 w-5 text-orange-600" />
       default:
         return <Info className="h-5 w-5 text-blue-600" />
     }
@@ -72,12 +75,15 @@ const Notificaciones = () => {
 
   const getTipoBgColor = (tipo) => {
     switch(tipo) {
+      case 'LOGRO':
       case 'EXITO':
         return 'bg-green-50 border-green-200'
+      case 'ALERTA':
       case 'ADVERTENCIA':
-        return 'bg-yellow-50 border-yellow-200'
       case 'ERROR':
-        return 'bg-red-50 border-red-200'
+        return 'bg-yellow-50 border-yellow-200'
+      case 'RECORDATORIO':
+        return 'bg-orange-50 border-orange-200'
       default:
         return 'bg-blue-50 border-blue-200'
     }
@@ -175,7 +181,7 @@ const Notificaciones = () => {
                   <p className="text-sm text-gray-600 mb-2">{notif.mensaje}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">
-                      {dayjs(notif.createdAt).fromNow()}
+                      {dayjs(notif.fechaEnvio || notif.createdAt).fromNow()}
                     </span>
                     <div className="flex items-center gap-2">
                       {!notif.leida && (

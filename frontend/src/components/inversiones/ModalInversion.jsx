@@ -13,8 +13,6 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
     montoInicial: '',
     montoActual: '',
     cantidadUnidades: '',
-    precioCompra: '',
-    precioActual: '',
     fechaCompra: new Date().toISOString().split('T')[0],
     broker: '',
     notas: ''
@@ -27,11 +25,9 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
       setFormData({
         nombre: inversion.nombre || '',
         tipo: inversion.tipo || 'ACCIONES',
-        montoInicial: inversion.montoInicial || '',
-        montoActual: inversion.montoActual || '',
-        cantidadUnidades: inversion.cantidadUnidades || '',
-        precioCompra: inversion.precioCompra || '',
-        precioActual: inversion.precioActual || '',
+        montoInicial: inversion.montoInicial ?? inversion.montoInvertido ?? '',
+        montoActual: inversion.montoActual ?? inversion.valorActual ?? '',
+        cantidadUnidades: inversion.cantidadUnidades ?? inversion.cantidad ?? '',
         fechaCompra: inversion.fechaCompra ? new Date(inversion.fechaCompra).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         broker: inversion.broker || '',
         notas: inversion.notas || ''
@@ -43,8 +39,6 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
         montoInicial: '',
         montoActual: '',
         cantidadUnidades: '',
-        precioCompra: '',
-        precioActual: '',
         fechaCompra: new Date().toISOString().split('T')[0],
         broker: '',
         notas: ''
@@ -68,12 +62,16 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
 
     try {
       const dataToSend = {
-        ...formData,
+        nombre: formData.nombre,
+        tipo: formData.tipo,
         montoInicial: parseFloat(formData.montoInicial),
         montoActual: parseFloat(formData.montoActual),
-        cantidadUnidades: parseFloat(formData.cantidadUnidades) || null,
-        precioCompra: parseFloat(formData.precioCompra) || null,
-        precioActual: parseFloat(formData.precioActual) || null
+        cantidadUnidades: formData.cantidadUnidades
+          ? parseFloat(formData.cantidadUnidades)
+          : null,
+        fechaCompra: formData.fechaCompra,
+        broker: formData.broker,
+        notas: formData.notas
       }
 
       if (isEditing) {
@@ -125,11 +123,12 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
             >
               <option value="ACCIONES">Acciones</option>
               <option value="BONOS">Bonos</option>
-              <option value="FONDOS">Fondos de Inversión</option>
+              <option value="FONDOS_MUTUOS">Fondos de Inversión</option>
+              <option value="ETF">ETF</option>
               <option value="CRIPTOMONEDAS">Criptomonedas</option>
               <option value="BIENES_RAICES">Bienes Raíces</option>
               <option value="COMMODITIES">Commodities</option>
-              <option value="OTROS">Otros</option>
+              <option value="OTRO">Otros</option>
             </select>
           </div>
 
@@ -169,7 +168,7 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="Cantidad de Unidades"
             type="number"
@@ -182,36 +181,14 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
           />
 
           <Input
-            label="Precio de Compra"
-            type="number"
-            name="precioCompra"
-            value={formData.precioCompra}
+            label="Fecha de Compra *"
+            type="date"
+            name="fechaCompra"
+            value={formData.fechaCompra}
             onChange={handleChange}
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          />
-
-          <Input
-            label="Precio Actual"
-            type="number"
-            name="precioActual"
-            value={formData.precioActual}
-            onChange={handleChange}
-            placeholder="0.00"
-            step="0.01"
-            min="0"
+            required
           />
         </div>
-
-        <Input
-          label="Fecha de Compra *"
-          type="date"
-          name="fechaCompra"
-          value={formData.fechaCompra}
-          onChange={handleChange}
-          required
-        />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

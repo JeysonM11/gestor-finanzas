@@ -27,7 +27,9 @@ export const notificacionService = {
   },
 
   async getNoLeidas() {
-    const response = await api.get('/sistema/notificaciones', { params: { leida: false } })
+    const response = await api.get('/sistema/notificaciones', {
+      params: { soloNoLeidas: true },
+    })
     return response.data
   }
 }

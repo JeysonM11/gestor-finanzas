@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { mapTipoNotificacion, toNotificacionDto } = require('../utils/mappers');
 
 // ============= CONTROLADOR DE TRANSACCIONES RECURRENTES =============
 
@@ -43,7 +44,7 @@ exports.crearTransaccionRecurrente = async (req, res) => {
     const userId = req.user.id;
     const {
       nombre, descripcion, tipo, monto, categoria,
-      frecuencia, diaEjecucion, diaSemana, fechaInicio, fechaFin
+      frecuencia, diaEjecucion, diaSemana, fechaInicio, fechaFin, activa
     } = req.body;
 
     if (!nombre || !tipo || !monto || !frecuencia) {
@@ -69,6 +70,7 @@ exports.crearTransaccionRecurrente = async (req, res) => {
         fechaInicio: new Date(fechaInicio),
         fechaFin: fechaFin ? new Date(fechaFin) : null,
         proximaEjecucion,
+        activa: activa !== undefined ? Boolean(activa) : true,
         userId
       }
     });
@@ -79,6 +81,114 @@ exports.crearTransaccionRecurrente = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al crear transaccion recurrente:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+exports.actualizarTransaccionRecurrente = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const {
+      nombre, descripcion, tipo, monto, categoria,
+      frecuencia, diaEjecucion, diaSemana, fechaInicio, fechaFin, activa
+    } = req.body;
+
+    const existente = await prisma.transaccionRecurrente.findFirst({
+      where: { id: parseInt(id), userId },
+    });
+
+    if (!existente) {
+      return res.status(404).json({ message: 'Transaccion recurrente no encontrada' });
+    }
+
+    const updateData = {};
+    if (nombre != null) updateData.nombre = nombre;
+    if (descripcion !== undefined) updateData.descripcion = descripcion;
+    if (tipo != null) updateData.tipo = tipo;
+    if (monto != null) updateData.monto = Number(monto);
+    if (categoria !== undefined) updateData.categoria = categoria;
+    if (frecuencia != null) updateData.frecuencia = frecuencia;
+    if (diaEjecucion !== undefined) updateData.diaEjecucion = diaEjecucion != null ? Number(diaEjecucion) : null;
+    if (diaSemana !== undefined) updateData.diaSemana = diaSemana != null ? Number(diaSemana) : null;
+    if (fechaInicio) updateData.fechaInicio = new Date(fechaInicio);
+    if (fechaFin !== undefined) {
+      updateData.fechaFin = fechaFin ? new Date(fechaFin) : null;
+    }
+    if (activa !== undefined) updateData.activa = Boolean(activa);
+
+    if (frecuencia || fechaInicio || diaEjecucion !== undefined || diaSemana !== undefined) {
+      updateData.proximaEjecucion = calcularProximaEjecucion(
+        frecuencia || existente.frecuencia,
+        fechaInicio || existente.fechaInicio,
+        diaEjecucion !== undefined ? diaEjecucion : existente.diaEjecucion,
+        diaSemana !== undefined ? diaSemana : existente.diaSemana
+      );
+    }
+
+    const transaccionRecurrente = await prisma.transaccionRecurrente.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+    });
+
+    res.status(200).json({
+      message: 'Transaccion recurrente actualizada exitosamente',
+      transaccionRecurrente,
+    });
+  } catch (error) {
+    console.error('Error al actualizar transaccion recurrente:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+exports.eliminarTransaccionRecurrente = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const resultado = await prisma.transaccionRecurrente.deleteMany({
+      where: { id: parseInt(id), userId },
+    });
+
+    if (resultado.count === 0) {
+      return res.status(404).json({ message: 'Transaccion recurrente no encontrada' });
+    }
+
+    res.status(200).json({ message: 'Transaccion recurrente eliminada exitosamente' });
+  } catch (error) {
+    console.error('Error al eliminar transaccion recurrente:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+exports.toggleTransaccionRecurrente = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { activa } = req.body;
+
+    const existente = await prisma.transaccionRecurrente.findFirst({
+      where: { id: parseInt(id), userId },
+    });
+
+    if (!existente) {
+      return res.status(404).json({ message: 'Transaccion recurrente no encontrada' });
+    }
+
+    const nuevoEstado =
+      activa !== undefined ? Boolean(activa) : !existente.activa;
+
+    const transaccionRecurrente = await prisma.transaccionRecurrente.update({
+      where: { id: parseInt(id) },
+      data: { activa: nuevoEstado },
+    });
+
+    res.status(200).json({
+      message: 'Estado actualizado exitosamente',
+      transaccionRecurrente,
+    });
+  } catch (error) {
+    console.error('Error al cambiar estado de recurrente:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -214,11 +324,13 @@ function getLastDayOfMonth(fecha) {
 exports.obtenerNotificaciones = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { limit = 20, offset = 0, soloNoLeidas = false } = req.query;
+    const { limit = 20, offset = 0, soloNoLeidas = false, leida } = req.query;
 
     const filtros = { userId };
-    if (soloNoLeidas === 'true') {
+    if (soloNoLeidas === 'true' || leida === 'false') {
       filtros.leida = false;
+    } else if (leida === 'true') {
+      filtros.leida = true;
     }
 
     const notificaciones = await prisma.notificacion.findMany({
@@ -238,7 +350,7 @@ exports.obtenerNotificaciones = async (req, res) => {
     const leidas = contadores.find(c => c.leida)?._count?.leida || 0;
 
     res.status(200).json({
-      notificaciones,
+      notificaciones: notificaciones.map(toNotificacionDto),
       contadores: {
         noLeidas,
         leidas,
@@ -263,11 +375,13 @@ exports.crearNotificacion = async (req, res) => {
       });
     }
 
+    const tipoNormalizado = mapTipoNotificacion(tipo);
+
     const notificacion = await prisma.notificacion.create({
       data: {
         titulo,
         mensaje,
-        tipo,
+        tipo: tipoNormalizado,
         datos,
         userId
       }
@@ -275,7 +389,7 @@ exports.crearNotificacion = async (req, res) => {
 
     res.status(201).json({
       message: 'Notificacion creada exitosamente',
-      notificacion
+      notificacion: toNotificacionDto(notificacion)
     });
   } catch (error) {
     console.error('Error al crear notificacion:', error);
@@ -328,6 +442,26 @@ exports.marcarTodasLeidas = async (req, res) => {
     res.status(200).json({ message: 'Todas las notificaciones marcadas como leidas' });
   } catch (error) {
     console.error('Error al marcar todas las notificaciones:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+exports.eliminarNotificacion = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const resultado = await prisma.notificacion.deleteMany({
+      where: { id: parseInt(id), userId },
+    });
+
+    if (resultado.count === 0) {
+      return res.status(404).json({ message: 'Notificacion no encontrada' });
+    }
+
+    res.status(200).json({ message: 'Notificacion eliminada exitosamente' });
+  } catch (error) {
+    console.error('Error al eliminar notificacion:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };

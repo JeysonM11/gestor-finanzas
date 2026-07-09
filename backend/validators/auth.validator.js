@@ -131,8 +131,37 @@ const updateProfileSchema = Joi.object({
     })
 });
 
+const changePasswordSchema = Joi.object({
+  currentPassword: Joi.string().required().messages({
+    'any.required': 'La contraseña actual es requerida',
+  }),
+  newPassword: Joi.string()
+    .min(6)
+    .max(100)
+    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)'))
+    .required()
+    .messages({
+      'string.min': 'La nueva contraseña debe tener al menos 6 caracteres',
+      'string.pattern.base':
+        'La nueva contraseña debe contener al menos una minúscula, una mayúscula y un número',
+      'any.required': 'La nueva contraseña es requerida',
+    }),
+});
+
+const updatePreferencesSchema = Joi.object({
+  monedaPrincipal: Joi.string()
+    .valid('USD', 'EUR', 'COP', 'MXN', 'ARS', 'PEN', 'CLP', 'BOB')
+    .optional(),
+  notificacionesEmail: Joi.boolean().optional(),
+  notificacionesPush: Joi.boolean().optional(),
+  notificacionesTransacciones: Joi.boolean().optional(),
+  notificacionesRecurrentes: Joi.boolean().optional(),
+}).unknown(true);
+
 module.exports = {
   registerSchema,
   loginSchema,
-  updateProfileSchema
+  updateProfileSchema,
+  changePasswordSchema,
+  updatePreferencesSchema,
 };

@@ -30,6 +30,31 @@ const TIPO_DEUDA_UI_A_PRISMA = {
   OTRO: 'OTRO',
 };
 
+const TIPO_INVERSION_UI_A_PRISMA = {
+  ACCIONES: 'ACCIONES',
+  BONOS: 'BONOS',
+  FONDOS: 'FONDOS_MUTUOS',
+  FONDOS_MUTUOS: 'FONDOS_MUTUOS',
+  ETF: 'ETF',
+  CRIPTOMONEDAS: 'CRIPTOMONEDAS',
+  BIENES_RAICES: 'BIENES_RAICES',
+  COMMODITIES: 'COMMODITIES',
+  OTROS: 'OTRO',
+  OTRO: 'OTRO',
+};
+
+const TIPO_NOTIFICACION_UI_A_PRISMA = {
+  EXITO: 'INFO',
+  ADVERTENCIA: 'ALERTA',
+  ERROR: 'ALERTA',
+  INFO: 'INFO',
+  ALERTA: 'ALERTA',
+  RECORDATORIO: 'RECORDATORIO',
+  LOGRO: 'LOGRO',
+  SISTEMA: 'SISTEMA',
+  PROMOCION: 'PROMOCION',
+};
+
 function mapTipoCuenta(tipo) {
   if (!tipo) return null;
   return TIPO_CUENTA_UI_A_PRISMA[tipo] || tipo;
@@ -38,6 +63,79 @@ function mapTipoCuenta(tipo) {
 function mapTipoDeuda(tipo) {
   if (!tipo) return null;
   return TIPO_DEUDA_UI_A_PRISMA[tipo] || tipo;
+}
+
+function mapTipoInversion(tipo) {
+  if (!tipo) return null;
+  return TIPO_INVERSION_UI_A_PRISMA[tipo] || tipo;
+}
+
+function mapTipoNotificacion(tipo) {
+  if (!tipo) return null;
+  return TIPO_NOTIFICACION_UI_A_PRISMA[tipo] || tipo;
+}
+
+/**
+ * Normaliza body de inversion desde UI legacy a Prisma.
+ */
+function normalizeInversionInput(body = {}) {
+  const montoInvertido =
+    body.montoInvertido != null
+      ? Number(body.montoInvertido)
+      : body.montoInicial != null
+        ? Number(body.montoInicial)
+        : null;
+
+  const valorActual =
+    body.valorActual != null
+      ? Number(body.valorActual)
+      : body.montoActual != null
+        ? Number(body.montoActual)
+        : montoInvertido;
+
+  const cantidad =
+    body.cantidad != null
+      ? Number(body.cantidad)
+      : body.cantidadUnidades != null
+        ? Number(body.cantidadUnidades)
+        : null;
+
+  return {
+    nombre: body.nombre,
+    tipo: mapTipoInversion(body.tipo),
+    simbolo: body.simbolo || null,
+    montoInvertido,
+    valorActual,
+    cantidad,
+    fechaCompra: body.fechaCompra,
+    broker: body.broker || null,
+    comisiones: body.comisiones != null ? Number(body.comisiones) : 0,
+    notas: body.notas || null,
+  };
+}
+
+/**
+ * DTO de inversion para el frontend (incluye aliases legacy).
+ */
+function toInversionDto(inversion) {
+  if (!inversion) return null;
+  return {
+    ...inversion,
+    montoInicial: inversion.montoInvertido,
+    montoActual: inversion.valorActual ?? inversion.montoInvertido,
+    cantidadUnidades: inversion.cantidad,
+  };
+}
+
+/**
+ * DTO de notificacion (alias createdAt = fechaEnvio).
+ */
+function toNotificacionDto(notificacion) {
+  if (!notificacion) return null;
+  return {
+    ...notificacion,
+    createdAt: notificacion.fechaEnvio,
+  };
 }
 
 /**
@@ -91,8 +189,15 @@ function toDeudaDto(deuda) {
 module.exports = {
   mapTipoCuenta,
   mapTipoDeuda,
+  mapTipoInversion,
+  mapTipoNotificacion,
   normalizeDeudaInput,
+  normalizeInversionInput,
   toDeudaDto,
+  toInversionDto,
+  toNotificacionDto,
   TIPO_CUENTA_UI_A_PRISMA,
   TIPO_DEUDA_UI_A_PRISMA,
+  TIPO_INVERSION_UI_A_PRISMA,
+  TIPO_NOTIFICACION_UI_A_PRISMA,
 };

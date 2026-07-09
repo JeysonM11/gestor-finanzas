@@ -61,14 +61,22 @@ const Inversiones = () => {
   }
 
   const calcularRendimiento = (inversion) => {
-    const ganancia = inversion.montoActual - inversion.montoInicial
-    const porcentaje = (ganancia / inversion.montoInicial) * 100
-    return { ganancia, porcentaje }
+    const inicial = inversion.montoInicial ?? inversion.montoInvertido ?? 0
+    const actual = inversion.montoActual ?? inversion.valorActual ?? inicial
+    const ganancia = actual - inicial
+    const porcentaje = inicial > 0 ? (ganancia / inicial) * 100 : 0
+    return { ganancia, porcentaje, inicial, actual }
   }
 
   const calcularTotales = () => {
-    const totalInvertido = inversiones.reduce((sum, inv) => sum + inv.montoInicial, 0)
-    const totalActual = inversiones.reduce((sum, inv) => sum + inv.montoActual, 0)
+    const totalInvertido = inversiones.reduce(
+      (sum, inv) => sum + (inv.montoInicial ?? inv.montoInvertido ?? 0),
+      0
+    )
+    const totalActual = inversiones.reduce(
+      (sum, inv) => sum + (inv.montoActual ?? inv.valorActual ?? inv.montoInicial ?? inv.montoInvertido ?? 0),
+      0
+    )
     const gananciaTotal = totalActual - totalInvertido
     const rendimientoPromedio = totalInvertido > 0 ? (gananciaTotal / totalInvertido) * 100 : 0
     
@@ -84,10 +92,13 @@ const Inversiones = () => {
       'ACCIONES': 'bg-blue-100 text-blue-800',
       'BONOS': 'bg-green-100 text-green-800',
       'FONDOS': 'bg-purple-100 text-purple-800',
+      'FONDOS_MUTUOS': 'bg-purple-100 text-purple-800',
+      'ETF': 'bg-indigo-100 text-indigo-800',
       'CRIPTOMONEDAS': 'bg-orange-100 text-orange-800',
       'BIENES_RAICES': 'bg-teal-100 text-teal-800',
       'COMMODITIES': 'bg-yellow-100 text-yellow-800',
-      'OTROS': 'bg-gray-100 text-gray-800'
+      'OTROS': 'bg-gray-100 text-gray-800',
+      'OTRO': 'bg-gray-100 text-gray-800'
     }
     return colores[tipo] || 'bg-gray-100 text-gray-800'
   }
@@ -196,7 +207,7 @@ const Inversiones = () => {
       {inversiones.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {inversiones.map((inversion) => {
-            const { ganancia, porcentaje } = calcularRendimiento(inversion)
+            const { ganancia, porcentaje, inicial, actual } = calcularRendimiento(inversion)
             const esPositivo = ganancia >= 0
 
             return (
@@ -222,13 +233,13 @@ const Inversiones = () => {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Invertido</p>
                       <p className="text-lg font-bold text-gray-900">
-                        ${inversion.montoInicial.toFixed(2)}
+                        ${inicial.toFixed(2)}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Valor Actual</p>
                       <p className="text-lg font-bold text-gray-900">
-                        ${inversion.montoActual.toFixed(2)}
+                        ${actual.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -259,14 +270,9 @@ const Inversiones = () => {
                   </div>
 
                   {/* Detalles adicionales */}
-                  {(inversion.cantidadUnidades || inversion.precioActual) && (
+                  {(inversion.cantidadUnidades || inversion.cantidad) && (
                     <div className="text-sm text-gray-600 space-y-1">
-                      {inversion.cantidadUnidades && (
-                        <p>Unidades: <span className="font-medium">{inversion.cantidadUnidades}</span></p>
-                      )}
-                      {inversion.precioCompra && inversion.precioActual && (
-                        <p>Precio: ${inversion.precioCompra.toFixed(2)} → ${inversion.precioActual.toFixed(2)}</p>
-                      )}
+                      <p>Unidades: <span className="font-medium">{inversion.cantidadUnidades ?? inversion.cantidad}</span></p>
                     </div>
                   )}
 

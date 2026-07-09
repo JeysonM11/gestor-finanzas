@@ -15,15 +15,15 @@ const Gamificacion = () => {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [resumenRes, logrosRes, historialRes] = await Promise.all([
+      const [resumenData, logrosData, historialData] = await Promise.all([
         logroService.getResumen(),
         logroService.getAll(),
         logroService.getHistorialPuntos()
       ])
-      
-      setResumen(resumenRes.data)
-      setLogros(logrosRes.data)
-      setHistorial(historialRes.data)
+
+      setResumen(resumenData)
+      setLogros(logrosData.logros || [])
+      setHistorial(historialData.historial || [])
     } catch (error) {
       console.error('Error al cargar datos de gamificación:', error)
     } finally {
@@ -33,26 +33,28 @@ const Gamificacion = () => {
 
   const getLogroIcon = (tipo) => {
     const icons = {
-      TRANSACCION: Target,
+      HABITO: Target,
       AHORRO: TrendingUp,
       INVERSION: Star,
       DEUDA: CheckCircle,
-      RACHA: Zap,
-      OTRO: Award
+      PRESUPUESTO: Zap,
+      META: Award,
+      GAMIFICACION: Award
     }
     return icons[tipo] || Award
   }
 
   const getLogroColor = (tipo) => {
     const colors = {
-      TRANSACCION: 'bg-blue-100 text-blue-600',
+      HABITO: 'bg-blue-100 text-blue-600',
       AHORRO: 'bg-green-100 text-green-600',
       INVERSION: 'bg-yellow-100 text-yellow-600',
       DEUDA: 'bg-purple-100 text-purple-600',
-      RACHA: 'bg-orange-100 text-orange-600',
-      OTRO: 'bg-gray-100 text-gray-600'
+      PRESUPUESTO: 'bg-orange-100 text-orange-600',
+      META: 'bg-indigo-100 text-indigo-600',
+      GAMIFICACION: 'bg-gray-100 text-gray-600'
     }
-    return colors[tipo] || colors.OTRO
+    return colors[tipo] || colors.GAMIFICACION
   }
 
   const getNivelInfo = (nivel) => {
@@ -79,13 +81,11 @@ const Gamificacion = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Gamificación</h1>
         <p className="text-gray-600 mt-1">Alcanza logros y mejora tus hábitos financieros</p>
       </div>
 
-      {/* Resumen de Usuario */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-xl shadow-lg p-8 text-white">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -115,13 +115,14 @@ const Gamificacion = () => {
             </div>
             <div>
               <p className="text-primary-100 text-sm">Logros Desbloqueados</p>
-              <p className="text-2xl font-bold">{logros.filter(l => l.desbloqueado).length} / {logros.length}</p>
+              <p className="text-2xl font-bold">
+                {logros.filter((l) => l.desbloqueado).length} / {logros.length}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Logros */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           <Award className="w-6 h-6 text-primary-600" />
@@ -183,7 +184,6 @@ const Gamificacion = () => {
         )}
       </div>
 
-      {/* Historial de Puntos */}
       {historial.length > 0 && (
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">

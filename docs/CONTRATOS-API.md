@@ -204,7 +204,7 @@ Enums en agregaciones: siempre `INGRESO` / `GASTO` (nunca minúsculas).
 
 - [x] **Sprint 0:** este documento creado
 - [x] **Sprint 1:** cuentas (tipo + saldo), deudas (campos + POST), ownership
-- [ ] **Sprint 2:** inversiones, recurrentes CRUD, notificaciones, gamificación, config
+- [x] **Sprint 2:** inversiones, recurrentes CRUD, notificaciones, gamificación, config
 - [ ] **Sprint 3:** reportes montados, categorías, metodoPago unificado
 
 ---

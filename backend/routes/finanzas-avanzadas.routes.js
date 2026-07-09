@@ -12,6 +12,8 @@ router.delete('/cuentas/:id', authenticateToken, finanzasAvanzadasController.eli
 // ============= RUTAS DE INVERSIONES =============
 router.get('/inversiones', authenticateToken, finanzasAvanzadasController.obtenerInversiones);
 router.post('/inversiones', authenticateToken, finanzasAvanzadasController.crearInversion);
+router.put('/inversiones/:id', authenticateToken, finanzasAvanzadasController.actualizarInversion);
+router.delete('/inversiones/:id', authenticateToken, finanzasAvanzadasController.eliminarInversion);
 
 // ============= RUTAS DE DEUDAS =============
 router.get('/deudas', authenticateToken, finanzasAvanzadasController.obtenerDeudas);
@@ -20,8 +22,10 @@ router.put('/deudas/:id', authenticateToken, finanzasAvanzadasController.actuali
 router.delete('/deudas/:id', authenticateToken, finanzasAvanzadasController.eliminarDeuda);
 router.post('/deudas/:deudaId/pagos', authenticateToken, finanzasAvanzadasController.registrarPagoDeuda);
 
-// ============= RUTAS DE GAMIFICACIÓN =============
+// ============= RUTAS DE GAMIFICACION =============
 router.get('/logros', authenticateToken, finanzasAvanzadasController.obtenerLogrosUsuario);
+router.get('/logros/resumen', authenticateToken, finanzasAvanzadasController.obtenerResumenLogros);
+router.get('/logros/historial', authenticateToken, finanzasAvanzadasController.obtenerHistorialPuntos);
 router.post('/logros/verificar', authenticateToken, finanzasAvanzadasController.verificarLogros);
 
 module.exports = router;

@@ -160,6 +160,7 @@ exports.getCurrentUser = catchAsync(async (req, res, next) => {
       nivel: true,
       activo: true,
       fechaNacimiento: true,
+      configuracion: true,
       createdAt: true,
       updatedAt: true,
     }
@@ -171,6 +172,123 @@ exports.getCurrentUser = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    user,
+  });
+});
+
+const userPublicSelect = {
+  id: true,
+  name: true,
+  email: true,
+  rol: true,
+  telefono: true,
+  ocupacion: true,
+  salarioMensual: true,
+  monedaPrincipal: true,
+  puntosAcumulados: true,
+  nivel: true,
+  activo: true,
+  fechaNacimiento: true,
+  configuracion: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+// Actualizar perfil
+exports.updateProfile = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  const { name, telefono, fechaNacimiento, ocupacion, salarioMensual, monedaPrincipal } = req.body;
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(name != null && { name: name.trim() }),
+      ...(telefono !== undefined && { telefono: telefono || null }),
+      ...(fechaNacimiento !== undefined && {
+        fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
+      }),
+      ...(ocupacion !== undefined && { ocupacion: ocupacion || null }),
+      ...(salarioMensual !== undefined && { salarioMensual }),
+      ...(monedaPrincipal != null && { monedaPrincipal }),
+    },
+    select: userPublicSelect,
+  });
+
+  logUserAction('USER_PROFILE_UPDATED', userId, { fields: Object.keys(req.body) });
+
+  res.status(200).json({
+    success: true,
+    message: 'Perfil actualizado exitosamente',
+    user,
+  });
+});
+
+// Cambiar contraseña
+exports.changePassword = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, password: true },
+  });
+
+  if (!user) {
+    return next(new AuthenticationError('Usuario no encontrado'));
+  }
+
+  const isValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isValid) {
+    return next(new AuthenticationError('La contraseña actual es incorrecta'));
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
+
+  logUserAction('USER_PASSWORD_CHANGED', userId, {
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Contraseña actualizada exitosamente',
+  });
+});
+
+// Actualizar preferencias
+exports.updatePreferences = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  const { monedaPrincipal, ...preferencias } = req.body;
+
+  const actual = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { configuracion: true },
+  });
+
+  const configuracionActual =
+    actual?.configuracion && typeof actual.configuracion === 'object'
+      ? actual.configuracion
+      : {};
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(monedaPrincipal != null && { monedaPrincipal }),
+      configuracion: {
+        ...configuracionActual,
+        ...preferencias,
+      },
+    },
+    select: userPublicSelect,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Preferencias guardadas exitosamente',
     user,
   });
 });
