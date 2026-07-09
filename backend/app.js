@@ -14,6 +14,8 @@ const authRoutes = require('./routes/auth.routes');
 const transaccionesRoutes = require('./routes/transaccion.routes');
 const finanzasAvanzadasRoutes = require('./routes/finanzas-avanzadas.routes');
 const sistemaRoutes = require('./routes/sistema.routes');
+const reporteRoutes = require('./routes/reporte.routes');
+const categoriaRoutes = require('./routes/categoria.routes');
 
 // Middlewares de error y logging
 const { globalErrorHandler, notFoundHandler } = require('./middlewares/error.middleware');
@@ -41,6 +43,8 @@ app.use('/api/transacciones', transaccionesRoutes);
 // Nuevas rutas avanzadas
 app.use('/api/finanzas', finanzasAvanzadasRoutes);
 app.use('/api/sistema', sistemaRoutes);
+app.use('/api/reportes', reporteRoutes);
+app.use('/api/categorias', categoriaRoutes);
 
 // Ruta principal
 app.get('/', (req, res) => {
@@ -55,7 +59,9 @@ app.get('/', (req, res) => {
       deudas: '/api/finanzas/deudas',
       gamificacion: '/api/finanzas/logros',
       recurrentes: '/api/sistema/recurrentes',
-      notificaciones: '/api/sistema/notificaciones'
+      notificaciones: '/api/sistema/notificaciones',
+      reportes: '/api/reportes',
+      categorias: '/api/categorias'
     },
     status: 'Funcionando correctamente'
   });

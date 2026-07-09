@@ -78,7 +78,7 @@ const createTransaccionSchema = Joi.object({
     }),
 
   metodoPago: Joi.string()
-    .valid('EFECTIVO', 'TARJETA_DEBITO', 'TARJETA_CREDITO', 'TRANSFERENCIA', 'CHEQUE', 'DIGITAL', 'CRIPTOMONEDA')
+    .valid('EFECTIVO', 'TARJETA_DEBITO', 'TARJETA_CREDITO', 'TRANSFERENCIA', 'CHEQUE', 'CRYPTO', 'OTRO')
     .optional()
     .messages({
       'any.only': 'Método de pago no válido'
@@ -142,7 +142,7 @@ const getTransaccionesSchema = Joi.object({
   limit: Joi.number()
     .integer()
     .min(1)
-    .max(100)
+    .max(10000)
     .default(20)
     .optional(),
 

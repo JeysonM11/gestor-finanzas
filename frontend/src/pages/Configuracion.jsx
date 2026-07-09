@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/auth.service'
+import { reporteService } from '../services/reporte.service'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import Input from '../components/common/Input'
@@ -131,6 +132,30 @@ const Configuracion = () => {
       setMensaje({
         tipo: 'error',
         texto: error.response?.data?.message || 'Error al guardar preferencias'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleExportarDatos = async () => {
+    setLoading(true)
+    setMensaje({ tipo: '', texto: '' })
+    try {
+      const blob = await reporteService.exportarCSV()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'transacciones.csv'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      setMensaje({ tipo: 'success', texto: 'Exportacion iniciada' })
+    } catch (error) {
+      setMensaje({
+        tipo: 'error',
+        texto: error.response?.data?.message || 'Error al exportar datos'
       })
     } finally {
       setLoading(false)
@@ -406,11 +431,11 @@ const Configuracion = () => {
                 <div className="p-4 border border-gray-200 rounded-lg">
                   <h3 className="font-medium text-gray-900 mb-2">Exportar datos</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    La exportación CSV estará disponible en el Sprint 3 (reportes backend).
+                    Descarga una copia de tus transacciones en formato CSV.
                   </p>
-                  <Button variant="secondary" disabled>
+                  <Button variant="secondary" onClick={handleExportarDatos} disabled={loading}>
                     <Download className="h-5 w-5 mr-2" />
-                    Exportar Datos (próximamente)
+                    {loading ? 'Exportando...' : 'Exportar Datos'}
                   </Button>
                 </div>
 

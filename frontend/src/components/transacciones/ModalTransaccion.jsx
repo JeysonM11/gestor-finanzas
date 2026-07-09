@@ -188,8 +188,9 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
             <option value="TARJETA_DEBITO">Tarjeta de Débito</option>
             <option value="TARJETA_CREDITO">Tarjeta de Crédito</option>
             <option value="TRANSFERENCIA">Transferencia</option>
-            <option value="DIGITAL">Pago Digital</option>
             <option value="CHEQUE">Cheque</option>
+            <option value="CRYPTO">Crypto</option>
+            <option value="OTRO">Otro</option>
           </select>
         </div>
 

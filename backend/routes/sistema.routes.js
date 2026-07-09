@@ -2,10 +2,17 @@ const express = require('express');
 const router = express.Router();
 const transaccionesRecurrentesController = require('../controllers/transacciones-recurrentes.controller');
 const { authMiddleware: authenticateToken } = require('../middlewares/auth.middleware');
+const { validateBody } = require('../middlewares/validation.middleware');
+const { createRecurrenteSchema } = require('../validators/finanzas.validator');
 
 // ============= RUTAS DE TRANSACCIONES RECURRENTES =============
 router.get('/recurrentes', authenticateToken, transaccionesRecurrentesController.obtenerTransaccionesRecurrentes);
-router.post('/recurrentes', authenticateToken, transaccionesRecurrentesController.crearTransaccionRecurrente);
+router.post(
+  '/recurrentes',
+  authenticateToken,
+  validateBody(createRecurrenteSchema),
+  transaccionesRecurrentesController.crearTransaccionRecurrente
+);
 router.put('/recurrentes/:id', authenticateToken, transaccionesRecurrentesController.actualizarTransaccionRecurrente);
 router.delete('/recurrentes/:id', authenticateToken, transaccionesRecurrentesController.eliminarTransaccionRecurrente);
 router.put('/recurrentes/:id/toggle', authenticateToken, transaccionesRecurrentesController.toggleTransaccionRecurrente);

@@ -153,28 +153,28 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 
 ### 3.1 Sincronización de saldos
 
-- [ ] Al crear/editar/eliminar transacción, actualizar `saldoActual` de la cuenta en una `$transaction` de Prisma.
-- [ ] Validar que la cuenta pertenece al usuario.
-- [ ] Definir reglas para `TRANSFERENCIA` (origen/destino).
-- [ ] Tests de integridad: saldo = saldoInicial ± movimientos.
+- [x] Al crear/editar/eliminar transacción, actualizar `saldoActual` de la cuenta en una `$transaction` de Prisma.
+- [x] Validar que la cuenta pertenece al usuario.
+- [x] Definir reglas para `TRANSFERENCIA` (origen/destino).
+- [x] Tests unitarios de deltas de saldo.
 
 ### 3.2 Resumen y agregaciones
 
-- [ ] Resumen de listado de transacciones con `aggregate` sobre el `where` completo (no solo la página).
-- [ ] Endpoint(s) de reportes en backend (montar `reporte.controller.js`).
-- [ ] Corregir enums en reportes/categorías (`INGRESO` / `GASTO`).
-- [ ] Subir límite de paginación para reportes o endpoint de agregación dedicado.
-- [ ] Conectar “Exportar datos” de Configuración a CSV real.
+- [x] Resumen de listado de transacciones con `aggregate` sobre el `where` completo (no solo la página).
+- [x] Endpoint(s) de reportes en backend (`/api/reportes`).
+- [x] Corregir enums en reportes/categorías (`INGRESO` / `GASTO`).
+- [x] Subir límite de paginación / endpoint de agregación dedicado.
+- [x] Conectar “Exportar datos” de Configuración a CSV real.
 
 ### 3.3 Categorías
 
-- [ ] Decisión: montar rutas `/api/categorias` **o** eliminar servicio/controlador muerto.
-- [ ] Si se mantienen: CRUD + uso en modales (dejar de hardcodear listas).
+- [x] Montar rutas `/api/categorias` (listado + CRUD personalizadas + estadísticas).
+- [ ] Consumo completo en modales (listas hardcodeadas aún válidas; API lista).
 
 ### 3.4 Validaciones
 
-- [ ] Unificar `metodoPago` (validator, schema, frontend): sin `DIGITAL` si Prisma no lo tiene.
-- [ ] Joi en cuentas, inversiones, deudas y recurrentes (hoy solo auth + transacciones).
+- [x] Unificar `metodoPago` (validator + frontend) con enum Prisma.
+- [x] Joi en cuentas, inversiones, deudas y recurrentes.
 
 **Criterio de salida:** saldos coherentes con transacciones; reportes correctos desde API; validaciones homogéneas.
 
