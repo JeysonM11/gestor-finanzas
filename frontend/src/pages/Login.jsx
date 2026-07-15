@@ -38,7 +38,7 @@ const Login = () => {
       await login(formData.email, formData.password)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al iniciar sesión')
+      setError(err.response?.data?.message || err.response?.data?.error || 'Error al iniciar sesión')
     } finally {
       setLoading(false)
     }

@@ -4,10 +4,12 @@ import Button from '../components/common/Button'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalTransaccionRecurrente from '../components/recurrentes/ModalTransaccionRecurrente'
 import { transaccionRecurrenteService } from '../services/transaccion-recurrente.service'
+import { useToast } from '../context/ToastContext'
 import { Plus, Play, Edit, Trash2, Calendar, ToggleLeft, ToggleRight, Clock } from 'lucide-react'
 import dayjs from 'dayjs'
 
 const TransaccionesRecurrentes = () => {
+  const toast = useToast()
   const [transacciones, setTransacciones] = useState([])
   const [estadisticas, setEstadisticas] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -27,7 +29,7 @@ const TransaccionesRecurrentes = () => {
       setTransacciones(data.transaccionesRecurrentes || data)
       setEstadisticas(data.estadisticas)
     } catch (error) {
-      console.error('Error al cargar transacciones recurrentes:', error)
+      toast.error(error.response?.data?.message || 'Error al cargar recurrentes')
     } finally {
       setLoading(false)
     }
@@ -45,22 +47,24 @@ const TransaccionesRecurrentes = () => {
 
   const confirmarEliminar = async () => {
     if (!transaccionAEliminar) return
-    
+
     try {
       await transaccionRecurrenteService.delete(transaccionAEliminar.id)
+      toast.success('Recurrente eliminada')
       cargarTransacciones()
     } catch (error) {
-      console.error('Error al eliminar transacción recurrente:', error)
+      toast.error(error.response?.data?.message || 'Error al eliminar')
     }
   }
 
   const handleEjecutar = async () => {
     setEjecutando(true)
     try {
-      await transaccionRecurrenteService.ejecutar()
+      const data = await transaccionRecurrenteService.ejecutar()
+      toast.success(data.message || 'Pendientes ejecutadas')
       cargarTransacciones()
     } catch (error) {
-      console.error('Error al ejecutar transacciones:', error)
+      toast.error(error.response?.data?.message || 'Error al ejecutar pendientes')
     } finally {
       setEjecutando(false)
     }
@@ -71,7 +75,7 @@ const TransaccionesRecurrentes = () => {
       await transaccionRecurrenteService.toggleActivo(id, !activa)
       cargarTransacciones()
     } catch (error) {
-      console.error('Error al cambiar estado:', error)
+      toast.error(error.response?.data?.message || 'Error al cambiar estado')
     }
   }
 
@@ -117,7 +121,7 @@ const TransaccionesRecurrentes = () => {
             disabled={ejecutando}
           >
             <Play className="h-5 w-5 mr-2" />
-            {ejecutando ? 'Ejecutando...' : 'Ejecutar Pendientes'}
+            {ejecutando ? 'Ejecutando...' : 'Forzar ahora'}
           </Button>
           <Button onClick={() => setModalAbierto(true)}>
             <Plus className="h-5 w-5 mr-2" />

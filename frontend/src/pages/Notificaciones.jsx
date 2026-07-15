@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { notificacionService } from '../services/notificacion.service'
+import { useToast } from '../context/ToastContext'
 import { Bell, Check, CheckCheck, Trash2, AlertCircle, Info, CheckCircle } from 'lucide-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -11,6 +12,7 @@ dayjs.extend(relativeTime)
 dayjs.locale('es')
 
 const Notificaciones = () => {
+  const toast = useToast()
   const [notificaciones, setNotificaciones] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState('todas') // 'todas', 'noLeidas', 'leidas'
@@ -24,7 +26,7 @@ const Notificaciones = () => {
       const data = await notificacionService.getAll()
       setNotificaciones(data.notificaciones || data)
     } catch (error) {
-      console.error('Error al cargar notificaciones:', error)
+      toast.error(error.response?.data?.message || 'Error al cargar notificaciones')
     } finally {
       setLoading(false)
     }
@@ -35,7 +37,7 @@ const Notificaciones = () => {
       await notificacionService.marcarLeida(id)
       cargarNotificaciones()
     } catch (error) {
-      console.error('Error al marcar como leída:', error)
+      toast.error(error.response?.data?.message || 'Error al marcar como leída')
     }
   }
 
@@ -44,7 +46,7 @@ const Notificaciones = () => {
       await notificacionService.marcarTodasLeidas()
       cargarNotificaciones()
     } catch (error) {
-      console.error('Error al marcar todas como leídas:', error)
+      toast.error(error.response?.data?.message || 'Error al marcar todas')
     }
   }
 
@@ -53,18 +55,21 @@ const Notificaciones = () => {
       await notificacionService.delete(id)
       cargarNotificaciones()
     } catch (error) {
-      console.error('Error al eliminar notificación:', error)
+      toast.error(error.response?.data?.message || 'Error al eliminar notificación')
     }
   }
 
   const getTipoIcon = (tipo) => {
     switch(tipo) {
+      case 'LOGRO':
       case 'EXITO':
         return <CheckCircle className="h-5 w-5 text-green-600" />
+      case 'ALERTA':
       case 'ADVERTENCIA':
-        return <AlertCircle className="h-5 w-5 text-yellow-600" />
       case 'ERROR':
-        return <AlertCircle className="h-5 w-5 text-red-600" />
+        return <AlertCircle className="h-5 w-5 text-yellow-600" />
+      case 'RECORDATORIO':
+        return <AlertCircle className="h-5 w-5 text-orange-600" />
       default:
         return <Info className="h-5 w-5 text-blue-600" />
     }
@@ -72,12 +77,15 @@ const Notificaciones = () => {
 
   const getTipoBgColor = (tipo) => {
     switch(tipo) {
+      case 'LOGRO':
       case 'EXITO':
         return 'bg-green-50 border-green-200'
+      case 'ALERTA':
       case 'ADVERTENCIA':
-        return 'bg-yellow-50 border-yellow-200'
       case 'ERROR':
-        return 'bg-red-50 border-red-200'
+        return 'bg-yellow-50 border-yellow-200'
+      case 'RECORDATORIO':
+        return 'bg-orange-50 border-orange-200'
       default:
         return 'bg-blue-50 border-blue-200'
     }
@@ -175,7 +183,7 @@ const Notificaciones = () => {
                   <p className="text-sm text-gray-600 mb-2">{notif.mensaje}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">
-                      {dayjs(notif.createdAt).fromNow()}
+                      {dayjs(notif.fechaEnvio || notif.createdAt).fromNow()}
                     </span>
                     <div className="flex items-center gap-2">
                       {!notif.leida && (

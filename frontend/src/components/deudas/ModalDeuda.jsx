@@ -9,14 +9,13 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
   
   const [formData, setFormData] = useState({
     nombre: '',
-    tipo: 'PRESTAMO',
+    tipo: 'PRESTAMO_PERSONAL',
     montoTotal: '',
     montoPagado: '',
     tasaInteres: '',
     fechaInicio: new Date().toISOString().split('T')[0],
     fechaVencimiento: '',
     acreedor: '',
-    frecuenciaPago: 'MENSUAL',
     notas: ''
   })
   const [loading, setLoading] = useState(false)
@@ -26,27 +25,25 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
     if (deuda && isOpen) {
       setFormData({
         nombre: deuda.nombre || '',
-        tipo: deuda.tipo || 'PRESTAMO',
-        montoTotal: deuda.montoTotal || '',
-        montoPagado: deuda.montoPagado || '',
+        tipo: deuda.tipo || 'PRESTAMO_PERSONAL',
+        montoTotal: deuda.montoTotal ?? deuda.montoInicial ?? '',
+        montoPagado: deuda.montoPagado ?? '',
         tasaInteres: deuda.tasaInteres || '',
         fechaInicio: deuda.fechaInicio ? new Date(deuda.fechaInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         fechaVencimiento: deuda.fechaVencimiento ? new Date(deuda.fechaVencimiento).toISOString().split('T')[0] : '',
         acreedor: deuda.acreedor || '',
-        frecuenciaPago: deuda.frecuenciaPago || 'MENSUAL',
         notas: deuda.notas || ''
       })
     } else if (!isOpen) {
       setFormData({
         nombre: '',
-        tipo: 'PRESTAMO',
+        tipo: 'PRESTAMO_PERSONAL',
         montoTotal: '',
         montoPagado: '',
         tasaInteres: '',
         fechaInicio: new Date().toISOString().split('T')[0],
         fechaVencimiento: '',
         acreedor: '',
-        frecuenciaPago: 'MENSUAL',
         notas: ''
       })
       setError('')
@@ -68,10 +65,15 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
 
     try {
       const dataToSend = {
-        ...formData,
+        nombre: formData.nombre,
+        tipo: formData.tipo,
         montoTotal: parseFloat(formData.montoTotal),
         montoPagado: parseFloat(formData.montoPagado) || 0,
-        tasaInteres: parseFloat(formData.tasaInteres) || 0
+        tasaInteres: parseFloat(formData.tasaInteres) || 0,
+        fechaInicio: formData.fechaInicio,
+        fechaVencimiento: formData.fechaVencimiento || null,
+        acreedor: formData.acreedor,
+        notas: formData.notas
       }
 
       if (isEditing) {
@@ -121,12 +123,13 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
               className="w-full input-field"
               required
             >
-              <option value="PRESTAMO">Préstamo Personal</option>
+              <option value="PRESTAMO_PERSONAL">Préstamo Personal</option>
               <option value="HIPOTECA">Hipoteca</option>
               <option value="TARJETA_CREDITO">Tarjeta de Crédito</option>
               <option value="PRESTAMO_ESTUDIANTIL">Préstamo Estudiantil</option>
               <option value="PRESTAMO_AUTO">Préstamo de Auto</option>
-              <option value="OTROS">Otros</option>
+              <option value="LINEA_CREDITO">Línea de Crédito</option>
+              <option value="OTRO">Otros</option>
             </select>
           </div>
 
@@ -165,37 +168,17 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Tasa de Interés (%)"
-            type="number"
-            name="tasaInteres"
-            value={formData.tasaInteres}
-            onChange={handleChange}
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-            max="100"
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Frecuencia de Pago
-            </label>
-            <select
-              name="frecuenciaPago"
-              value={formData.frecuenciaPago}
-              onChange={handleChange}
-              className="w-full input-field"
-            >
-              <option value="SEMANAL">Semanal</option>
-              <option value="QUINCENAL">Quincenal</option>
-              <option value="MENSUAL">Mensual</option>
-              <option value="TRIMESTRAL">Trimestral</option>
-              <option value="ANUAL">Anual</option>
-            </select>
-          </div>
-        </div>
+        <Input
+          label="Tasa de Interés (%)"
+          type="number"
+          name="tasaInteres"
+          value={formData.tasaInteres}
+          onChange={handleChange}
+          placeholder="0.00"
+          step="0.01"
+          min="0"
+          max="100"
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input

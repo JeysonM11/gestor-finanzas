@@ -9,7 +9,10 @@ import {
   BarChart3,
   Trophy,
   Settings,
-  Wallet
+  Wallet,
+  Bell,
+  Target,
+  PieChart
 } from 'lucide-react'
 
 const Sidebar = () => {
@@ -20,8 +23,11 @@ const Sidebar = () => {
     { path: '/cuentas', label: 'Cuentas', icon: CreditCard },
     { path: '/inversiones', label: 'Inversiones', icon: TrendingUp },
     { path: '/deudas', label: 'Deudas', icon: AlertCircle },
+    { path: '/metas', label: 'Metas', icon: Target },
+    { path: '/presupuestos', label: 'Presupuestos', icon: PieChart },
     { path: '/reportes', label: 'Reportes', icon: BarChart3 },
     { path: '/gamificacion', label: 'Gamificación', icon: Trophy },
+    { path: '/notificaciones', label: 'Notificaciones', icon: Bell },
     { path: '/configuracion', label: 'Configuración', icon: Settings },
   ]
 

@@ -23,7 +23,7 @@ const handlePrismaError = (error) => {
       return new AppError('Los datos enviados violan las restricciones de la base de datos', 400, 'INVALID_DATA');
     
     default:
-      console.error('Error de Prisma no manejado:', error);
+      logError(error, null, { type: 'UnhandledPrismaError' });
       return new AppError('Error interno del servidor', 500, 'DATABASE_ERROR');
   }
 };
@@ -71,12 +71,11 @@ const sendErrorProd = (err, res) => {
     });
   } else {
     // Error de programación: no filtrar detalles al cliente
-    logError(err, null, { 
+    logError(err, null, {
       type: 'UnhandledError',
-      environment: process.env.NODE_ENV 
+      environment: process.env.NODE_ENV
     });
-    console.error('ERROR:', err);
-    
+
     res.status(500).json({
       success: false,
       status: 'error',

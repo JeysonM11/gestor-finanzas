@@ -60,6 +60,14 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    setUser,
+    refreshUser: async () => {
+      const response = await authService.getCurrentUser()
+      if (response.user) {
+        setUser(response.user)
+      }
+      return response.user
+    },
     isAuthenticated: !!user,
     isAdmin: user?.rol === 'ADMIN',
     hasRole: (rol) => user?.rol === rol

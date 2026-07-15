@@ -3,6 +3,7 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { transaccionService } from '../../services/transaccion.service'
+import { CATEGORIAS_DEFAULT, METODOS_PAGO, categoriasParaTipo } from '../../utils/constants'
 
 const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
@@ -148,17 +149,16 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
               className="w-full input-field"
             >
               <option value="">Sin categoría</option>
-              <option value="Alimentación">Alimentación</option>
-              <option value="Transporte">Transporte</option>
-              <option value="Entretenimiento">Entretenimiento</option>
-              <option value="Salud">Salud</option>
-              <option value="Educación">Educación</option>
-              <option value="Servicios">Servicios</option>
-              <option value="Compras">Compras</option>
-              <option value="Hogar">Hogar</option>
-              <option value="Trabajo">Trabajo</option>
-              <option value="Inversión">Inversión</option>
-              <option value="Otros">Otros</option>
+              {categoriasParaTipo(formData.tipo).map((c) => (
+                <option key={c.nombre} value={c.nombre}>
+                  {c.nombre}
+                </option>
+              ))}
+              {/* Mantener valor al editar si no está en la lista filtrada */}
+              {formData.categoria &&
+                !CATEGORIAS_DEFAULT.some((c) => c.nombre === formData.categoria) && (
+                  <option value={formData.categoria}>{formData.categoria}</option>
+                )}
             </select>
           </div>
 
@@ -184,12 +184,11 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
             onChange={handleChange}
             className="w-full input-field"
           >
-            <option value="EFECTIVO">Efectivo</option>
-            <option value="TARJETA_DEBITO">Tarjeta de Débito</option>
-            <option value="TARJETA_CREDITO">Tarjeta de Crédito</option>
-            <option value="TRANSFERENCIA">Transferencia</option>
-            <option value="DIGITAL">Pago Digital</option>
-            <option value="CHEQUE">Cheque</option>
+            {METODOS_PAGO.map((m) => (
+              <option key={m} value={m}>
+                {m.replace(/_/g, ' ')}
+              </option>
+            ))}
           </select>
         </div>
 

@@ -1,188 +1,105 @@
-# ?? Gestor de Finanzas - Backend
+# Backend — Gestor de Finanzas
 
-API REST para gestión de finanzas personales desarrollada con Node.js, Express y Prisma ORM.
+API REST con Node.js, Express 5, Prisma y PostgreSQL.
 
-## ?? Características
+## Stack
 
-- ? **Autenticación JWT** con validación robusta
-- ? **Gestión de transacciones** con categorización avanzada
-- ? **Múltiples cuentas bancarias** y transferencias
-- ? **Transacciones recurrentes** automatizadas
-- ? **Sistema de metas** y presupuestos
-- ? **Gamificación** con puntos y logros
-- ? **Inversiones y deudas** tracking
-- ? **Reportes avanzados** y análisis
-- ? **Validación de datos** con Joi
-- ? **Manejo centralizado de errores**
-- ? **Sistema de logs** con Winston
+- Express + Helmet + CORS + rate-limit (auth)
+- Prisma ORM + PostgreSQL
+- JWT (`authMiddleware`, `requireRole`)
+- Joi (validación)
+- Winston + Morgan
+- node-cron (recurrentes cada hora)
+- Jest
 
-## ?? Tecnologías
+## Setup
 
-- **Node.js** - Runtime de JavaScript
-- **Express.js** (v5.1.0) - Framework web
-- **Prisma ORM** (v6.6.0) - ORM para PostgreSQL
-- **PostgreSQL** - Base de datos relacional
-- **JWT** - Autenticación basada en tokens
-- **bcryptjs** - Encriptación de contraseñas
-- **Joi** - Validación de datos
-- **Winston** - Sistema de logging
-- **Morgan** - HTTP request logger
-- **CORS** - Cross-Origin Resource Sharing
-
-## ?? Instalación
-
-### Prerrequisitos
-
-- Node.js v16 o superior
-- PostgreSQL v13 o superior
-- npm o yarn
-
-### Pasos de instalación
-
-1. **Instala las dependencias:**
 ```bash
 cd backend
+cp .env.example .env   # o copy en Windows
 npm install
-```
-
-2. **Configura las variables de entorno:**
-
-Crea un archivo `.env` basado en `.env.example`:
-
-```env
-# Puerto del servidor
-PORT=5000
-
-# Base de datos PostgreSQL
-DATABASE_URL="postgresql://postgres:admin@localhost:5432/gestor_finanzas?schema=public"
-
-# JWT Secret (cambia esto en producción)
-JWT_SECRET=tu_clave_secreta_muy_segura_cambiala_en_produccion
-
-# Entorno
-NODE_ENV=development
-
-# Configuración de logs
-LOG_LEVEL=info
-```
-
-3. **Configura la base de datos:**
-```bash
-# Ejecutar migraciones
-npm run prisma:migrate
-
-# Generar cliente de Prisma
-npm run prisma:generate
-
-# (Opcional) Ejecutar seed para datos de prueba
-npm run prisma:seed
-```
-
-## ????? Uso
-
-### Desarrollo
-```bash
+npx prisma migrate dev
+npx prisma generate
+npm run prisma:seed    # opcional: admin + datos demo
 npm run dev
 ```
 
-### Producción
+Servidor: `http://localhost:5000`
+
+## Variables de entorno
+
+| Variable | Requerida | Descripción |
+|----------|-----------|-------------|
+| `DATABASE_URL` | sí | Connection string PostgreSQL |
+| `JWT_SECRET` | sí | Firma JWT (fail-fast si falta) |
+| `PORT` | no | Default `5000` |
+| `NODE_ENV` | no | `development` / `production` / `test` |
+| `CORS_ORIGIN` | prod | Origen permitido del frontend |
+| `CRON_RECURRENTES` | no | `false` desactiva el job |
+| `CRON_RECURRENTES_SCHEDULE` | no | Default `0 * * * *` |
+| `CRON_SECRET` | para interno | Header `X-Cron-Secret` en ejecutar-interno |
+| `AUTH_RATE_LIMIT_MAX` | no | Default 20 / 15 min |
+| `API_RATE_LIMIT_MAX` | no | Default 300 / 15 min |
+| `LOG_LEVEL` | no | Default `info` |
+
+## Endpoints principales
+
+| Prefijo | Recursos |
+|---------|----------|
+| `/api/auth` | register, login, me, profile, change-password, preferences |
+| `/api/transacciones` | CRUD, resumen (ownership + sync saldos) |
+| `/api/finanzas/cuentas` | CRUD / soft delete |
+| `/api/finanzas/inversiones` | CRUD |
+| `/api/finanzas/deudas` | CRUD + pagos |
+| `/api/finanzas/metas` | CRUD + aportar |
+| `/api/finanzas/presupuestos` | CRUD + sincronizar + alertas |
+| `/api/finanzas/logros` | listado, resumen, historial, verificar |
+| `/api/sistema/recurrentes` | CRUD, toggle, ejecutar (usuario), ejecutar-interno (cron) |
+| `/api/sistema/notificaciones` | listado, CRUD, marcar leídas |
+| `/api/reportes` | mensual, agregados, export CSV |
+| `/api/categorias` | listado, CRUD personalizadas, estadísticas |
+| `/api/sistema/admin/health` | solo `ADMIN` |
+
+Contratos de campos/enums: [docs/CONTRATOS-API.md](../docs/CONTRATOS-API.md).
+
+## Scripts
+
 ```bash
+npm run dev
 npm start
+npm test
+npm run prisma:migrate
+npm run prisma:generate
+npm run prisma:studio
+npm run prisma:seed
 ```
 
-### Scripts disponibles
-```bash
-npm run dev              # Desarrollo con nodemon
-npm start                # Producción
-npm run test             # Ejecutar tests con Jest
-npm run test:watch       # Tests en modo watch
-npm run test:coverage    # Generar reporte de cobertura
-npm run prisma:migrate   # Ejecutar migraciones
-npm run prisma:generate  # Generar cliente Prisma
-npm run prisma:studio    # Abrir Prisma Studio
-npm run prisma:seed      # Ejecutar seed de datos
-```
-
-## ?? Estructura del Proyecto
+## Estructura
 
 ```
 backend/
-+-- controllers/           # Controladores de las rutas
-¦   +-- auth.controller.js
-¦   +-- categoria.controller.js
-¦   +-- finanzas-avanzadas.controller.js
-¦   +-- reporte.controller.js
-¦   +-- transaccion.controller.js
-¦   +-- transacciones-recurrentes.controller.js
-+-- middlewares/          # Middlewares personalizados
-¦   +-- auth.middleware.js
-¦   +-- error.middleware.js
-¦   +-- validation.middleware.js
-+-- routes/               # Definición de rutas
-¦   +-- auth.routes.js
-¦   +-- finanzas-avanzadas.routes.js
-¦   +-- sistema.routes.js
-¦   +-- transaccion.routes.js
-+-- validators/           # Validadores con Joi
-¦   +-- auth.validator.js
-¦   +-- transaccion.validator.js
-+-- utils/                # Utilidades
-¦   +-- errors.js
-¦   +-- logger.js
-+-- prisma/               # Prisma ORM
-¦   +-- schema.prisma
-¦   +-- seed.js
-¦   +-- migrations/
-+-- .env                  # Variables de entorno (no versionado)
-+-- .env.example          # Ejemplo de variables de entorno
-+-- .gitignore            # Archivos ignorados por Git
-+-- app.js                # Punto de entrada de la aplicación
-+-- package.json          # Dependencias y scripts
+??? app.js
+??? controllers/
+??? routes/
+??? middlewares/
+??? validators/
+??? services/          # lógica compartida (recurrentes)
+??? jobs/              # cron
+??? utils/             # errors, logger, mappers, saldo
+??? lib/prisma.js
+??? prisma/
+??? tests/
 ```
 
-## ?? API Endpoints Principales
+## Seguridad
 
-### Autenticación
-- `POST /api/auth/register` - Registrar nuevo usuario
-- `POST /api/auth/login` - Iniciar sesión
+- JWT obligatorio en rutas privadas; ownership por `userId`
+- Helmet + rate limit en login/register
+- Cron interno con `CRON_SECRET`
+- Rol `ADMIN` solo en rutas admin explícitas; el resto es multi-tenant por usuario
 
-### Transacciones
-- `GET /api/transacciones` - Obtener transacciones
-- `POST /api/transacciones` - Crear transacción
-- `GET /api/transacciones/:id` - Obtener transacción por ID
-- `PUT /api/transacciones/:id` - Actualizar transacción
-- `DELETE /api/transacciones/:id` - Eliminar transacción
+## Notas
 
-### Reportes
-- `GET /api/reportes/resumen` - Resumen financiero
-- `GET /api/reportes/por-categoria` - Gastos por categoría
-- `GET /api/reportes/tendencias` - Tendencias de gastos/ingresos
-
-### Finanzas Avanzadas
-- Gestión de cuentas múltiples
-- Transacciones recurrentes
-- Metas financieras
-- Sistema de gamificación
-
-## ??? Seguridad
-
-- Autenticación con JWT
-- Contraseñas hasheadas con bcryptjs
-- Validación de datos con Joi
-- CORS configurado
-- Manejo de errores centralizado
-
-## ?? Notas
-
-- El puerto por defecto es `5000`
-- Los logs se guardan en la carpeta `logs/`
-- Los archivos generados por Prisma están en `generated/` (no versionados)
-- La cobertura de tests se guarda en `coverage/` (no versionada)
-
-## ????? Autor
-
-**Jeyson Miranda**
-
-## ?? Licencia
-
-ISC
+- Logs en `logs/` (gitignored)
+- En `NODE_ENV=test` no se hace `listen` ni se arranca el cron
+- Recurrentes crean transacciones; no actualizan saldo de cuenta (el modelo recurrente no tiene `cuentaId`)

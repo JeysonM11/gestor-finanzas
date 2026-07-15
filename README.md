@@ -1,153 +1,100 @@
-# Gestor de Finanzas Personales 💰
+# Gestor de Finanzas Personales
 
-Sistema completo de gestión de finanzas personales con funcionalidades avanzadas como gamificación, inversiones, cuentas múltiples y análisis predictivo.
+Aplicación full-stack de finanzas personales: autenticación JWT, transacciones con sync de saldos, cuentas, inversiones, deudas, recurrentes (cron), notificaciones, reportes/CSV, gamificación básica y configuración real.
 
-## 🏗️ Arquitectura del Proyecto
+> **MVP + Sprint 5:** Metas y Presupuestos implementados. Recordatorios / sesiones / email verification siguen en backlog.
+
+## Arquitectura
 
 ```
 gestor-finanzas/
-├── backend/          # API REST con Node.js + Express + Prisma
-├── frontend/         # Aplicación React + Vite + Tailwind CSS
-└── README.md         # Este archivo
+├── backend/     # Express + Prisma + PostgreSQL
+├── frontend/    # React + Vite + Tailwind
+├── docs/        # CONTRATOS-API.md
+├── PLAN-DE-TRABAJO.md
+└── .github/workflows/ci.yml
 ```
 
-## 🚀 Inicio Rápido
+## Requisitos
 
-### Modo Manual
+- Node.js 18+ (recomendado 20)
+- PostgreSQL 13+
+- npm
 
-**Terminal 1 - Backend:**
+## Inicio rápido
+
+### 1. Backend
+
 ```powershell
 cd backend
+copy .env.example .env
+# Editar DATABASE_URL y JWT_SECRET
 npm install
-# Configurar .env con las credenciales de PostgreSQL
-npm run dev
+npx prisma migrate dev
+npm run prisma:seed   # opcional
+npm run dev           # http://localhost:5000
 ```
 
-**Terminal 2 - Frontend:**
+### 2. Frontend
+
 ```powershell
 cd frontend
 npm install
-npm run dev
+npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 ```
 
-## 📋 Requisitos
+## Estado por módulo
 
-- **Node.js** v16 o superior
-- **PostgreSQL** v13 o superior
-- **npm** o **yarn**
+| Módulo | Estado |
+|--------|--------|
+| Auth (register/login/me/profile/password/preferences) | ✅ |
+| Transacciones + sync saldos | ✅ |
+| Cuentas | ✅ |
+| Inversiones | ✅ |
+| Deudas + pagos | ✅ |
+| Recurrentes + cron horario | ✅ |
+| Notificaciones | ✅ |
+| Reportes / agregados / export CSV | ✅ |
+| Categorías API | ✅ (UI usa lista default; service listo) |
+| Gamificación (logros/resumen/historial) | ✅ básica |
+| Metas de ahorro | ✅ |
+| Presupuestos + alertas | ✅ |
+| Recordatorios / Sesiones / Email verify | ❌ backlog |
 
-## 🔧 Tecnologías
+## Documentación
 
-### Backend
-- **Node.js** + **Express** - Framework web
-- **Prisma ORM** - Base de datos
-- **PostgreSQL** - Base de datos relacional
-- **JWT** - Autenticación
-- **Jest** - Testing
+- [backend/README.md](backend/README.md) — endpoints, env, seed, deploy
+- [frontend/README.md](frontend/README.md) — estructura UI
+- [docs/CONTRATOS-API.md](docs/CONTRATOS-API.md) — enums y contratos de campos
+- [PLAN-DE-TRABAJO.md](PLAN-DE-TRABAJO.md) — sprints y criterios de cierre
 
-### Frontend
-- **React 18** - Biblioteca UI
-- **Vite** - Build tool
-- **Tailwind CSS** - Estilos
-- **React Router** - Enrutamiento
-- **Axios** - Cliente HTTP
-- **Recharts** - Gráficos
+## Checklist de despliegue
 
-## 📚 Documentación
+1. PostgreSQL accesible; crear DB `gestor_finanzas`
+2. `backend/.env`: `DATABASE_URL`, `JWT_SECRET` fuerte, `NODE_ENV=production`, `CORS_ORIGIN` = URL del frontend
+3. Opcional: `CRON_SECRET`, `CRON_RECURRENTES_SCHEDULE`
+4. `cd backend && npm ci && npx prisma migrate deploy && npm run prisma:seed` (seed solo si hace falta)
+5. `npm start` (o process manager)
+6. Frontend: `npm ci && npm run build`; servir `dist/` o proxy `/api` → backend
+7. Verificar `GET /` del API y login
 
-- [**backend/README.md**](backend/README.md) - Documentación del backend
-- [**frontend/README.md**](frontend/README.md) - Documentación del frontend
+## Puertos
 
-## 📡 Puertos
+| Servicio | Puerto |
+|----------|--------|
+| Backend | 5000 |
+| Frontend (dev) | 5173 |
+| PostgreSQL | 5432 |
 
-| Servicio | Puerto | URL |
-|----------|--------|-----|
-| Backend | 5000 | http://localhost:5000 |
-| Frontend | 5173 | http://localhost:5173 |
-| PostgreSQL | 5432 | localhost:5432 |
+## Tests / CI
 
-## ✨ Características
-
-### Gestión Básica
-- ✅ Registro e inicio de sesión
-- ✅ Dashboard con resumen financiero
-- ✅ Gestión de transacciones (ingresos/gastos)
-- ✅ Categorización de transacciones
-- ✅ Filtros y búsqueda
-
-### Características Avanzadas
-- 📊 Reportes y análisis
-- 💳 Múltiples cuentas bancarias
-- 📈 Seguimiento de inversiones
-- 💰 Gestión de deudas
-- 🎯 Gamificación con logros
-- 🔄 Transacciones recurrentes
-- 🔔 Sistema de notificaciones
-
-## 🛠️ Comandos Útiles
-
-### Backend
 ```powershell
-npm run dev              # Desarrollo
-npm test                 # Tests
-npm run prisma:studio    # Abrir Prisma Studio
-npm run prisma:migrate   # Ejecutar migraciones
+cd backend
+npm test
 ```
 
-### Frontend
-```powershell
-npm run dev      # Desarrollo
-npm run build    # Build producción
-npm run preview  # Vista previa del build
-```
+GitHub Actions: install + `prisma generate` + `npm test` en push/PR a `main`.
 
-## 🐛 Solución de Problemas
+## Autor
 
-### Puerto ocupado
-```powershell
-# Ver qué proceso usa el puerto
-netstat -ano | findstr :5000
-
-# Terminar el proceso
-taskkill /PID <PID> /F
-```
-
-### Error de conexión a la base de datos
-1. Verifica que PostgreSQL esté corriendo
-2. Revisa las credenciales en `backend/.env`
-3. Asegúrate de que la base de datos exista
-
-### El frontend no se conecta al backend
-1. Verifica que el backend esté en el puerto 5000
-2. Revisa la consola del navegador (F12)
-3. Verifica el proxy en `frontend/vite.config.js`
-
-## 📝 Configuración Inicial
-
-1. **Clonar el repositorio**
-2. **Configurar backend:**
-   - Copiar `backend/.env.example` a `backend/.env`
-   - Configurar las variables de entorno
-   - Ejecutar migraciones: `npm run prisma:migrate`
-3. **Instalar dependencias:**
-   - Backend: `cd backend && npm install`
-   - Frontend: `cd frontend && npm install`
-4. **Iniciar servicios:** Seguir la sección "Inicio Rápido"
-
-## 👨‍💻 Desarrollo
-
-Para contribuir al proyecto:
-
-1. Fork el repositorio
-2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
-3. Commit tus cambios: `git commit -m 'Agregar nueva funcionalidad'`
-4. Push a la rama: `git push origin feature/nueva-funcionalidad`
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-ISC
-
-## 👤 Autor
-
-Jeyson Miranda
+Jeyson Miranda — Licencia ISC

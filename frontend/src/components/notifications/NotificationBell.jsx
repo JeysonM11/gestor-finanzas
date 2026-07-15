@@ -103,7 +103,7 @@ const NotificationBell = () => {
                         {notif.mensaje}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {dayjs(notif.createdAt).fromNow()}
+                        {dayjs(notif.fechaEnvio || notif.createdAt).fromNow()}
                       </p>
                     </div>
                   </div>

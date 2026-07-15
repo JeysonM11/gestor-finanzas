@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { authService } from '../services/auth.service'
+import { reporteService } from '../services/reporte.service'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import Input from '../components/common/Input'
 import { User, Lock, Bell, Download, Shield } from 'lucide-react'
 
 const Configuracion = () => {
-  const { user } = useAuth()
+  const { user, setUser } = useAuth()
   const [activeTab, setActiveTab] = useState('perfil')
   const [loading, setLoading] = useState(false)
   const [mensaje, setMensaje] = useState({ tipo: '', texto: '' })
@@ -28,10 +30,10 @@ const Configuracion = () => {
 
   // Estado para preferencias
   const [preferencias, setPreferencias] = useState({
-    notificacionesEmail: true,
-    notificacionesPush: true,
-    notificacionesTransacciones: true,
-    notificacionesRecurrentes: true,
+    notificacionesEmail: user?.configuracion?.notificacionesEmail ?? true,
+    notificacionesPush: user?.configuracion?.notificacionesPush ?? true,
+    notificacionesTransacciones: user?.configuracion?.notificacionesTransacciones ?? true,
+    notificacionesRecurrentes: user?.configuracion?.notificacionesRecurrentes ?? true,
     monedaPrincipal: user?.monedaPrincipal || 'USD'
   })
 
@@ -63,15 +65,20 @@ const Configuracion = () => {
     setMensaje({ tipo: '', texto: '' })
 
     try {
-      // TODO: Implementar actualización de perfil
-      // await api.put('/auth/profile', perfilData)
-      
-      // Simulación
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      setMensaje({ tipo: 'success', texto: 'Perfil actualizado exitosamente' })
+      const response = await authService.updateProfile({
+        name: perfilData.name,
+        telefono: perfilData.telefono,
+        ocupacion: perfilData.ocupacion
+      })
+      if (response.user) {
+        setUser(response.user)
+      }
+      setMensaje({ tipo: 'success', texto: response.message || 'Perfil actualizado exitosamente' })
     } catch (error) {
-      setMensaje({ tipo: 'error', texto: 'Error al actualizar perfil' })
+      setMensaje({
+        tipo: 'error',
+        texto: error.response?.data?.message || 'Error al actualizar perfil'
+      })
     } finally {
       setLoading(false)
     }
@@ -89,20 +96,22 @@ const Configuracion = () => {
     }
 
     try {
-      // TODO: Implementar cambio de contraseña
-      // await api.put('/auth/change-password', passwordData)
-      
-      // Simulación
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await authService.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      })
       
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       })
-      setMensaje({ tipo: 'success', texto: 'Contraseña actualizada exitosamente' })
+      setMensaje({ tipo: 'success', texto: response.message || 'Contraseña actualizada exitosamente' })
     } catch (error) {
-      setMensaje({ tipo: 'error', texto: 'Error al cambiar contraseña' })
+      setMensaje({
+        tipo: 'error',
+        texto: error.response?.data?.message || 'Error al cambiar contraseña'
+      })
     } finally {
       setLoading(false)
     }
@@ -114,15 +123,40 @@ const Configuracion = () => {
     setMensaje({ tipo: '', texto: '' })
 
     try {
-      // TODO: Implementar actualización de preferencias
-      // await api.put('/auth/preferences', preferencias)
-      
-      // Simulación
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      setMensaje({ tipo: 'success', texto: 'Preferencias guardadas exitosamente' })
+      const response = await authService.updatePreferences(preferencias)
+      if (response.user) {
+        setUser(response.user)
+      }
+      setMensaje({ tipo: 'success', texto: response.message || 'Preferencias guardadas exitosamente' })
     } catch (error) {
-      setMensaje({ tipo: 'error', texto: 'Error al guardar preferencias' })
+      setMensaje({
+        tipo: 'error',
+        texto: error.response?.data?.message || 'Error al guardar preferencias'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleExportarDatos = async () => {
+    setLoading(true)
+    setMensaje({ tipo: '', texto: '' })
+    try {
+      const blob = await reporteService.exportarCSV()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'transacciones.csv'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      setMensaje({ tipo: 'success', texto: 'Exportacion iniciada' })
+    } catch (error) {
+      setMensaje({
+        tipo: 'error',
+        texto: error.response?.data?.message || 'Error al exportar datos'
+      })
     } finally {
       setLoading(false)
     }
@@ -205,7 +239,11 @@ const Configuracion = () => {
                   onChange={handlePerfilChange}
                   placeholder="tu@email.com"
                   required
+                  disabled
                 />
+                <p className="text-xs text-gray-500 -mt-2">
+                  El email no se puede cambiar desde esta pantalla.
+                </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
@@ -393,21 +431,21 @@ const Configuracion = () => {
                 <div className="p-4 border border-gray-200 rounded-lg">
                   <h3 className="font-medium text-gray-900 mb-2">Exportar datos</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Descarga una copia de todos tus datos en formato CSV
+                    Descarga una copia de tus transacciones en formato CSV.
                   </p>
-                  <Button variant="secondary">
+                  <Button variant="secondary" onClick={handleExportarDatos} disabled={loading}>
                     <Download className="h-5 w-5 mr-2" />
-                    Exportar Datos
+                    {loading ? 'Exportando...' : 'Exportar Datos'}
                   </Button>
                 </div>
 
                 <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
                   <h3 className="font-medium text-red-900 mb-2">Zona de peligro</h3>
                   <p className="text-sm text-red-600 mb-4">
-                    Las siguientes acciones son irreversibles. Por favor, procede con precaución.
+                    La eliminación de cuenta aún no está implementada en el backend.
                   </p>
-                  <Button variant="danger">
-                    Eliminar mi cuenta
+                  <Button variant="danger" disabled>
+                    Eliminar mi cuenta (próximamente)
                   </Button>
                 </div>
               </div>
