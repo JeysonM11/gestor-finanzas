@@ -57,8 +57,15 @@ src/
 | `/configuracion` | Perfil, password, preferencias, export CSV |
 | `*` | 404 |
 
-## Notas
+## Deploy (Render Static Site)
 
-- Toasts globales vía `ToastContext` (errores visibles, no solo `console`)
-- Categorías en modales: lista default en `utils/constants.js` (API `/api/categorias` disponible en backend)
-- `ConfirmDialog` acepta `type` o `variant`
+Si al recargar una ruta ves pantalla blanca o 404, el rewrite de Render a veces
+devuelve cuerpo vacío. Este proyecto usa **HashRouter** (`/#/dashboard`), así el
+servidor siempre sirve `/` y React maneja la ruta tras el `#`.
+
+Opcional en Dashboard → Redirects/Rewrites (por si vuelves a BrowserRouter):
+
+| Source | Destination | Action |
+|--------|-------------|--------|
+| `/*` | `/index.html` | Rewrite |
+
