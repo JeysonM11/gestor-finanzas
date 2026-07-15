@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, Button, Spinner, EmptyState } from '../components/ui'
+import { Card, Button, Spinner, EmptyState, Badge } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalMeta from '../components/metas/ModalMeta'
 import { metaService } from '../services/meta.service'
@@ -69,19 +69,20 @@ const Metas = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Metas de ahorro</h1>
-          <p className="text-gray-600">Define objetivos y registra aportes</p>
+    <div className="page-shell">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Metas de ahorro</h1>
+          <p className="page-subtitle">Define objetivos y registra aportes</p>
         </div>
         <Button
           onClick={() => {
             setMetaSeleccionada(null)
             setModalAbierto(true)
           }}
+          className="w-full sm:w-auto shrink-0"
         >
-          <Plus className="h-5 w-5 mr-2" />
+          <Plus className="h-4 w-4" />
           Nueva Meta
         </Button>
       </div>
@@ -107,17 +108,17 @@ const Metas = () => {
       />
 
       {resumen && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="stat-grid">
           <Card>
-            <p className="text-sm text-gray-500">Activas</p>
-            <p className="text-2xl font-bold text-gray-900">{resumen.activas}</p>
+            <p className="text-sm text-ink-muted">Activas</p>
+            <p className="text-2xl font-bold text-ink">{resumen.activas}</p>
           </Card>
           <Card>
-            <p className="text-sm text-gray-500">Completadas</p>
+            <p className="text-sm text-ink-muted">Completadas</p>
             <p className="text-2xl font-bold text-green-600">{resumen.completadas}</p>
           </Card>
           <Card>
-            <p className="text-sm text-gray-500">Ahorrado / Objetivo</p>
+            <p className="text-sm text-ink-muted">Ahorrado / Objetivo</p>
             <p className="text-2xl font-bold text-primary-600">
               ${Number(resumen.montoActualTotal || 0).toFixed(0)} / $
               {Number(resumen.montoObjetivoTotal || 0).toFixed(0)}
@@ -127,59 +128,59 @@ const Metas = () => {
       )}
 
       {metas.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card-grid">
           {metas.map((meta) => (
-            <Card key={meta.id} className={meta.completada ? 'opacity-75' : ''}>
+            <Card key={meta.id} hover className={meta.completada ? 'opacity-75' : ''}>
               <div className="space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Target className="h-5 w-5 text-primary-600" />
-                      <h3 className="font-bold text-lg text-gray-900">{meta.titulo}</h3>
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700">
-                        {meta.tipo}
-                      </span>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <Target className="h-5 w-5 text-primary-600 shrink-0" />
+                      <h3 className="font-bold text-lg text-ink">{meta.titulo}</h3>
+                      <Badge variant="gray">{meta.tipo}</Badge>
                       {meta.completada && (
-                        <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">
-                          Completada
-                        </span>
+                        <Badge variant="green">Completada</Badge>
                       )}
                     </div>
                     {meta.descripcion && (
-                      <p className="text-sm text-gray-500">{meta.descripcion}</p>
+                      <p className="text-sm text-ink-muted">{meta.descripcion}</p>
                     )}
                   </div>
-                  <div className="flex gap-1">
-                    <button
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => {
                         setMetaSeleccionada(meta)
                         setModalAbierto(true)
                       }}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                      aria-label="Editar meta"
                     >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
+                      <Edit className="h-4 w-4 text-primary-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => {
                         setMetaAEliminar(meta)
                         setConfirmOpen(true)
                       }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      aria-label="Eliminar meta"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">
+                    <span className="text-ink-muted">
                       ${Number(meta.montoActual).toFixed(2)} / $
                       {Number(meta.montoObjetivo).toFixed(2)}
                     </span>
                     <span className="font-medium">{Number(meta.progreso).toFixed(0)}%</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-surface-muted rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full ${
                         meta.completada ? 'bg-green-500' : 'bg-primary-600'
@@ -189,13 +190,13 @@ const Metas = () => {
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-ink-subtle">
                   Límite: {dayjs(meta.fechaLimite).format('DD/MM/YYYY')} · Prioridad:{' '}
                   {meta.prioridad}
                 </p>
 
                 {!meta.completada && (
-                  <div className="pt-2 border-t border-gray-100">
+                  <div className="pt-2 border-t border-line">
                     {aporteId === meta.id ? (
                       <div className="flex gap-2">
                         <input

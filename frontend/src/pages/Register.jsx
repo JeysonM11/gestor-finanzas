@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import Input from '../components/common/Input'
-import Button from '../components/common/Button'
+import { Input, Button, Alert } from '../components/ui'
 import { Wallet } from 'lucide-react'
 
 const Register = () => {
@@ -17,7 +16,6 @@ const Register = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Redirigir si ya está autenticado
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard')
@@ -50,9 +48,7 @@ const Register = () => {
       })
       navigate('/dashboard')
     } catch (err) {
-      // Manejo mejorado de errores
       if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
-        // Si hay errores de validación, mostrar el primero
         const firstError = err.response.data.errors[0]
         setError(firstError.message)
       } else if (err.response?.data?.message) {
@@ -68,18 +64,27 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
-          <Wallet className="h-12 w-12 text-primary-600 mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900">Crear cuenta</h1>
-          <p className="text-gray-500 mt-2">Comienza a gestionar tus finanzas</p>
+    <div className="min-h-dvh flex items-center justify-center p-4 bg-surface-muted relative overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-70"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 50% at 50% -20%, rgb(37 99 235 / 0.15), transparent), radial-gradient(ellipse 60% 40% at 100% 100%, rgb(15 23 42 / 0.04), transparent)',
+        }}
+      />
+      <div className="relative w-full max-w-md bg-surface border border-line rounded-2xl shadow-card p-6 sm:p-8">
+        <div className="flex flex-col items-center mb-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-sm mb-4">
+            <Wallet className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Crear cuenta</h1>
+          <p className="text-sm text-ink-muted mt-1.5">Comienza a gestionar tus finanzas</p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <Alert variant="error" className="mb-5">
             {error}
-          </div>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,6 +96,7 @@ const Register = () => {
             onChange={handleChange}
             placeholder="Tu nombre"
             required
+            autoComplete="name"
           />
 
           <Input
@@ -101,6 +107,7 @@ const Register = () => {
             onChange={handleChange}
             placeholder="tu@email.com"
             required
+            autoComplete="email"
           />
 
           <Input
@@ -111,8 +118,9 @@ const Register = () => {
             onChange={handleChange}
             placeholder="••••••••"
             required
+            autoComplete="new-password"
           />
-          <p className="text-xs text-gray-500 -mt-2">
+          <p className="text-xs text-ink-subtle -mt-2">
             Debe tener al menos 6 caracteres, una mayúscula, una minúscula y un número
           </p>
 
@@ -124,18 +132,15 @@ const Register = () => {
             onChange={handleChange}
             placeholder="••••••••"
             required
+            autoComplete="new-password"
           />
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" loading={loading}>
             {loading ? 'Creando cuenta...' : 'Crear cuenta'}
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-ink-muted">
           ¿Ya tienes cuenta?{' '}
           <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
             Inicia sesión aquí

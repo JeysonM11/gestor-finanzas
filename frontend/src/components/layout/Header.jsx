@@ -1,42 +1,75 @@
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../notifications/NotificationBell'
-import { LogOut, User } from 'lucide-react'
+import { useLayout } from './LayoutContext'
+import { Button } from '../ui'
+import { LogOut, Menu, User } from 'lucide-react'
 
 const Header = () => {
   const { user, logout } = useAuth()
+  const { toggleMobile } = useLayout()
 
   const handleLogout = () => {
     logout()
     window.location.href = '/login'
   }
 
+  const displayName = user?.name || user?.email || 'Usuario'
+  const initials = displayName
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Bienvenido de nuevo
-          </h2>
-          <p className="text-sm text-gray-500">
+    <header className="sticky top-0 z-30 h-header shrink-0 border-b border-line bg-surface/90 backdrop-blur-md">
+      <div className="flex h-full items-center gap-3 px-3 sm:px-5">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="lg:hidden shrink-0"
+          onClick={toggleMobile}
+          aria-label="Abrir menú"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-sm sm:text-base font-semibold text-ink truncate">
+            Hola, {user?.name?.split(' ')[0] || 'de nuevo'}
+          </p>
+          <p className="hidden sm:block text-xs text-ink-muted truncate">
             Gestiona tus finanzas de manera inteligente
           </p>
         </div>
-        
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <NotificationBell />
-          
-          <div className="flex items-center gap-2 text-sm">
-            <User className="h-5 w-5 text-gray-500" />
-            <span className="text-gray-700">{user?.name || user?.email}</span>
+
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-line bg-surface-muted/60 pl-1 pr-3 py-1">
+            <span
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-[11px] font-semibold text-white"
+              aria-hidden="true"
+            >
+              {initials || <User className="h-3.5 w-3.5" />}
+            </span>
+            <span className="text-xs font-medium text-ink max-w-[9rem] truncate">
+              {displayName}
+            </span>
           </div>
-          
-          <button
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Cerrar sesión"
+            className="text-ink-muted"
           >
             <LogOut className="h-4 w-4" />
-            <span>Salir</span>
-          </button>
+            <span className="hidden md:inline">Salir</span>
+          </Button>
         </div>
       </div>
     </header>

@@ -17,8 +17,7 @@ const NotificationBell = () => {
 
   useEffect(() => {
     cargarNotificaciones()
-    const intervalo = setInterval(cargarNotificaciones, 60000) // Cada minuto
-    
+    const intervalo = setInterval(cargarNotificaciones, 60000)
     return () => clearInterval(intervalo)
   }, [])
 
@@ -28,7 +27,6 @@ const NotificationBell = () => {
         setMostrarDropdown(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
@@ -37,8 +35,8 @@ const NotificationBell = () => {
     try {
       const data = await notificacionService.getAll()
       const notifs = data.notificaciones || data
-      setNotificaciones(notifs.slice(0, 5)) // Solo las últimas 5
-      setNoLeidas(notifs.filter(n => !n.leida).length)
+      setNotificaciones(notifs.slice(0, 5))
+      setNoLeidas(notifs.filter((n) => !n.leida).length)
     } catch (error) {
       console.error('Error al cargar notificaciones:', error)
     }
@@ -56,36 +54,39 @@ const NotificationBell = () => {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
         onClick={() => setMostrarDropdown(!mostrarDropdown)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        className="relative p-2 text-ink-muted hover:text-ink hover:bg-surface-muted rounded-control transition-colors"
+        aria-label={`Notificaciones${noLeidas > 0 ? `, ${noLeidas} sin leer` : ''}`}
+        aria-expanded={mostrarDropdown}
       >
-        <Bell className="h-6 w-6" />
+        <Bell className="h-5 w-5" />
         {noLeidas > 0 && (
-          <span className="absolute top-1 right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full">
+          <span className="absolute top-1 right-1 inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 text-[10px] font-bold text-white bg-red-600 rounded-full">
             {noLeidas > 9 ? '9+' : noLeidas}
           </span>
         )}
       </button>
 
-      {/* Dropdown */}
       {mostrarDropdown && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Notificaciones</h3>
+        <div className="absolute right-0 mt-2 w-[min(100vw-1.5rem,22rem)] bg-surface rounded-card shadow-dropdown border border-line z-50 animate-scale-in origin-top-right">
+          <div className="p-3.5 border-b border-line">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-ink">Notificaciones</h3>
               {noLeidas > 0 && (
-                <span className="text-xs text-gray-500">{noLeidas} sin leer</span>
+                <span className="text-xs text-ink-subtle">{noLeidas} sin leer</span>
               )}
             </div>
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto">
             {notificaciones.length > 0 ? (
               notificaciones.map((notif) => (
-                <div
+                <button
+                  type="button"
                   key={notif.id}
-                  className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                    !notif.leida ? 'bg-blue-50' : ''
+                  className={`w-full text-left p-3.5 border-b border-line last:border-0 hover:bg-surface-muted transition-colors ${
+                    !notif.leida ? 'bg-primary-50/40' : ''
                   }`}
                   onClick={() => {
                     if (!notif.leida) handleMarcarLeida(notif.id)
@@ -93,37 +94,33 @@ const NotificationBell = () => {
                 >
                   <div className="flex items-start gap-3">
                     {!notif.leida && (
-                      <span className="inline-block w-2 h-2 bg-primary-600 rounded-full mt-2"></span>
+                      <span className="inline-block w-2 h-2 bg-primary-600 rounded-full mt-1.5 shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {notif.titulo}
-                      </p>
-                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                        {notif.mensaje}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-sm font-medium text-ink truncate">{notif.titulo}</p>
+                      <p className="text-xs text-ink-muted mt-0.5 line-clamp-2">{notif.mensaje}</p>
+                      <p className="text-[11px] text-ink-subtle mt-1">
                         {dayjs(notif.fechaEnvio || notif.createdAt).fromNow()}
                       </p>
                     </div>
                   </div>
-                </div>
+                </button>
               ))
             ) : (
-              <div className="p-8 text-center text-gray-500">
-                <Bell className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+              <div className="p-8 text-center text-ink-muted">
+                <Bell className="h-10 w-10 mx-auto mb-2 text-ink-subtle/60" />
                 <p className="text-sm">No hay notificaciones</p>
               </div>
             )}
           </div>
 
-          <div className="p-3 border-t border-gray-200 bg-gray-50">
+          <div className="p-2.5 border-t border-line bg-surface-muted/50">
             <Link
               to="/notificaciones"
               onClick={() => setMostrarDropdown(false)}
-              className="block text-center text-sm text-primary-600 hover:text-primary-700 font-medium"
+              className="block text-center text-sm text-primary-600 hover:text-primary-700 font-medium py-1.5 rounded-control hover:bg-surface"
             >
-              Ver todas las notificaciones
+              Ver todas
             </Link>
           </div>
         </div>

@@ -59,17 +59,17 @@ const Presupuestos = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Presupuestos</h1>
-          <p className="text-gray-600">Límites mensuales por categoría</p>
+    <div className="page-shell">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Presupuestos</h1>
+          <p className="page-subtitle">Límites mensuales por categoría</p>
         </div>
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
           <select
             value={mes}
             onChange={(e) => setMes(Number(e.target.value))}
-            className="input-field w-auto"
+            className="input-field w-full sm:w-auto"
           >
             {Array.from({ length: 12 }, (_, i) => (
               <option key={i + 1} value={i + 1}>
@@ -81,10 +81,10 @@ const Presupuestos = () => {
             type="number"
             value={anio}
             onChange={(e) => setAnio(Number(e.target.value))}
-            className="input-field w-24"
+            className="input-field w-full sm:w-24"
           />
-          <Button variant="secondary" onClick={handleSincronizar}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button variant="secondary" onClick={handleSincronizar} className="w-full sm:w-auto shrink-0">
+            <RefreshCw className="h-4 w-4" />
             Sincronizar
           </Button>
           <Button
@@ -92,8 +92,9 @@ const Presupuestos = () => {
               setSeleccionado(null)
               setModalAbierto(true)
             }}
+            className="w-full sm:w-auto shrink-0"
           >
-            <Plus className="h-5 w-5 mr-2" />
+            <Plus className="h-4 w-4" />
             Nuevo
           </Button>
         </div>
@@ -122,19 +123,19 @@ const Presupuestos = () => {
       />
 
       {resumen && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="stat-grid">
           <Card>
-            <p className="text-sm text-gray-500">Límite total</p>
-            <p className="text-2xl font-bold">${Number(resumen.totalLimite || 0).toFixed(2)}</p>
+            <p className="text-sm text-ink-muted">Límite total</p>
+            <p className="text-2xl font-bold text-ink">${Number(resumen.totalLimite || 0).toFixed(2)}</p>
           </Card>
           <Card>
-            <p className="text-sm text-gray-500">Gastado</p>
+            <p className="text-sm text-ink-muted">Gastado</p>
             <p className="text-2xl font-bold text-orange-600">
               ${Number(resumen.totalGastado || 0).toFixed(2)}
             </p>
           </Card>
           <Card>
-            <p className="text-sm text-gray-500">Excedidos</p>
+            <p className="text-sm text-ink-muted">Excedidos</p>
             <p className="text-2xl font-bold text-red-600">{resumen.excedidos || 0}</p>
           </Card>
         </div>
@@ -145,55 +146,59 @@ const Presupuestos = () => {
           <Spinner />
         </div>
       ) : presupuestos.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card-grid">
           {presupuestos.map((p) => (
-            <Card key={p.id}>
+            <Card key={p.id} hover>
               <div className="space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-bold text-lg text-gray-900">{p.categoria}</h3>
-                    <p className="text-sm text-gray-500">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-lg text-ink">{p.categoria}</h3>
+                    <p className="text-sm text-ink-muted">
                       {p.mes}/{p.anio || p.año}
                       {p.excedido && (
                         <span className="ml-2 text-red-600 font-medium">Excedido</span>
                       )}
                     </p>
                   </div>
-                  <div className="flex gap-1">
-                    <button
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => {
                         setSeleccionado(p)
                         setModalAbierto(true)
                       }}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                      aria-label="Editar presupuesto"
                     >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
+                      <Edit className="h-4 w-4 text-primary-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => {
                         setAEliminar(p)
                         setConfirmOpen(true)
                       }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      aria-label="Eliminar presupuesto"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
                   </div>
                 </div>
 
                 <div className="flex justify-between text-sm">
-                  <span>
+                  <span className="text-ink-muted">
                     ${Number(p.gastado).toFixed(2)} / ${Number(p.limite).toFixed(2)}
                   </span>
                   <span
                     className={
-                      p.excedido ? 'text-red-600 font-medium' : 'text-gray-700 font-medium'
+                      p.excedido ? 'text-red-600 font-medium' : 'text-ink font-medium'
                     }
                   >
                     {Number(p.porcentajeUsado || 0).toFixed(0)}%
                   </span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-surface-muted rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full ${
                       p.excedido
@@ -205,7 +210,7 @@ const Presupuestos = () => {
                     style={{ width: `${Math.min(100, p.porcentajeUsado || 0)}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-ink-subtle">
                   Restante: ${Number(p.restante || 0).toFixed(2)}
                   {p.alertaEn != null && ` · Alerta al ${p.alertaEn}%`}
                 </p>

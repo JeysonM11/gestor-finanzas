@@ -1,41 +1,70 @@
 import { cn } from '../../utils/cn'
 
+const baseStyles =
+  'inline-flex items-center justify-center gap-2 font-medium rounded-control transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none'
+
+const variants = {
+  primary:
+    'bg-primary-600 text-white shadow-sm hover:bg-primary-700 active:bg-primary-800',
+  secondary:
+    'bg-slate-100 text-slate-800 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
+  outline:
+    'border border-line bg-surface text-ink hover:bg-surface-muted hover:border-line-strong',
+  danger:
+    'bg-red-600 text-white shadow-sm hover:bg-red-700 active:bg-red-800',
+  ghost:
+    'bg-transparent text-ink-muted hover:bg-surface-muted hover:text-ink',
+  success:
+    'bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 active:bg-emerald-800',
+}
+
+const sizes = {
+  sm: 'h-8 px-3 text-xs',
+  md: 'h-10 px-4 text-sm',
+  lg: 'h-11 px-5 text-sm',
+  icon: 'h-9 w-9 p-0',
+  'icon-sm': 'h-8 w-8 p-0',
+}
+
 /**
- * Botón alineado al estilo actual (`common/Button`).
- *
  * @param {object} props
  * @param {import('react').ReactNode} [props.children]
- * @param {'primary'|'secondary'|'danger'|'outline'} [props.variant='primary']
- * @param {'button'|'submit'|'reset'} [props.type='button']
+ * @param {'primary'|'secondary'|'outline'|'danger'|'ghost'|'success'} [props.variant='primary']
+ * @param {'sm'|'md'|'lg'|'icon'|'icon-sm'} [props.size='md']
+ * @param {boolean} [props.loading]
  * @param {boolean} [props.disabled]
+ * @param {'button'|'submit'|'reset'} [props.type='button']
  * @param {string} [props.className]
- * @param {import('react').MouseEventHandler<HTMLButtonElement>} [props.onClick]
  */
 const Button = ({
   children,
   variant = 'primary',
+  size = 'md',
   type = 'button',
   className = '',
   disabled = false,
+  loading = false,
   ...props
 }) => {
-  const baseStyles =
-    'px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-
-  const variants = {
-    primary: 'bg-primary-600 hover:bg-primary-700 text-white',
-    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-800',
-    danger: 'bg-red-600 hover:bg-red-700 text-white',
-    outline: 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50',
-  }
-
   return (
     <button
       type={type}
-      disabled={disabled}
-      className={cn(baseStyles, variants[variant] || variants.primary, className)}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      className={cn(
+        baseStyles,
+        variants[variant] || variants.primary,
+        sizes[size] || sizes.md,
+        className
+      )}
       {...props}
     >
+      {loading && (
+        <span
+          className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"
+          aria-hidden="true"
+        />
+      )}
       {children}
     </button>
   )

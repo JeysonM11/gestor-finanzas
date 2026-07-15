@@ -20,38 +20,29 @@ const ConfirmDialog = ({
   const resolvedType = variant || type || 'danger'
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="">
-      <div className="text-center">
+    <Modal isOpen={isOpen} onClose={onClose} title={title || 'Confirmar'} size="sm">
+      <div className="text-center sm:text-left">
         <div
-          className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${
+          className={`mx-auto sm:mx-0 flex items-center justify-center h-11 w-11 rounded-xl mb-4 ${
             resolvedType === 'danger'
-              ? 'bg-red-100'
+              ? 'bg-red-50 text-red-600'
               : resolvedType === 'warning'
-                ? 'bg-yellow-100'
-                : 'bg-blue-100'
+                ? 'bg-amber-50 text-amber-600'
+                : 'bg-blue-50 text-blue-600'
           }`}
         >
-          <AlertTriangle
-            className={`h-6 w-6 ${
-              resolvedType === 'danger'
-                ? 'text-red-600'
-                : resolvedType === 'warning'
-                  ? 'text-yellow-600'
-                  : 'text-blue-600'
-            }`}
-          />
+          <AlertTriangle className="h-5 w-5" aria-hidden="true" />
         </div>
 
-        <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
+        <p className="text-sm text-ink-muted mb-6">{message}</p>
 
-        <p className="text-sm text-gray-500 mb-6">{message}</p>
-
-        <div className="flex items-center justify-center gap-3">
-          <Button variant="secondary" onClick={onClose}>
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             {cancelText}
           </Button>
           <Button
             variant={resolvedType === 'danger' ? 'danger' : 'primary'}
+            className="w-full sm:w-auto"
             onClick={() => {
               onConfirm()
               onClose()

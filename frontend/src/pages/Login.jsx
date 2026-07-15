@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import Input from '../components/common/Input'
-import Button from '../components/common/Button'
+import { Input, Button, Alert } from '../components/ui'
 import { Wallet } from 'lucide-react'
 
 const Login = () => {
@@ -10,12 +9,11 @@ const Login = () => {
   const { login, isAuthenticated } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Redirigir si ya está autenticado
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard')
@@ -25,7 +23,7 @@ const Login = () => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     })
   }
 
@@ -38,25 +36,38 @@ const Login = () => {
       await login(formData.email, formData.password)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.error || 'Error al iniciar sesión')
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          'Error al iniciar sesión'
+      )
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
-          <Wallet className="h-12 w-12 text-primary-600 mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900">Gestor de Finanzas</h1>
-          <p className="text-gray-500 mt-2">Inicia sesión en tu cuenta</p>
+    <div className="min-h-dvh flex items-center justify-center p-4 bg-surface-muted relative overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-70"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 50% at 50% -20%, rgb(37 99 235 / 0.15), transparent), radial-gradient(ellipse 60% 40% at 100% 100%, rgb(15 23 42 / 0.04), transparent)',
+        }}
+      />
+      <div className="relative w-full max-w-md bg-surface border border-line rounded-2xl shadow-card p-6 sm:p-8">
+        <div className="flex flex-col items-center mb-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-sm mb-4">
+            <Wallet className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Gestor de Finanzas</h1>
+          <p className="text-sm text-ink-muted mt-1.5">Inicia sesión en tu cuenta</p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <Alert variant="error" className="mb-5">
             {error}
-          </div>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,6 +79,7 @@ const Login = () => {
             onChange={handleChange}
             placeholder="tu@email.com"
             required
+            autoComplete="email"
           />
 
           <Input
@@ -78,18 +90,15 @@ const Login = () => {
             onChange={handleChange}
             placeholder="••••••••"
             required
+            autoComplete="current-password"
           />
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" loading={loading}>
             {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-ink-muted">
           ¿No tienes cuenta?{' '}
           <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
             Regístrate aquí

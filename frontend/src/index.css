@@ -2,14 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-surface: 255 255 255;
+  --color-surface-muted: 248 250 252;
+  --color-surface-elevated: 255 255 255;
+  --color-ink: 15 23 42;
+  --color-ink-muted: 71 85 105;
+  --color-ink-subtle: 148 163 184;
+  --color-line: 226 232 240;
+  --color-line-strong: 203 213 225;
+  color-scheme: light;
+}
+
+/* Estructura lista para dark mode (activar con class="dark" en <html>) */
+.dark {
+  --color-surface: 15 23 42;
+  --color-surface-muted: 2 6 23;
+  --color-surface-elevated: 30 41 59;
+  --color-ink: 248 250 252;
+  --color-ink-muted: 148 163 184;
+  --color-ink-subtle: 100 116 139;
+  --color-line: 51 65 85;
+  --color-line-strong: 71 85 105;
+  color-scheme: dark;
+}
+
 @layer base {
+  html {
+    @apply antialiased scroll-smooth;
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-surface-muted text-ink font-sans;
+    overflow-x: hidden;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary-500/40 ring-offset-2 ring-offset-surface-muted;
   }
 }
 
 @layer components {
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full px-3 py-2.5 text-sm bg-surface text-ink
+      border border-line rounded-control
+      placeholder:text-ink-subtle
+      transition-colors duration-150
+      hover:border-line-strong
+      focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .page-shell {
+    @apply w-full max-w-7xl mx-auto space-y-5 sm:space-y-6;
+  }
+
+  .page-header {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between;
+  }
+
+  .page-title {
+    @apply text-xl sm:text-2xl font-semibold tracking-tight text-ink;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-ink-muted mt-1;
+  }
+
+  .stat-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4;
+  }
+
+  .card-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4;
+  }
+
+  .table-shell {
+    @apply w-full overflow-x-auto -mx-1 px-1;
+  }
+
+  .data-table {
+    @apply w-full min-w-[640px] text-sm text-left;
+  }
+
+  .data-table thead th {
+    @apply px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-ink-subtle
+      border-b border-line bg-surface-muted/80 whitespace-nowrap;
+  }
+
+  .data-table tbody td {
+    @apply px-3 py-3 border-b border-line align-middle text-ink;
+  }
+
+  .data-table tbody tr {
+    @apply transition-colors hover:bg-surface-muted/80;
   }
 }

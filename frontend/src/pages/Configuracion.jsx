@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/auth.service'
 import { reporteService } from '../services/reporte.service'
-import { Card, Button, Input } from '../components/ui'
+import { Card, Button, Input, Alert, Badge } from '../components/ui'
 import { User, Lock, Bell, Download, Shield } from 'lucide-react'
 
 const Configuracion = () => {
@@ -168,25 +168,21 @@ const Configuracion = () => {
   ]
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
-        <p className="text-gray-500 mt-2">Personaliza tu experiencia</p>
+    <div className="page-shell">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Configuración</h1>
+          <p className="page-subtitle">Personaliza tu experiencia</p>
+        </div>
       </div>
 
-      {/* Mensaje de éxito/error */}
       {mensaje.texto && (
-        <div className={`p-4 rounded-lg ${
-          mensaje.tipo === 'success' 
-            ? 'bg-green-50 border border-green-200 text-green-800' 
-            : 'bg-red-50 border border-red-200 text-red-800'
-        }`}>
+        <Alert variant={mensaje.tipo === 'success' ? 'success' : 'error'}>
           {mensaje.texto}
-        </div>
+        </Alert>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar de tabs */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
         <Card className="lg:col-span-1 h-fit">
           <nav className="space-y-1">
             {tabs.map((tab) => {
@@ -201,7 +197,7 @@ const Configuracion = () => {
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     activeTab === tab.id
                       ? 'bg-primary-50 text-primary-700 font-medium'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      : 'text-ink-muted hover:bg-surface-muted hover:text-ink'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -217,7 +213,7 @@ const Configuracion = () => {
           {/* Pestaña Perfil */}
           {activeTab === 'perfil' && (
             <Card>
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Información del Perfil</h2>
+              <h2 className="text-xl font-bold text-ink mb-6">Información del Perfil</h2>
               <form onSubmit={handleGuardarPerfil} className="space-y-4">
                 <Input
                   label="Nombre completo"
@@ -239,7 +235,7 @@ const Configuracion = () => {
                   required
                   disabled
                 />
-                <p className="text-xs text-gray-500 -mt-2">
+                <p className="text-xs text-ink-subtle -mt-2">
                   El email no se puede cambiar desde esta pantalla.
                 </p>
 
@@ -265,15 +261,15 @@ const Configuracion = () => {
 
                 <div className="flex items-center gap-2 pt-4">
                   {user?.rol === 'ADMIN' && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg text-purple-800 text-sm">
-                      <Shield className="h-4 w-4" />
-                      <span className="font-medium">Administrador</span>
-                    </div>
+                    <Badge variant="purple">
+                      <Shield className="h-3 w-3" />
+                      Administrador
+                    </Badge>
                   )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-                  <Button type="submit" disabled={loading}>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pt-4 border-t border-line">
+                  <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                     {loading ? 'Guardando...' : 'Guardar Cambios'}
                   </Button>
                 </div>
@@ -284,7 +280,7 @@ const Configuracion = () => {
           {/* Pestaña Seguridad */}
           {activeTab === 'seguridad' && (
             <Card>
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Cambiar Contraseña</h2>
+              <h2 className="text-xl font-bold text-ink mb-6">Cambiar Contraseña</h2>
               <form onSubmit={handleCambiarPassword} className="space-y-4">
                 <Input
                   label="Contraseña actual"
@@ -316,14 +312,12 @@ const Configuracion = () => {
                   required
                 />
 
-                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Requisitos:</strong> Mínimo 6 caracteres, una mayúscula, una minúscula y un número.
-                  </p>
-                </div>
+                <Alert variant="info">
+                  <strong>Requisitos:</strong> Mínimo 6 caracteres, una mayúscula, una minúscula y un número.
+                </Alert>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-                  <Button type="submit" disabled={loading}>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pt-4 border-t border-line">
+                  <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                     {loading ? 'Cambiando...' : 'Cambiar Contraseña'}
                   </Button>
                 </div>
@@ -334,13 +328,13 @@ const Configuracion = () => {
           {/* Pestaña Notificaciones */}
           {activeTab === 'notificaciones' && (
             <Card>
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Preferencias de Notificaciones</h2>
+              <h2 className="text-xl font-bold text-ink mb-6">Preferencias de Notificaciones</h2>
               <form onSubmit={handleGuardarPreferencias} className="space-y-6">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <p className="font-medium text-gray-900">Notificaciones por email</p>
-                      <p className="text-sm text-gray-500">Recibe actualizaciones por correo electrónico</p>
+                      <p className="font-medium text-ink">Notificaciones por email</p>
+                      <p className="text-sm text-ink-muted">Recibe actualizaciones por correo electrónico</p>
                     </div>
                     <input
                       type="checkbox"
@@ -351,10 +345,10 @@ const Configuracion = () => {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <p className="font-medium text-gray-900">Notificaciones push</p>
-                      <p className="text-sm text-gray-500">Recibe notificaciones en tiempo real</p>
+                      <p className="font-medium text-ink">Notificaciones push</p>
+                      <p className="text-sm text-ink-muted">Recibe notificaciones en tiempo real</p>
                     </div>
                     <input
                       type="checkbox"
@@ -365,10 +359,10 @@ const Configuracion = () => {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <p className="font-medium text-gray-900">Notificaciones de transacciones</p>
-                      <p className="text-sm text-gray-500">Recibe alertas cuando se registren transacciones</p>
+                      <p className="font-medium text-ink">Notificaciones de transacciones</p>
+                      <p className="text-sm text-ink-muted">Recibe alertas cuando se registren transacciones</p>
                     </div>
                     <input
                       type="checkbox"
@@ -379,10 +373,10 @@ const Configuracion = () => {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <p className="font-medium text-gray-900">Recordatorios de transacciones recurrentes</p>
-                      <p className="text-sm text-gray-500">Recibe recordatorios antes de ejecutar pagos recurrentes</p>
+                      <p className="font-medium text-ink">Recordatorios de transacciones recurrentes</p>
+                      <p className="text-sm text-ink-muted">Recibe recordatorios antes de ejecutar pagos recurrentes</p>
                     </div>
                     <input
                       type="checkbox"
@@ -394,8 +388,8 @@ const Configuracion = () => {
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="border-t border-line pt-6">
+                  <label className="block text-sm font-medium text-ink-muted mb-2">
                     Moneda principal
                   </label>
                   <select
@@ -412,8 +406,8 @@ const Configuracion = () => {
                   </select>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-                  <Button type="submit" disabled={loading}>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pt-4 border-t border-line">
+                  <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                     {loading ? 'Guardando...' : 'Guardar Preferencias'}
                   </Button>
                 </div>
@@ -421,31 +415,30 @@ const Configuracion = () => {
             </Card>
           )}
 
-          {/* Pestaña Datos */}
           {activeTab === 'datos' && (
             <Card>
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Gestión de Datos</h2>
+              <h2 className="text-xl font-bold text-ink mb-6">Gestión de Datos</h2>
               <div className="space-y-6">
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="font-medium text-gray-900 mb-2">Exportar datos</h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                <div className="p-4 border border-line rounded-lg">
+                  <h3 className="font-medium text-ink mb-2">Exportar datos</h3>
+                  <p className="text-sm text-ink-muted mb-4">
                     Descarga una copia de tus transacciones en formato CSV.
                   </p>
-                  <Button variant="secondary" onClick={handleExportarDatos} disabled={loading}>
-                    <Download className="h-5 w-5 mr-2" />
+                  <Button variant="secondary" onClick={handleExportarDatos} disabled={loading} className="w-full sm:w-auto">
+                    <Download className="h-4 w-4" />
                     {loading ? 'Exportando...' : 'Exportar Datos'}
                   </Button>
                 </div>
 
-                <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
-                  <h3 className="font-medium text-red-900 mb-2">Zona de peligro</h3>
-                  <p className="text-sm text-red-600 mb-4">
+                <Alert variant="error">
+                  <h3 className="font-medium mb-2">Zona de peligro</h3>
+                  <p className="mb-4">
                     La eliminación de cuenta aún no está implementada en el backend.
                   </p>
-                  <Button variant="danger" disabled>
+                  <Button variant="danger" disabled className="w-full sm:w-auto">
                     Eliminar mi cuenta (próximamente)
                   </Button>
-                </div>
+                </Alert>
               </div>
             </Card>
           )}

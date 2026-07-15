@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, Button, Spinner, Select, Input } from '../components/ui'
+import { Card, Button, Spinner, Select, Input, Badge } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalTransaccion from '../components/transacciones/ModalTransaccion'
 import { transaccionService } from '../services/transaccion.service'
@@ -89,19 +89,25 @@ const Transacciones = () => {
     setTransaccionSeleccionada(null)
   }
 
+  const tipoBadge = (tipo) => {
+    if (tipo === 'INGRESO') return 'green'
+    if (tipo === 'TRANSFERENCIA') return 'blue'
+    return 'red'
+  }
+
   if (loading && transacciones.length === 0) {
     return <Spinner fullPage />
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Transacciones</h1>
-          <p className="text-gray-600">Gestiona tus ingresos y gastos</p>
+    <div className="page-shell">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Transacciones</h1>
+          <p className="page-subtitle">Gestiona tus ingresos y gastos</p>
         </div>
-        <Button onClick={() => setModalAbierto(true)}>
-          <Plus className="h-5 w-5 mr-2" />
+        <Button onClick={() => setModalAbierto(true)} className="w-full sm:w-auto shrink-0">
+          <Plus className="h-4 w-4" />
           Nueva Transacción
         </Button>
       </div>
@@ -125,23 +131,26 @@ const Transacciones = () => {
       />
 
       <Card>
-        <form onSubmit={handleBuscar} className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Filter className="h-4 w-4 inline mr-2" />
-              Tipo
-            </label>
-            <Select
-              name="tipo"
-              value={filtros.tipo}
-              onChange={handleFiltroChange}
-            >
-              <option value="">Todos</option>
-              <option value="INGRESO">Ingresos</option>
-              <option value="GASTO">Gastos</option>
-              <option value="TRANSFERENCIA">Transferencias</option>
-            </Select>
-          </div>
+        <form
+          onSubmit={handleBuscar}
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4"
+        >
+          <Select
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                <Filter className="h-3.5 w-3.5" />
+                Tipo
+              </span>
+            }
+            name="tipo"
+            value={filtros.tipo}
+            onChange={handleFiltroChange}
+          >
+            <option value="">Todos</option>
+            <option value="INGRESO">Ingresos</option>
+            <option value="GASTO">Gastos</option>
+            <option value="TRANSFERENCIA">Transferencias</option>
+          </Select>
 
           <Input
             label="Fecha Inicio"
@@ -167,99 +176,130 @@ const Transacciones = () => {
             placeholder="Descripción o notas..."
           />
 
-          <div className="flex items-end">
+          <div className="flex items-end sm:col-span-2 xl:col-span-1">
             <Button type="submit" variant="secondary" className="w-full">
-              <Search className="h-5 w-5 mr-2" />
+              <Search className="h-4 w-4" />
               Buscar
             </Button>
           </div>
         </form>
       </Card>
 
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
+      {/* Mobile cards */}
+      <div className="space-y-2 md:hidden">
+        {transacciones.length > 0 ? (
+          transacciones.map((transaccion) => (
+            <Card key={transaccion.id} className="!p-3.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-ink truncate">{transaccion.descripcion}</p>
+                  <p className="text-xs text-ink-muted mt-0.5">
+                    {dayjs(transaccion.fecha).format('DD/MM/YYYY')} ·{' '}
+                    {transaccion.categoria || '-'}
+                  </p>
+                  <div className="mt-2">
+                    <Badge variant={tipoBadge(transaccion.tipo)}>{transaccion.tipo}</Badge>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <p
+                    className={`font-semibold tabular-nums ${
+                      transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
+                    }`}
+                  >
+                    {transaccion.tipo === 'INGRESO' ? '+' : '-'}$
+                    {Number(transaccion.monto).toFixed(2)}
+                  </p>
+                  <div className="flex justify-end gap-1 mt-2">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleEditar(transaccion)}
+                      aria-label="Editar"
+                    >
+                      <Edit className="h-4 w-4 text-primary-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleEliminar(transaccion)}
+                      aria-label="Eliminar"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <Card>
+            <p className="text-center text-ink-muted py-8 text-sm">
+              No se encontraron transacciones
+            </p>
+          </Card>
+        )}
+      </div>
+
+      {/* Desktop / tablet table */}
+      <Card padding={false} className="hidden md:block overflow-hidden">
+        <div className="table-shell">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fecha
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Descripción
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Categoría
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tipo
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Monto
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
+                <th>Fecha</th>
+                <th>Descripción</th>
+                <th>Categoría</th>
+                <th>Tipo</th>
+                <th className="text-right">Monto</th>
+                <th className="text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {transacciones.length > 0 ? (
                 transacciones.map((transaccion) => (
-                  <tr key={transaccion.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <tr key={transaccion.id}>
+                    <td className="whitespace-nowrap">
                       {dayjs(transaccion.fecha).format('DD/MM/YYYY')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {transaccion.descripcion}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {transaccion.categoria || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          transaccion.tipo === 'INGRESO'
-                            ? 'bg-green-100 text-green-800'
-                            : transaccion.tipo === 'TRANSFERENCIA'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {transaccion.tipo}
-                      </span>
+                    <td className="max-w-[14rem] truncate">{transaccion.descripcion}</td>
+                    <td className="text-ink-muted">{transaccion.categoria || '-'}</td>
+                    <td>
+                      <Badge variant={tipoBadge(transaccion.tipo)}>{transaccion.tipo}</Badge>
                     </td>
                     <td
-                      className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${
-                        transaccion.tipo === 'INGRESO'
-                          ? 'text-green-600'
-                          : 'text-red-600'
+                      className={`text-right font-medium tabular-nums ${
+                        transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
                       }`}
                     >
                       {transaccion.tipo === 'INGRESO' ? '+' : '-'}$
                       {Number(transaccion.monto).toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
+                    <td>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
                           onClick={() => handleEditar(transaccion)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors"
-                          title="Editar"
+                          aria-label="Editar"
                         >
-                          <Edit className="h-5 w-5" />
-                        </button>
-                        <button
+                          <Edit className="h-4 w-4 text-primary-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
                           onClick={() => handleEliminar(transaccion)}
-                          className="text-red-600 hover:text-red-800 transition-colors"
-                          title="Eliminar"
+                          aria-label="Eliminar"
                         >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="6" className="!text-center text-ink-muted py-10">
                     No se encontraron transacciones
                   </td>
                 </tr>

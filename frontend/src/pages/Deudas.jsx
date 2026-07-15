@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { CreditCard, Plus, Edit, Trash2, DollarSign, Calendar, TrendingDown, AlertTriangle } from 'lucide-react'
-import { Button, Spinner } from '../components/ui'
+import { Button, Spinner, Card, EmptyState, Badge } from '../components/ui'
 import ModalDeuda from '../components/deudas/ModalDeuda'
 import ModalPago from '../components/deudas/ModalPago'
 import ConfirmDialog from '../components/common/ConfirmDialog'
@@ -110,83 +110,86 @@ const Deudas = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Deudas</h1>
-          <p className="text-gray-600 mt-1">Administra tus préstamos y obligaciones</p>
+    <div className="page-shell">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Gestión de Deudas</h1>
+          <p className="page-subtitle">Administra tus préstamos y obligaciones</p>
         </div>
-        <Button onClick={() => setModalDeudaOpen(true)}>
-          <Plus className="w-5 h-5 mr-2" />
+        <Button onClick={() => setModalDeudaOpen(true)} className="w-full sm:w-auto shrink-0">
+          <Plus className="h-4 w-4" />
           Nueva Deuda
         </Button>
       </div>
 
       {/* Resumen Total */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+      <div className="stat-grid">
+        <Card>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Adeudado</p>
-              <p className="text-2xl font-bold text-gray-900">${totales.total.toFixed(2)}</p>
+              <p className="text-sm text-ink-muted mb-1">Total Adeudado</p>
+              <p className="text-2xl font-bold text-ink">${totales.total.toFixed(2)}</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
               <CreditCard className="w-6 h-6 text-red-600" />
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <Card>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Pagado</p>
+              <p className="text-sm text-ink-muted mb-1">Total Pagado</p>
               <p className="text-2xl font-bold text-green-600">${totales.pagado.toFixed(2)}</p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-green-600" />
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <Card>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Restante</p>
+              <p className="text-sm text-ink-muted mb-1">Total Restante</p>
               <p className="text-2xl font-bold text-orange-600">${totales.restante.toFixed(2)}</p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
               <TrendingDown className="w-6 h-6 text-orange-600" />
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+        <Card>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Progreso Total</p>
-              <p className="text-2xl font-bold text-blue-600">{totales.progresoTotal.toFixed(1)}%</p>
+              <p className="text-sm text-ink-muted mb-1">Progreso Total</p>
+              <p className="text-2xl font-bold text-primary-600">{totales.progresoTotal.toFixed(1)}%</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
               <AlertTriangle className="w-6 h-6 text-blue-600" />
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Lista de Deudas */}
       {deudas.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-md p-12 text-center border border-gray-200">
-          <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No hay deudas registradas</h3>
-          <p className="text-gray-600 mb-6">Comienza agregando tus préstamos y obligaciones</p>
-          <Button onClick={() => setModalDeudaOpen(true)}>
-            <Plus className="w-5 h-5 mr-2" />
-            Agregar Primera Deuda
-          </Button>
-        </div>
+        <Card>
+          <EmptyState
+            icon={<CreditCard className="h-16 w-16" />}
+            title="No hay deudas registradas"
+            description="Comienza agregando tus préstamos y obligaciones"
+            action={
+              <Button onClick={() => setModalDeudaOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Agregar Primera Deuda
+              </Button>
+            }
+          />
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card-grid">
           {(Array.isArray(deudas) ? deudas : []).map((deuda) => {
             const progreso = calcularProgreso(deuda)
             const restante = calcularRestante(deuda)
@@ -196,44 +199,42 @@ const Deudas = () => {
             const montoPagado = deuda.montoPagado ?? 0
             
             return (
-              <div key={deuda.id} className="bg-white rounded-xl shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{deuda.nombre}</h3>
-                    <div className="flex items-center gap-2">
+              <Card key={deuda.id} hover>
+                <div className="flex items-start justify-between mb-4 gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-ink mb-2">{deuda.nombre}</h3>
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${tipoBadge.color}`}>
                         {tipoBadge.label}
                       </span>
                       {estaVencida && (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                          Vencida
-                        </span>
+                        <Badge variant="vencido">Vencida</Badge>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => handleEditDeuda(deuda)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Editar"
+                      aria-label="Editar deuda"
                     >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
+                      <Edit className="h-4 w-4 text-primary-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => setDeudaToDelete(deuda)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Eliminar"
+                      aria-label="Eliminar deuda"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
                   </div>
                 </div>
 
-                {/* Información */}
                 <div className="space-y-3 mb-4">
                   {deuda.acreedor && (
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-ink-muted">
                       <span className="font-medium mr-2">Acreedor:</span>
                       <span>{deuda.acreedor}</span>
                     </div>
@@ -241,40 +242,39 @@ const Deudas = () => {
                   
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-600">Monto Total</p>
-                      <p className="font-semibold text-gray-900">${montoTotal.toFixed(2)}</p>
+                      <p className="text-ink-muted">Monto Total</p>
+                      <p className="font-semibold text-ink">${montoTotal.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Pagado</p>
+                      <p className="text-ink-muted">Pagado</p>
                       <p className="font-semibold text-green-600">${montoPagado.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Restante</p>
+                      <p className="text-ink-muted">Restante</p>
                       <p className="font-semibold text-orange-600">${restante.toFixed(2)}</p>
                     </div>
                     {deuda.tasaInteres > 0 && (
                       <div>
-                        <p className="text-gray-600">Tasa</p>
-                        <p className="font-semibold text-gray-900">{deuda.tasaInteres}%</p>
+                        <p className="text-ink-muted">Tasa</p>
+                        <p className="font-semibold text-ink">{deuda.tasaInteres}%</p>
                       </div>
                     )}
                   </div>
 
                   {deuda.fechaVencimiento && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="w-4 h-4 mr-2" />
+                    <div className="flex items-center text-sm text-ink-muted">
+                      <Calendar className="w-4 h-4 mr-2 shrink-0" />
                       <span>Vence: {new Date(deuda.fechaVencimiento).toLocaleDateString()}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Barra de Progreso */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="font-medium text-gray-700">Progreso</span>
+                    <span className="font-medium text-ink-muted">Progreso</span>
                     <span className="font-semibold text-primary-600">{progreso.toFixed(1)}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                  <div className="w-full bg-surface-muted rounded-full h-3 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
                         progreso === 100 ? 'bg-green-500' : 'bg-primary-600'
@@ -284,14 +284,13 @@ const Deudas = () => {
                   </div>
                 </div>
 
-                {/* Botón de Pago */}
                 {restante > 0 && (
                   <Button
                     variant="secondary"
                     onClick={() => handleRegistrarPago(deuda)}
                     className="w-full"
                   >
-                    <DollarSign className="w-4 h-4 mr-2" />
+                    <DollarSign className="w-4 h-4" />
                     Registrar Pago
                   </Button>
                 )}
@@ -301,7 +300,7 @@ const Deudas = () => {
                     ✓ Deuda Saldada Completamente
                   </div>
                 )}
-              </div>
+              </Card>
             )
           })}
         </div>
