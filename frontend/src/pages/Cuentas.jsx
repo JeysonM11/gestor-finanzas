@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import Card from '../components/common/Card'
-import Button from '../components/common/Button'
+import { Card, Button, Spinner, EmptyState } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalCuenta from '../components/cuentas/ModalCuenta'
 import { cuentaService } from '../services/cuenta.service'
@@ -89,11 +88,7 @@ const Cuentas = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    )
+    return <Spinner fullPage />
   }
 
   const totalesPorMoneda = calcularTotalPorMoneda()
@@ -213,15 +208,17 @@ const Cuentas = () => {
         </div>
       ) : (
         <Card>
-          <div className="text-center py-12">
-            <Wallet className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay cuentas</h3>
-            <p className="text-gray-500 mb-6">Crea tu primera cuenta para comenzar</p>
-            <Button onClick={() => setModalAbierto(true)}>
-              <Plus className="h-5 w-5 mr-2" />
-              Nueva Cuenta
-            </Button>
-          </div>
+          <EmptyState
+            icon={<Wallet className="h-16 w-16" />}
+            title="No hay cuentas"
+            description="Crea tu primera cuenta para comenzar"
+            action={
+              <Button onClick={() => setModalAbierto(true)}>
+                <Plus className="h-5 w-5 mr-2" />
+                Nueva Cuenta
+              </Button>
+            }
+          />
         </Card>
       )}
     </div>

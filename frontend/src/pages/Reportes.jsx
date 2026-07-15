@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import Card from '../components/common/Card'
+import { Card, Spinner } from '../components/ui'
 import { reporteService } from '../services/reporte.service'
 import { 
   BarChart, Bar, PieChart, Pie, LineChart, Line, 
@@ -39,11 +39,7 @@ const Reportes = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    )
+    return <Spinner fullPage />
   }
 
   return (

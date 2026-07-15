@@ -2,9 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/auth.service'
 import { reporteService } from '../services/reporte.service'
-import Card from '../components/common/Card'
-import Button from '../components/common/Button'
-import Input from '../components/common/Input'
+import { Card, Button, Input } from '../components/ui'
 import { User, Lock, Bell, Download, Shield } from 'lucide-react'
 
 const Configuracion = () => {

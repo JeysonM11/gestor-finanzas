@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import Card from '../components/common/Card'
-import Button from '../components/common/Button'
+import { Card, Button, Spinner, EmptyState } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalPresupuesto from '../components/presupuestos/ModalPresupuesto'
 import { presupuestoService } from '../services/presupuesto.service'
@@ -143,7 +142,7 @@ const Presupuestos = () => {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
+          <Spinner />
         </div>
       ) : presupuestos.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -216,17 +215,17 @@ const Presupuestos = () => {
         </div>
       ) : (
         <Card>
-          <div className="text-center py-12">
-            <PieChart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Sin presupuestos</h3>
-            <p className="text-gray-500 mb-6">
-              Define un límite por categoría para {mes}/{anio}
-            </p>
-            <Button onClick={() => setModalAbierto(true)}>
-              <Plus className="h-5 w-5 mr-2" />
-              Nuevo presupuesto
-            </Button>
-          </div>
+          <EmptyState
+            icon={<PieChart className="h-16 w-16" />}
+            title="Sin presupuestos"
+            description={`Define un límite por categoría para ${mes}/${anio}`}
+            action={
+              <Button onClick={() => setModalAbierto(true)}>
+                <Plus className="h-5 w-5 mr-2" />
+                Nuevo presupuesto
+              </Button>
+            }
+          />
         </Card>
       )}
     </div>

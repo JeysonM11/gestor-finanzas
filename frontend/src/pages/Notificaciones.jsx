@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import Card from '../components/common/Card'
-import Button from '../components/common/Button'
+import { Card, Button, Spinner, EmptyState } from '../components/ui'
 import { notificacionService } from '../services/notificacion.service'
 import { useToast } from '../context/ToastContext'
 import { Bell, Check, CheckCheck, Trash2, AlertCircle, Info, CheckCircle } from 'lucide-react'
@@ -100,11 +99,7 @@ const Notificaciones = () => {
   const noLeidas = notificaciones.filter(n => !n.leida).length
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    )
+    return <Spinner fullPage />
   }
 
   return (
@@ -210,19 +205,20 @@ const Notificaciones = () => {
         </div>
       ) : (
         <Card>
-          <div className="text-center py-12">
-            <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {filtro === 'todas' 
+          <EmptyState
+            icon={<Bell className="h-16 w-16" />}
+            title={
+              filtro === 'todas'
                 ? 'No hay notificaciones'
                 : filtro === 'noLeidas'
-                ? 'No hay notificaciones sin leer'
-                : 'No hay notificaciones leídas'}
-            </h3>
+                  ? 'No hay notificaciones sin leer'
+                  : 'No hay notificaciones leídas'
+            }
+          >
             <p className="text-gray-500">
               Las nuevas notificaciones aparecerán aquí
             </p>
-          </div>
+          </EmptyState>
         </Card>
       )}
     </div>

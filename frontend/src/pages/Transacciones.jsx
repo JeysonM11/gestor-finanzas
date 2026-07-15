@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import Card from '../components/common/Card'
-import Button from '../components/common/Button'
+import { Card, Button, Spinner, Select, Input } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalTransaccion from '../components/transacciones/ModalTransaccion'
 import { transaccionService } from '../services/transaccion.service'
@@ -91,11 +90,7 @@ const Transacciones = () => {
   }
 
   if (loading && transacciones.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    )
+    return <Spinner fullPage />
   }
 
   return (
@@ -136,57 +131,41 @@ const Transacciones = () => {
               <Filter className="h-4 w-4 inline mr-2" />
               Tipo
             </label>
-            <select
+            <Select
               name="tipo"
               value={filtros.tipo}
               onChange={handleFiltroChange}
-              className="w-full input-field"
             >
               <option value="">Todos</option>
               <option value="INGRESO">Ingresos</option>
               <option value="GASTO">Gastos</option>
               <option value="TRANSFERENCIA">Transferencias</option>
-            </select>
+            </Select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha Inicio
-            </label>
-            <input
-              type="date"
-              name="fechaInicio"
-              value={filtros.fechaInicio}
-              onChange={handleFiltroChange}
-              className="w-full input-field"
-            />
-          </div>
+          <Input
+            label="Fecha Inicio"
+            type="date"
+            name="fechaInicio"
+            value={filtros.fechaInicio}
+            onChange={handleFiltroChange}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha Fin
-            </label>
-            <input
-              type="date"
-              name="fechaFin"
-              value={filtros.fechaFin}
-              onChange={handleFiltroChange}
-              className="w-full input-field"
-            />
-          </div>
+          <Input
+            label="Fecha Fin"
+            type="date"
+            name="fechaFin"
+            value={filtros.fechaFin}
+            onChange={handleFiltroChange}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Buscar
-            </label>
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Descripción o notas..."
-              className="w-full input-field"
-            />
-          </div>
+          <Input
+            label="Buscar"
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Descripción o notas..."
+          />
 
           <div className="flex items-end">
             <Button type="submit" variant="secondary" className="w-full">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { CreditCard, Plus, Edit, Trash2, DollarSign, Calendar, TrendingDown, AlertTriangle } from 'lucide-react'
-import Button from '../components/common/Button'
+import { Button, Spinner } from '../components/ui'
 import ModalDeuda from '../components/deudas/ModalDeuda'
 import ModalPago from '../components/deudas/ModalPago'
 import ConfirmDialog from '../components/common/ConfirmDialog'
@@ -106,11 +106,7 @@ const Deudas = () => {
   const totales = calcularTotales()
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    )
+    return <Spinner fullPage />
   }
 
   return (
