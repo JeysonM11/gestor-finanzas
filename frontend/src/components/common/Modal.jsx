@@ -1,7 +1,4 @@
-import { useState } from 'react'
 import { X } from 'lucide-react'
-import Button from './Button'
-import Input from './Input'
 
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null

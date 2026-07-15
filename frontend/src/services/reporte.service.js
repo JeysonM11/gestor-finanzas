@@ -36,16 +36,6 @@ export const reporteService = {
     }
   },
 
-  async getTopCategorias(limit = 5) {
-    try {
-      const gastos = await this.getGastosPorCategoria()
-      return gastos.slice(0, limit)
-    } catch (error) {
-      console.error('Error al obtener top categorías:', error)
-      return []
-    }
-  },
-
   async exportarCSV(params = {}) {
     const response = await api.get('/reportes/export', {
       params,

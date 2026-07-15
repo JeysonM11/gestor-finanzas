@@ -25,9 +25,4 @@ export const inversionService = {
     const response = await api.delete(`/finanzas/inversiones/${id}`)
     return response.data
   },
-
-  async getResumen() {
-    const response = await api.get('/finanzas/inversiones/resumen')
-    return response.data
-  }
 }

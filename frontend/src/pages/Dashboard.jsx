@@ -6,7 +6,7 @@ import { TrendingUp, TrendingDown, Wallet, Calendar, Shield } from 'lucide-react
 import dayjs from 'dayjs'
 
 const Dashboard = () => {
-  const { user, isAdmin } = useAuth()
+  const { isAdmin } = useAuth()
   const [resumen, setResumen] = useState(null)
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)

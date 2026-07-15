@@ -83,10 +83,6 @@ const Inversiones = () => {
     return { totalInvertido, totalActual, gananciaTotal, rendimientoPromedio }
   }
 
-  const getTipoIcon = (tipo) => {
-    return <TrendingUp className="h-5 w-5" />
-  }
-
   const getTipoBadge = (tipo) => {
     const colores = {
       'ACCIONES': 'bg-blue-100 text-blue-800',

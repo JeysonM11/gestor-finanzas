@@ -1,9 +1,3 @@
-export const TIPOS_TRANSACCION = {
-  INGRESO: 'INGRESO',
-  GASTO: 'GASTO',
-  TRANSFERENCIA: 'TRANSFERENCIA',
-}
-
 export const CATEGORIAS_DEFAULT = [
   { nombre: 'Alimentación', tipo: 'GASTO' },
   { nombre: 'Transporte', tipo: 'GASTO' },
@@ -26,12 +20,6 @@ export const METODOS_PAGO = [
   'CRYPTO',
   'OTRO',
 ]
-
-export const PERIODOS = {
-  MENSUAL: 'MENSUAL',
-  TRIMESTRAL: 'TRIMESTRAL',
-  ANUAL: 'ANUAL',
-}
 
 export function categoriasParaTipo(tipo) {
   return CATEGORIAS_DEFAULT.filter(

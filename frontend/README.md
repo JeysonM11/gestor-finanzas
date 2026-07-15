@@ -35,7 +35,7 @@ src/
 ├── pages/          # Dashboard, Transacciones, Cuentas, …
 ├── services/       # Axios por recurso
 ├── context/        # AuthContext, ToastContext
-├── utils/          # format.js, constants.js
+├── utils/          # constants.js
 ├── App.jsx
 └── main.jsx
 ```
@@ -60,5 +60,5 @@ src/
 ## Notas
 
 - Toasts globales vía `ToastContext` (errores visibles, no solo `console`)
-- Categorías en modales: lista default en `utils/constants.js`; API `/categorias` disponible vía `categoria.service.js`
+- Categorías en modales: lista default en `utils/constants.js` (API `/api/categorias` disponible en backend)
 - `ConfirmDialog` acepta `type` o `variant`
