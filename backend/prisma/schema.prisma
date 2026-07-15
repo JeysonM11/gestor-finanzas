@@ -256,7 +256,9 @@ model Deuda {
   tipo                TipoDeuda
   montoInicial        Float
   montoActual         Float
-  tasaInteres         Float?              // Porcentaje anual
+  tasaInteres         Float?              // Porcentaje de la tasa (ej. 15 = 15%)
+  tipoTasa            TipoTasaInteres?    // MENSUAL o ANUAL
+  plazoMeses          Int?                // Plazo del préstamo en meses
   fechaInicio         DateTime
   fechaVencimiento    DateTime?
   pagoMinimo          Float?
@@ -500,6 +502,11 @@ enum TipoDeuda {
   PRESTAMO_ESTUDIANTIL
   LINEA_CREDITO
   OTRO
+}
+
+enum TipoTasaInteres {
+  MENSUAL
+  ANUAL
 }
 
 enum TipoLogro {

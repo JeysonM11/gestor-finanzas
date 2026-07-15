@@ -81,23 +81,35 @@ const Deudas = () => {
   }
 
   const calcularProgreso = (deuda) => {
-    const total = deuda.montoTotal ?? deuda.montoInicial ?? 0
+    const total = deuda.montoConInteres ?? deuda.montoTotal ?? deuda.montoInicial ?? 0
     const pagado = deuda.montoPagado ?? 0
     if (!total) return 0
     return Math.min((pagado / total) * 100, 100)
   }
 
   const calcularRestante = (deuda) => {
-    const total = deuda.montoTotal ?? deuda.montoInicial ?? 0
+    if (deuda.montoActual != null) return deuda.montoActual
+    const total = deuda.montoConInteres ?? deuda.montoTotal ?? deuda.montoInicial ?? 0
     const pagado = deuda.montoPagado ?? 0
     return total - pagado
   }
 
+  const formatearPlazo = (meses) => {
+    if (!meses || meses <= 0) return null
+    return meses === 1 ? '1 mes' : `${meses} meses`
+  }
+
   const calcularTotales = () => {
     const lista = Array.isArray(deudas) ? deudas : []
-    const total = lista.reduce((acc, deuda) => acc + (deuda.montoTotal ?? deuda.montoInicial ?? 0), 0)
+    const total = lista.reduce(
+      (acc, deuda) => acc + (deuda.montoConInteres ?? deuda.montoTotal ?? deuda.montoInicial ?? 0),
+      0
+    )
     const pagado = lista.reduce((acc, deuda) => acc + (deuda.montoPagado ?? 0), 0)
-    const restante = total - pagado
+    const restante = lista.reduce(
+      (acc, deuda) => acc + (deuda.montoActual ?? calcularRestante(deuda)),
+      0
+    )
     const progresoTotal = total > 0 ? (pagado / total) * 100 : 0
     
     return { total, pagado, restante, progresoTotal }
@@ -197,6 +209,7 @@ const Deudas = () => {
             const estaVencida = deuda.fechaVencimiento && new Date(deuda.fechaVencimiento) < new Date()
             const montoTotal = deuda.montoTotal ?? deuda.montoInicial ?? 0
             const montoPagado = deuda.montoPagado ?? 0
+            const plazoLabel = formatearPlazo(deuda.plazoMeses)
             
             return (
               <Card key={deuda.id} hover>
@@ -207,6 +220,11 @@ const Deudas = () => {
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${tipoBadge.color}`}>
                         {tipoBadge.label}
                       </span>
+                      {plazoLabel && (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+                          {plazoLabel}
+                        </span>
+                      )}
                       {estaVencida && (
                         <Badge variant="vencido">Vencida</Badge>
                       )}
@@ -256,7 +274,12 @@ const Deudas = () => {
                     {deuda.tasaInteres > 0 && (
                       <div>
                         <p className="text-ink-muted">Tasa</p>
-                        <p className="font-semibold text-ink">{deuda.tasaInteres}%</p>
+                        <p className="font-semibold text-ink">
+                          {deuda.tasaInteres}%{' '}
+                          <span className="text-ink-muted font-normal">
+                            {deuda.tipoTasa === 'ANUAL' ? 'anual' : 'mensual'}
+                          </span>
+                        </p>
                       </div>
                     )}
                   </div>

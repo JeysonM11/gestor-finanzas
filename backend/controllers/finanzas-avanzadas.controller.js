@@ -3,6 +3,7 @@ const {
   mapTipoCuenta,
   normalizeDeudaInput,
   normalizeInversionInput,
+  calcularTotalConInteres,
   toDeudaDto,
   toInversionDto,
 } = require('../utils/mappers');
@@ -415,6 +416,8 @@ exports.crearDeuda = async (req, res) => {
         montoInicial: data.montoInicial,
         montoActual: data.montoActual ?? data.montoInicial,
         tasaInteres: data.tasaInteres,
+        tipoTasa: data.tipoTasa,
+        plazoMeses: data.plazoMeses,
         fechaInicio: new Date(data.fechaInicio),
         fechaVencimiento: data.fechaVencimiento
           ? new Date(data.fechaVencimiento)
@@ -455,11 +458,13 @@ exports.actualizarDeuda = async (req, res) => {
     if (data.nombre != null) updateData.nombre = data.nombre;
     if (data.tipo != null) updateData.tipo = data.tipo;
     if (data.montoInicial != null) updateData.montoInicial = data.montoInicial;
-    if (data.montoActual != null) {
-      updateData.montoActual = data.montoActual;
-      updateData.pagada = data.montoActual === 0;
-    }
     if (data.tasaInteres != null) updateData.tasaInteres = data.tasaInteres;
+    if (req.body.tipoTasa !== undefined || req.body.tipoTasaInteres !== undefined) {
+      updateData.tipoTasa = data.tipoTasa;
+    }
+    if (req.body.plazoMeses !== undefined) {
+      updateData.plazoMeses = data.plazoMeses;
+    }
     if (data.fechaInicio) updateData.fechaInicio = new Date(data.fechaInicio);
     if (req.body.fechaVencimiento !== undefined) {
       updateData.fechaVencimiento = data.fechaVencimiento
@@ -469,6 +474,54 @@ exports.actualizarDeuda = async (req, res) => {
     if (data.pagoMinimo != null) updateData.pagoMinimo = data.pagoMinimo;
     if (data.acreedor) updateData.acreedor = data.acreedor;
     if (req.body.notas !== undefined) updateData.notas = data.notas;
+
+    // Recalcular restante si cambia capital, tasa, tipo de tasa, plazo o monto pagado
+    const principal = data.montoInicial ?? existente.montoInicial;
+    const tasa =
+      data.tasaInteres != null ? data.tasaInteres : existente.tasaInteres;
+    const tipoTasa =
+      req.body.tipoTasa !== undefined || req.body.tipoTasaInteres !== undefined
+        ? data.tipoTasa
+        : existente.tipoTasa;
+    const plazo =
+      req.body.plazoMeses !== undefined
+        ? data.plazoMeses
+        : existente.plazoMeses;
+    const totalAnterior = calcularTotalConInteres(
+      existente.montoInicial,
+      existente.tasaInteres,
+      existente.plazoMeses,
+      existente.tipoTasa
+    );
+    const pagadoAnterior = Math.max(0, totalAnterior - existente.montoActual);
+    const montoPagado =
+      req.body.montoPagado != null
+        ? Number(req.body.montoPagado)
+        : pagadoAnterior;
+    const totalNuevo = calcularTotalConInteres(principal, tasa, plazo, tipoTasa);
+
+    if (
+      data.montoActual != null &&
+      req.body.montoPagado == null &&
+      data.montoInicial == null &&
+      data.tasaInteres == null &&
+      req.body.plazoMeses === undefined &&
+      req.body.tipoTasa === undefined &&
+      req.body.tipoTasaInteres === undefined
+    ) {
+      updateData.montoActual = data.montoActual;
+      updateData.pagada = data.montoActual === 0;
+    } else if (
+      data.montoInicial != null ||
+      data.tasaInteres != null ||
+      req.body.plazoMeses !== undefined ||
+      req.body.tipoTasa !== undefined ||
+      req.body.tipoTasaInteres !== undefined ||
+      req.body.montoPagado != null
+    ) {
+      updateData.montoActual = Math.max(0, totalNuevo - montoPagado);
+      updateData.pagada = updateData.montoActual === 0;
+    }
 
     const deuda = await prisma.deuda.update({
       where: { id: parseInt(id) },

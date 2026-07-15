@@ -50,8 +50,8 @@ const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
   if (!deuda) return null
 
   const montoTotal = deuda.montoTotal ?? deuda.montoInicial ?? 0
-  const montoPagado = deuda.montoPagado ?? Math.max(0, montoTotal - (deuda.montoActual ?? 0))
-  const montoRestante = deuda.montoActual ?? (montoTotal - montoPagado)
+  const montoPagado = deuda.montoPagado ?? Math.max(0, (deuda.montoConInteres ?? montoTotal) - (deuda.montoActual ?? 0))
+  const montoRestante = deuda.montoActual ?? ((deuda.montoConInteres ?? montoTotal) - montoPagado)
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Registrar Pago">

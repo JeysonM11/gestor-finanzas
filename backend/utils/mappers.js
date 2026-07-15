@@ -139,6 +139,38 @@ function toNotificacionDto(notificacion) {
 }
 
 /**
+ * Interés simple según tipo de tasa.
+ * MENSUAL: capital × (1 + tasa% × meses)
+ * ANUAL:   capital × (1 + tasa% × meses/12)
+ * Sin plazo o sin tasa => solo capital.
+ */
+function calcularTotalConInteres(
+  principal,
+  tasaInteres,
+  plazoMeses,
+  tipoTasa = 'MENSUAL'
+) {
+  const capital = Number(principal) || 0;
+  const tasa = Number(tasaInteres) || 0;
+  const meses = Number(plazoMeses) || 0;
+  if (capital <= 0 || tasa <= 0 || meses <= 0) return capital;
+
+  const tipo = String(tipoTasa || 'MENSUAL').toUpperCase();
+  const periodos =
+    tipo === 'ANUAL' ? meses / 12 : meses; // MENSUAL (default)
+
+  return capital * (1 + (tasa / 100) * periodos);
+}
+
+function normalizeTipoTasa(value) {
+  if (value == null || value === '') return null;
+  const v = String(value).toUpperCase();
+  if (v === 'ANUAL' || v === 'ANNUAL' || v === 'YEARLY') return 'ANUAL';
+  if (v === 'MENSUAL' || v === 'MONTHLY' || v === 'MES') return 'MENSUAL';
+  return null;
+}
+
+/**
  * Normaliza body de deuda desde UI (montoTotal/montoPagado) a Prisma.
  */
 function normalizeDeudaInput(body = {}) {
@@ -149,11 +181,34 @@ function normalizeDeudaInput(body = {}) {
         ? Number(body.montoTotal)
         : null;
 
+  const tasaInteres =
+    body.tasaInteres != null && body.tasaInteres !== ''
+      ? Number(body.tasaInteres)
+      : body.tasa != null && body.tasa !== ''
+        ? Number(body.tasa)
+        : null;
+  const plazoMeses =
+    body.plazoMeses != null && body.plazoMeses !== ''
+      ? parseInt(body.plazoMeses, 10)
+      : null;
+  const tipoTasa =
+    body.tipoTasa !== undefined || body.tipoTasaInteres !== undefined
+      ? normalizeTipoTasa(body.tipoTasa ?? body.tipoTasaInteres)
+      : tasaInteres != null && plazoMeses
+        ? 'MENSUAL'
+        : null;
+
   let montoActual = body.montoActual != null ? Number(body.montoActual) : null;
 
   if (montoActual == null && montoInicial != null) {
     const montoPagado = body.montoPagado != null ? Number(body.montoPagado) : 0;
-    montoActual = Math.max(0, montoInicial - montoPagado);
+    const totalAdeudado = calcularTotalConInteres(
+      montoInicial,
+      tasaInteres,
+      plazoMeses,
+      tipoTasa || 'MENSUAL'
+    );
+    montoActual = Math.max(0, totalAdeudado - montoPagado);
   }
 
   return {
@@ -161,7 +216,9 @@ function normalizeDeudaInput(body = {}) {
     tipo: mapTipoDeuda(body.tipo),
     montoInicial,
     montoActual,
-    tasaInteres: body.tasaInteres != null ? Number(body.tasaInteres) : null,
+    tasaInteres,
+    tipoTasa,
+    plazoMeses: Number.isFinite(plazoMeses) && plazoMeses > 0 ? plazoMeses : null,
     fechaInicio: body.fechaInicio,
     fechaVencimiento: body.fechaVencimiento || null,
     pagoMinimo: body.pagoMinimo != null ? Number(body.pagoMinimo) : null,
@@ -177,11 +234,20 @@ function toDeudaDto(deuda) {
   if (!deuda) return null;
   const montoInicial = deuda.montoInicial;
   const montoActual = deuda.montoActual;
-  const montoPagado = Math.max(0, montoInicial - montoActual);
+  const tipoTasa = deuda.tipoTasa || 'MENSUAL';
+  const montoConInteres = calcularTotalConInteres(
+    montoInicial,
+    deuda.tasaInteres,
+    deuda.plazoMeses,
+    tipoTasa
+  );
+  const montoPagado = Math.max(0, montoConInteres - montoActual);
 
   return {
     ...deuda,
+    tipoTasa: deuda.tipoTasa || null,
     montoTotal: montoInicial,
+    montoConInteres,
     montoPagado,
   };
 }
@@ -191,6 +257,8 @@ module.exports = {
   mapTipoDeuda,
   mapTipoInversion,
   mapTipoNotificacion,
+  calcularTotalConInteres,
+  normalizeTipoTasa,
   normalizeDeudaInput,
   normalizeInversionInput,
   toDeudaDto,

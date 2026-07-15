@@ -66,13 +66,18 @@ Contratos de campos/enums: [docs/CONTRATOS-API.md](../docs/CONTRATOS-API.md).
 
 ```bash
 npm run dev
-npm start
+npm start                 # aplica migraciones pendientes y arranca (producción)
 npm test
-npm run prisma:migrate
+npm run prisma:migrate    # solo desarrollo
+npm run prisma:deploy     # solo aplicar migraciones (sin arrancar)
 npm run prisma:generate
 npm run prisma:studio
 npm run prisma:seed
 ```
+
+### Migraciones en producción
+
+`npm start` ejecuta `prisma migrate deploy` antes de levantar el API. La migración `plazoMeses` es **aditiva y nullable**: no borra datos ni cambia préstamos existentes hasta que se asigne un plazo.
 
 ## Estructura
 

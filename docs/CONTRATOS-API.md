@@ -99,8 +99,17 @@ Fuente de verdad de nombres de campos y enums: `backend/prisma/schema.prisma`.
 | Campo Prisma | No usar (UI actual) |
 |--------------|---------------------|
 | `montoInicial` | ~~`montoTotal`~~ |
-| `montoActual` | ~~`montoPagado`~~ (pagado = inicial − actual) |
+| `montoActual` | ~~`montoPagado`~~ (pagado = totalConInteres − actual) |
 | `acreedor` | required en schema |
+| `plazoMeses` | opcional; plazo en meses |
+| `tasaInteres` / `tasa` | porcentaje (ej. 15 = 15%) |
+| `tipoTasa` | `MENSUAL` o `ANUAL` (default efectivo: MENSUAL) |
+
+Interés simple:
+- **Mensual:** `capital × (1 + tasa% × meses)`
+- **Anual:** `capital × (1 + tasa% × meses/12)`
+
+DTO: `montoTotal` (= capital), `montoConInteres`, `montoPagado`. Sin `plazoMeses`, el comportamiento es el anterior (sin interés).
 
 ### TipoDeuda (Prisma)
 

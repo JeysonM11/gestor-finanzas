@@ -4,6 +4,7 @@ const {
   mapTipoInversion,
   normalizeDeudaInput,
   normalizeInversionInput,
+  calcularTotalConInteres,
   toDeudaDto,
   toInversionDto,
   toNotificacionDto,
@@ -38,6 +39,52 @@ describe('mappers Sprint 1-2', () => {
     expect(data.montoActual).toBe(800);
   });
 
+  test('normalizeDeudaInput aplica interés simple mensual por plazo', () => {
+    const data = normalizeDeudaInput({
+      nombre: 'Prestamo Daniela',
+      tipo: 'PRESTAMO',
+      montoTotal: 300000,
+      montoPagado: 0,
+      tasaInteres: 15,
+      tipoTasa: 'MENSUAL',
+      plazoMeses: 1,
+      fechaInicio: '2026-06-19',
+      acreedor: 'Daniela',
+    });
+
+    expect(data.montoInicial).toBe(300000);
+    expect(data.plazoMeses).toBe(1);
+    expect(data.tipoTasa).toBe('MENSUAL');
+    expect(data.montoActual).toBe(345000);
+  });
+
+  test('normalizeDeudaInput aplica interés anual prorrateado', () => {
+    const data = normalizeDeudaInput({
+      nombre: 'Prestamo anual',
+      tipo: 'PRESTAMO',
+      montoTotal: 120000,
+      montoPagado: 0,
+      tasaInteres: 12,
+      tipoTasa: 'ANUAL',
+      plazoMeses: 12,
+      fechaInicio: '2026-01-01',
+      acreedor: 'Banco',
+    });
+
+    // 12% anual × 12 meses => 1 año completo => +12%
+    expect(data.montoActual).toBe(134400);
+    expect(data.tipoTasa).toBe('ANUAL');
+  });
+
+  test('calcularTotalConInteres respeta tipo de tasa', () => {
+    expect(calcularTotalConInteres(300000, 15, 1, 'MENSUAL')).toBe(345000);
+    expect(calcularTotalConInteres(400000, 20, 1, 'MENSUAL')).toBe(480000);
+    expect(calcularTotalConInteres(1000, 10, 2, 'MENSUAL')).toBe(1200);
+    expect(calcularTotalConInteres(120000, 12, 12, 'ANUAL')).toBe(134400);
+    expect(calcularTotalConInteres(120000, 12, 6, 'ANUAL')).toBe(127200);
+    expect(calcularTotalConInteres(1000, 0, 1, 'MENSUAL')).toBe(1000);
+  });
+
   test('toDeudaDto expone montoTotal y montoPagado', () => {
     const dto = toDeudaDto({
       id: 1,
@@ -48,6 +95,23 @@ describe('mappers Sprint 1-2', () => {
 
     expect(dto.montoTotal).toBe(500);
     expect(dto.montoPagado).toBe(350);
+    expect(dto.montoConInteres).toBe(500);
+  });
+
+  test('toDeudaDto incluye interés en restante y pagado', () => {
+    const dto = toDeudaDto({
+      id: 2,
+      montoInicial: 300000,
+      montoActual: 345000,
+      tasaInteres: 15,
+      tipoTasa: 'MENSUAL',
+      plazoMeses: 1,
+      nombre: 'Daniela',
+    });
+
+    expect(dto.montoTotal).toBe(300000);
+    expect(dto.montoConInteres).toBe(345000);
+    expect(dto.montoPagado).toBe(0);
   });
 
   test('mapTipoInversion y normalizeInversionInput', () => {

@@ -13,6 +13,8 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
     montoTotal: '',
     montoPagado: '',
     tasaInteres: '',
+    tipoTasa: 'MENSUAL',
+    plazoMeses: '',
     fechaInicio: new Date().toISOString().split('T')[0],
     fechaVencimiento: '',
     acreedor: '',
@@ -29,6 +31,8 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
         montoTotal: deuda.montoTotal ?? deuda.montoInicial ?? '',
         montoPagado: deuda.montoPagado ?? '',
         tasaInteres: deuda.tasaInteres || '',
+        tipoTasa: deuda.tipoTasa || 'MENSUAL',
+        plazoMeses: deuda.plazoMeses || '',
         fechaInicio: deuda.fechaInicio ? new Date(deuda.fechaInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         fechaVencimiento: deuda.fechaVencimiento ? new Date(deuda.fechaVencimiento).toISOString().split('T')[0] : '',
         acreedor: deuda.acreedor || '',
@@ -41,6 +45,8 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
         montoTotal: '',
         montoPagado: '',
         tasaInteres: '',
+        tipoTasa: 'MENSUAL',
+        plazoMeses: '',
         fechaInicio: new Date().toISOString().split('T')[0],
         fechaVencimiento: '',
         acreedor: '',
@@ -70,6 +76,8 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
         montoTotal: parseFloat(formData.montoTotal),
         montoPagado: parseFloat(formData.montoPagado) || 0,
         tasaInteres: parseFloat(formData.tasaInteres) || 0,
+        tipoTasa: formData.tipoTasa || 'MENSUAL',
+        plazoMeses: formData.plazoMeses ? parseInt(formData.plazoMeses, 10) : null,
         fechaInicio: formData.fechaInicio,
         fechaVencimiento: formData.fechaVencimiento || null,
         acreedor: formData.acreedor,
@@ -168,17 +176,65 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
           />
         </div>
 
-        <Input
-          label="Tasa de Interés (%)"
-          type="number"
-          name="tasaInteres"
-          value={formData.tasaInteres}
-          onChange={handleChange}
-          placeholder="0.00"
-          step="0.01"
-          min="0"
-          max="100"
-        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Input
+            label="Tasa (%)"
+            type="number"
+            name="tasaInteres"
+            value={formData.tasaInteres}
+            onChange={handleChange}
+            placeholder="Ej: 15"
+            step="0.01"
+            min="0"
+            max="100"
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de tasa
+            </label>
+            <select
+              name="tipoTasa"
+              value={formData.tipoTasa}
+              onChange={handleChange}
+              className="w-full input-field"
+            >
+              <option value="MENSUAL">Mensual</option>
+              <option value="ANUAL">Anual</option>
+            </select>
+          </div>
+
+          <Input
+            label="Plazo (meses)"
+            type="number"
+            name="plazoMeses"
+            value={formData.plazoMeses}
+            onChange={handleChange}
+            placeholder="Ej: 1"
+            step="1"
+            min="1"
+          />
+        </div>
+
+        {formData.montoTotal && formData.tasaInteres && formData.plazoMeses && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-lg text-sm">
+            {(() => {
+              const capital = parseFloat(formData.montoTotal)
+              const tasa = parseFloat(formData.tasaInteres) / 100
+              const meses = parseInt(formData.plazoMeses, 10)
+              const periodos = formData.tipoTasa === 'ANUAL' ? meses / 12 : meses
+              const total = capital * (1 + tasa * periodos)
+              const tipoLabel = formData.tipoTasa === 'ANUAL' ? 'anual' : 'mensual'
+              return (
+                <>
+                  Con interés ({formData.tasaInteres}% {tipoLabel} × {meses}{' '}
+                  {meses === 1 ? 'mes' : 'meses'}):{' '}
+                  <span className="font-semibold">${total.toFixed(2)}</span>
+                </>
+              )
+            })()}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
