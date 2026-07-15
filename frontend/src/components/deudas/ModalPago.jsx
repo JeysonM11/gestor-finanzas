@@ -3,8 +3,10 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { deudaService } from '../../services/deuda.service'
+import { useCurrency } from '../../hooks/useCurrency'
 
 const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
+  const { formatMoney } = useCurrency()
   const [formData, setFormData] = useState({
     monto: '',
     fecha: new Date().toISOString().split('T')[0]
@@ -67,15 +69,15 @@ const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-blue-700">Monto total:</p>
-              <p className="font-bold text-blue-900">${montoTotal.toFixed(2)}</p>
+              <p className="font-bold text-blue-900">{formatMoney(montoTotal)}</p>
             </div>
             <div>
               <p className="text-blue-700">Pagado:</p>
-              <p className="font-bold text-blue-900">${montoPagado.toFixed(2)}</p>
+              <p className="font-bold text-blue-900">{formatMoney(montoPagado)}</p>
             </div>
             <div className="col-span-2">
               <p className="text-blue-700">Restante:</p>
-              <p className="font-bold text-blue-900">${montoRestante.toFixed(2)}</p>
+              <p className="font-bold text-blue-900">{formatMoney(montoRestante)}</p>
             </div>
           </div>
         </div>

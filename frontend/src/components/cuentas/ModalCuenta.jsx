@@ -3,15 +3,18 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { cuentaService } from '../../services/cuenta.service'
+import { useCurrency } from '../../hooks/useCurrency'
+import { MONEDAS, MONEDA_DEFAULT } from '../../utils/currency'
 
 const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
   const isEditing = !!cuenta
+  const { currency: monedaPrincipal } = useCurrency()
   
   const [formData, setFormData] = useState({
     nombre: '',
     tipo: 'BANCO_AHORROS',
     banco: '',
-    moneda: 'USD',
+    moneda: MONEDA_DEFAULT,
     saldoActual: '',
     color: '#3B82F6'
   })
@@ -24,22 +27,32 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
         nombre: cuenta.nombre || '',
         tipo: cuenta.tipo || 'BANCO_AHORROS',
         banco: cuenta.banco || '',
-        moneda: cuenta.moneda || 'USD',
+        moneda: cuenta.moneda || monedaPrincipal || MONEDA_DEFAULT,
         saldoActual: cuenta.saldoActual || '',
         color: cuenta.color || '#3B82F6'
       })
+    } else if (isOpen && !cuenta) {
+      setFormData({
+        nombre: '',
+        tipo: 'BANCO_AHORROS',
+        banco: '',
+        moneda: monedaPrincipal || MONEDA_DEFAULT,
+        saldoActual: '',
+        color: '#3B82F6'
+      })
+      setError('')
     } else if (!isOpen) {
       setFormData({
         nombre: '',
         tipo: 'BANCO_AHORROS',
         banco: '',
-        moneda: 'USD',
+        moneda: monedaPrincipal || MONEDA_DEFAULT,
         saldoActual: '',
         color: '#3B82F6'
       })
       setError('')
     }
-  }, [cuenta, isOpen])
+  }, [cuenta, isOpen, monedaPrincipal])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -157,11 +170,11 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
               required
               disabled={isEditing}
             >
-              <option value="USD">USD - Dólar</option>
-              <option value="EUR">EUR - Euro</option>
-              <option value="MXN">MXN - Peso Mexicano</option>
-              <option value="COP">COP - Peso Colombiano</option>
-              <option value="ARS">ARS - Peso Argentino</option>
+              {MONEDAS.map((m) => (
+                <option key={m.code} value={m.code}>
+                  {m.label}
+                </option>
+              ))}
             </select>
           </div>
 

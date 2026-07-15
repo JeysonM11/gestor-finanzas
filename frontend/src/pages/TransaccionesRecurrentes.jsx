@@ -4,11 +4,13 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalTransaccionRecurrente from '../components/recurrentes/ModalTransaccionRecurrente'
 import { transaccionRecurrenteService } from '../services/transaccion-recurrente.service'
 import { useToast } from '../context/ToastContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { Plus, Play, Edit, Trash2, Calendar, ToggleLeft, ToggleRight, Clock } from 'lucide-react'
 import dayjs from 'dayjs'
 
 const TransaccionesRecurrentes = () => {
   const toast = useToast()
+  const { formatMoney } = useCurrency()
   const [transacciones, setTransacciones] = useState([])
   const [estadisticas, setEstadisticas] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -212,7 +214,8 @@ const TransaccionesRecurrentes = () => {
                   <div>
                     <p className="text-xs text-ink-subtle mb-1">Monto</p>
                     <p className={`text-xl font-bold ${transaccion.tipo === 'INGRESO' ? 'text-green-600' : 'text-red-600'}`}>
-                      {transaccion.tipo === 'INGRESO' ? '+' : '-'}${transaccion.monto.toFixed(2)}
+                      {transaccion.tipo === 'INGRESO' ? '+' : '-'}
+                      {formatMoney(transaccion.monto)}
                     </p>
                   </div>
                   <div>
@@ -240,7 +243,7 @@ const TransaccionesRecurrentes = () => {
                       {transaccion.transacciones.slice(0, 3).map((t, idx) => (
                         <div key={idx} className="text-xs text-ink-muted flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
-                          {dayjs(t.fecha).format('DD/MM/YYYY')} - ${t.monto.toFixed(2)}
+                          {dayjs(t.fecha).format('DD/MM/YYYY')} - {formatMoney(t.monto)}
                         </div>
                       ))}
                     </div>

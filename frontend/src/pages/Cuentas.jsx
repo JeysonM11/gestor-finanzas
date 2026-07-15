@@ -3,6 +3,7 @@ import { Card, Button, Spinner, EmptyState } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalCuenta from '../components/cuentas/ModalCuenta'
 import { cuentaService } from '../services/cuenta.service'
+import { formatMoney } from '../utils/currency'
 import { Plus, Wallet, CreditCard, Edit, Trash2, TrendingUp } from 'lucide-react'
 
 const Cuentas = () => {
@@ -135,7 +136,7 @@ const Cuentas = () => {
                 <div>
                   <p className="text-sm text-ink-muted">Total en {moneda}</p>
                   <p className="text-2xl font-bold text-ink">
-                    {moneda} {total.toFixed(2)}
+                    {formatMoney(total, moneda)}
                   </p>
                 </div>
                 <Wallet className="h-10 w-10 text-primary-600" />
@@ -177,7 +178,7 @@ const Cuentas = () => {
                 <div className="mb-4">
                   <p className="text-sm text-ink-muted mb-1">Saldo Actual</p>
                   <p className="text-3xl font-bold text-ink">
-                    {cuenta.moneda} {(cuenta.saldoActual ?? 0).toFixed(2)}
+                    {formatMoney(cuenta.saldoActual ?? 0, cuenta.moneda)}
                   </p>
                 </div>
 

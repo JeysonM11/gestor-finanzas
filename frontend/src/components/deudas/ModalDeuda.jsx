@@ -3,9 +3,11 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { deudaService } from '../../services/deuda.service'
+import { useCurrency } from '../../hooks/useCurrency'
 
 const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
   const isEditing = !!deuda
+  const { formatMoney } = useCurrency()
   
   const [formData, setFormData] = useState({
     nombre: '',
@@ -229,7 +231,7 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
                 <>
                   Con interés ({formData.tasaInteres}% {tipoLabel} × {meses}{' '}
                   {meses === 1 ? 'mes' : 'meses'}):{' '}
-                  <span className="font-semibold">${total.toFixed(2)}</span>
+                  <span className="font-semibold">{formatMoney(total)}</span>
                 </>
               )
             })()}

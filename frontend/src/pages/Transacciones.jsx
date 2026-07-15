@@ -4,11 +4,13 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalTransaccion from '../components/transacciones/ModalTransaccion'
 import { transaccionService } from '../services/transaccion.service'
 import { useToast } from '../context/ToastContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { Plus, Search, Filter, Edit, Trash2 } from 'lucide-react'
 import dayjs from 'dayjs'
 
 const Transacciones = () => {
   const toast = useToast()
+  const { formatMoney } = useCurrency()
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -207,8 +209,8 @@ const Transacciones = () => {
                       transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
                     }`}
                   >
-                    {transaccion.tipo === 'INGRESO' ? '+' : '-'}$
-                    {Number(transaccion.monto).toFixed(2)}
+                    {transaccion.tipo === 'INGRESO' ? '+' : '-'}
+                    {formatMoney(transaccion.monto)}
                   </p>
                   <div className="flex justify-end gap-1 mt-2">
                     <Button
@@ -272,8 +274,8 @@ const Transacciones = () => {
                         transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
                       }`}
                     >
-                      {transaccion.tipo === 'INGRESO' ? '+' : '-'}$
-                      {Number(transaccion.monto).toFixed(2)}
+                      {transaccion.tipo === 'INGRESO' ? '+' : '-'}
+                      {formatMoney(transaccion.monto)}
                     </td>
                     <td>
                       <div className="flex items-center justify-center gap-1">
