@@ -6,9 +6,11 @@ import ModalPago from '../components/deudas/ModalPago'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { deudaService } from '../services/deuda.service'
 import { useToast } from '../context/ToastContext'
+import { useCurrency } from '../hooks/useCurrency'
 
 const Deudas = () => {
   const toast = useToast()
+  const { formatMoney } = useCurrency()
   const [deudas, setDeudas] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalDeudaOpen, setModalDeudaOpen] = useState(false)
@@ -140,7 +142,7 @@ const Deudas = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-ink-muted mb-1">Total Adeudado</p>
-              <p className="text-2xl font-bold text-ink">${totales.total.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-ink">{formatMoney(totales.total)}</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
               <CreditCard className="w-6 h-6 text-red-600" />
@@ -152,7 +154,7 @@ const Deudas = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-ink-muted mb-1">Total Pagado</p>
-              <p className="text-2xl font-bold text-green-600">${totales.pagado.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-green-600">{formatMoney(totales.pagado)}</p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-green-600" />
@@ -164,7 +166,7 @@ const Deudas = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-ink-muted mb-1">Total Restante</p>
-              <p className="text-2xl font-bold text-orange-600">${totales.restante.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-orange-600">{formatMoney(totales.restante)}</p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
               <TrendingDown className="w-6 h-6 text-orange-600" />
@@ -261,15 +263,15 @@ const Deudas = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-ink-muted">Monto Total</p>
-                      <p className="font-semibold text-ink">${montoTotal.toFixed(2)}</p>
+                      <p className="font-semibold text-ink">{formatMoney(montoTotal)}</p>
                     </div>
                     <div>
                       <p className="text-ink-muted">Pagado</p>
-                      <p className="font-semibold text-green-600">${montoPagado.toFixed(2)}</p>
+                      <p className="font-semibold text-green-600">{formatMoney(montoPagado)}</p>
                     </div>
                     <div>
                       <p className="text-ink-muted">Restante</p>
-                      <p className="font-semibold text-orange-600">${restante.toFixed(2)}</p>
+                      <p className="font-semibold text-orange-600">{formatMoney(restante)}</p>
                     </div>
                     {deuda.tasaInteres > 0 && (
                       <div>

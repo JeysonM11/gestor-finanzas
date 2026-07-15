@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, Badge, PageSkeleton } from '../components/ui'
 import { transaccionService } from '../services/transaccion.service'
 import { useAuth } from '../context/AuthContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { TrendingUp, TrendingDown, Wallet, Calendar, Shield } from 'lucide-react'
 import dayjs from 'dayjs'
 
 const Dashboard = () => {
   const { isAdmin } = useAuth()
+  const { formatMoney } = useCurrency()
   const [resumen, setResumen] = useState(null)
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)
@@ -37,21 +39,21 @@ const Dashboard = () => {
   const stats = [
     {
       label: 'Total Ingresos',
-      value: resumen?.totalIngresos?.toFixed(2) || '0.00',
+      value: formatMoney(resumen?.totalIngresos || 0),
       icon: TrendingUp,
       tone: 'text-emerald-600',
       iconBg: 'bg-emerald-50 text-emerald-600',
     },
     {
       label: 'Total Gastos',
-      value: resumen?.totalGastos?.toFixed(2) || '0.00',
+      value: formatMoney(resumen?.totalGastos || 0),
       icon: TrendingDown,
       tone: 'text-red-600',
       iconBg: 'bg-red-50 text-red-600',
     },
     {
       label: 'Balance',
-      value: resumen?.balance?.toFixed(2) || '0.00',
+      value: formatMoney(resumen?.balance || 0),
       icon: Wallet,
       tone: (resumen?.balance || 0) >= 0 ? 'text-emerald-600' : 'text-red-600',
       iconBg: 'bg-primary-50 text-primary-600',
@@ -62,7 +64,6 @@ const Dashboard = () => {
       icon: Calendar,
       tone: 'text-ink',
       iconBg: 'bg-slate-100 text-slate-600',
-      prefix: '',
     },
   ]
 
@@ -92,7 +93,7 @@ const Dashboard = () => {
                   {stat.label}
                 </p>
                 <p className={`mt-2 text-xl sm:text-2xl font-semibold tabular-nums truncate ${stat.tone}`}>
-                  {stat.prefix === '' ? stat.value : `$${stat.value}`}
+                  {stat.value}
                 </p>
               </div>
               <div
@@ -133,8 +134,8 @@ const Dashboard = () => {
                     transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
                   }`}
                 >
-                  {transaccion.tipo === 'INGRESO' ? '+' : '-'}$
-                  {Number(transaccion.monto).toFixed(2)}
+                  {transaccion.tipo === 'INGRESO' ? '+' : '-'}
+                  {formatMoney(transaccion.monto)}
                 </p>
               </div>
             ))

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Card, Spinner, CardTitle } from '../components/ui'
 import { reporteService } from '../services/reporte.service'
+import { useCurrency } from '../hooks/useCurrency'
 import { 
   BarChart, Bar, PieChart, Pie, LineChart, Line, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
@@ -9,6 +10,7 @@ import {
 import { BarChart3, PieChart as PieChartIcon, TrendingUp, Calendar } from 'lucide-react'
 
 const Reportes = () => {
+  const { formatMoney } = useCurrency()
   const [gastosPorCategoria, setGastosPorCategoria] = useState([])
   const [evolucionMensual, setEvolucionMensual] = useState([])
   const [comparacionAnual, setComparacionAnual] = useState([])
@@ -61,7 +63,7 @@ const Reportes = () => {
                   <p className={`text-3xl font-bold ${
                     item.name === 'Ingresos' ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    ${item.value.toFixed(2)}
+                    {formatMoney(item.value)}
                   </p>
                   <p className="text-xs text-ink-subtle mt-1">Año {new Date().getFullYear()}</p>
                 </div>
@@ -109,7 +111,7 @@ const Reportes = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                <Tooltip formatter={(value) => formatMoney(value)} />
               </PieChart>
             </ResponsiveContainer>
             </div>
@@ -135,7 +137,7 @@ const Reportes = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                <Tooltip formatter={(value) => formatMoney(value)} />
                 <Bar dataKey="value" fill="#3B82F6" />
               </BarChart>
             </ResponsiveContainer>
@@ -163,7 +165,7 @@ const Reportes = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="mes" />
               <YAxis />
-              <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+              <Tooltip formatter={(value) => formatMoney(value)} />
               <Legend />
               <Line 
                 type="monotone" 
@@ -218,7 +220,7 @@ const Reportes = () => {
                         </div>
                       </td>
                       <td className="text-right tabular-nums">
-                        ${item.value.toFixed(2)}
+                        {formatMoney(item.value)}
                       </td>
                       <td className="text-right text-ink-muted tabular-nums">
                         {porcentaje}%

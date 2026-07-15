@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/auth.service'
 import { reporteService } from '../services/reporte.service'
 import { Card, Button, Input, Alert, Badge } from '../components/ui'
+import { MONEDAS } from '../utils/currency'
 import { User, Lock, Bell, Download, Shield } from 'lucide-react'
 
 const Configuracion = () => {
@@ -34,6 +35,24 @@ const Configuracion = () => {
     notificacionesRecurrentes: user?.configuracion?.notificacionesRecurrentes ?? true,
     monedaPrincipal: user?.monedaPrincipal || 'USD'
   })
+
+  useEffect(() => {
+    if (!user) return
+    setPerfilData({
+      name: user.name || '',
+      email: user.email || '',
+      telefono: user.telefono || '',
+      ocupacion: user.ocupacion || ''
+    })
+    setPreferencias((prev) => ({
+      ...prev,
+      notificacionesEmail: user.configuracion?.notificacionesEmail ?? true,
+      notificacionesPush: user.configuracion?.notificacionesPush ?? true,
+      notificacionesTransacciones: user.configuracion?.notificacionesTransacciones ?? true,
+      notificacionesRecurrentes: user.configuracion?.notificacionesRecurrentes ?? true,
+      monedaPrincipal: user.monedaPrincipal || 'USD'
+    }))
+  }, [user])
 
   const handlePerfilChange = (e) => {
     setPerfilData({
@@ -398,12 +417,16 @@ const Configuracion = () => {
                     onChange={handlePreferenciasChange}
                     className="w-full input-field"
                   >
-                    <option value="USD">USD - Dólar</option>
-                    <option value="EUR">EUR - Euro</option>
-                    <option value="MXN">MXN - Peso Mexicano</option>
-                    <option value="COP">COP - Peso Colombiano</option>
-                    <option value="ARS">ARS - Peso Argentino</option>
+                    {MONEDAS.map((m) => (
+                      <option key={m.code} value={m.code}>
+                        {m.label}
+                      </option>
+                    ))}
                   </select>
+                  <p className="mt-2 text-xs text-ink-subtle">
+                    Se usa para mostrar montos en dashboard, transacciones, reportes y demás pantallas.
+                    Las cuentas bancarias conservan su propia moneda.
+                  </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pt-4 border-t border-line">
