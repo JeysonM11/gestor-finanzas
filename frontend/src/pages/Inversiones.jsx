@@ -105,14 +105,14 @@ const Inversiones = () => {
   const totales = calcularTotales()
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Inversiones</h1>
-          <p className="text-gray-600">Gestiona y monitorea tu portafolio de inversiones</p>
+    <div className="page-shell">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Inversiones</h1>
+          <p className="page-subtitle">Gestiona y monitorea tu portafolio de inversiones</p>
         </div>
-        <Button onClick={() => setModalAbierto(true)}>
-          <Plus className="h-5 w-5 mr-2" />
+        <Button onClick={() => setModalAbierto(true)} className="w-full sm:w-auto shrink-0">
+          <Plus className="h-4 w-4" />
           Nueva Inversión
         </Button>
       </div>
@@ -139,12 +139,12 @@ const Inversiones = () => {
 
       {/* Resumen de Portafolio */}
       {inversiones.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="stat-grid">
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Invertido</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-ink-muted">Total Invertido</p>
+                <p className="text-2xl font-bold text-ink">
                   ${totales.totalInvertido.toFixed(2)}
                 </p>
               </div>
@@ -155,8 +155,8 @@ const Inversiones = () => {
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Valor Actual</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-ink-muted">Valor Actual</p>
+                <p className="text-2xl font-bold text-ink">
                   ${totales.totalActual.toFixed(2)}
                 </p>
               </div>
@@ -167,7 +167,7 @@ const Inversiones = () => {
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Ganancia/Pérdida</p>
+                <p className="text-sm text-ink-muted">Ganancia/Pérdida</p>
                 <p className={`text-2xl font-bold ${totales.gananciaTotal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {totales.gananciaTotal >= 0 ? '+' : ''}${totales.gananciaTotal.toFixed(2)}
                 </p>
@@ -183,7 +183,7 @@ const Inversiones = () => {
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Rendimiento</p>
+                <p className="text-sm text-ink-muted">Rendimiento</p>
                 <p className={`text-2xl font-bold ${totales.rendimientoPromedio >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {totales.rendimientoPromedio >= 0 ? '+' : ''}{totales.rendimientoPromedio.toFixed(2)}%
                 </p>
@@ -196,56 +196,53 @@ const Inversiones = () => {
 
       {/* Lista de inversiones */}
       {inversiones.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card-grid">
           {inversiones.map((inversion) => {
             const { ganancia, porcentaje, inicial, actual } = calcularRendimiento(inversion)
             const esPositivo = ganancia >= 0
 
             return (
-              <Card key={inversion.id}>
+              <Card key={inversion.id} hover>
                 <div className="space-y-4">
-                  {/* Header */}
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-lg text-gray-900">{inversion.nombre}</h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h3 className="font-bold text-lg text-ink">{inversion.nombre}</h3>
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getTipoBadge(inversion.tipo)}`}>
                           {inversion.tipo.replace('_', ' ')}
                         </span>
                       </div>
                       {inversion.broker && (
-                        <p className="text-sm text-gray-500">{inversion.broker}</p>
+                        <p className="text-sm text-ink-muted">{inversion.broker}</p>
                       )}
                     </div>
                   </div>
 
-                  {/* Valores */}
-                  <div className="grid grid-cols-2 gap-4 py-3 border-t border-b border-gray-200">
+                  <div className="grid grid-cols-2 gap-4 py-3 border-t border-b border-line">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Invertido</p>
-                      <p className="text-lg font-bold text-gray-900">
+                      <p className="text-xs text-ink-subtle mb-1">Invertido</p>
+                      <p className="text-lg font-bold text-ink">
                         ${inicial.toFixed(2)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Valor Actual</p>
-                      <p className="text-lg font-bold text-gray-900">
+                      <p className="text-xs text-ink-subtle mb-1">Valor Actual</p>
+                      <p className="text-lg font-bold text-ink">
                         ${actual.toFixed(2)}
                       </p>
                     </div>
                   </div>
 
-                  {/* Rendimiento */}
                   <div className={`p-3 rounded-lg ${esPositivo ? 'bg-green-50' : 'bg-red-50'}`}>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Ganancia/Pérdida</p>
+                        <p className="text-xs text-ink-muted mb-1">Ganancia/Pérdida</p>
                         <p className={`text-xl font-bold ${esPositivo ? 'text-green-600' : 'text-red-600'}`}>
                           {esPositivo ? '+' : ''}${ganancia.toFixed(2)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-600 mb-1">Rendimiento</p>
+                        <p className="text-xs text-ink-muted mb-1">Rendimiento</p>
                         <div className="flex items-center gap-1">
                           {esPositivo ? (
                             <TrendingUp className="h-5 w-5 text-green-600" />
@@ -262,31 +259,32 @@ const Inversiones = () => {
 
                   {/* Detalles adicionales */}
                   {(inversion.cantidadUnidades || inversion.cantidad) && (
-                    <div className="text-sm text-gray-600 space-y-1">
+                    <div className="text-sm text-ink-muted space-y-1">
                       <p>Unidades: <span className="font-medium">{inversion.cantidadUnidades ?? inversion.cantidad}</span></p>
                     </div>
                   )}
 
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                    <span className="text-xs text-gray-500">
+                  <div className="flex items-center justify-between pt-3 border-t border-line">
+                    <span className="text-xs text-ink-subtle">
                       Comprado: {dayjs(inversion.fechaCompra).format('DD/MM/YYYY')}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <button
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => handleEditar(inversion)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Editar"
+                        aria-label="Editar inversión"
                       >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
+                        <Edit className="h-4 w-4 text-primary-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => handleEliminar(inversion)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Eliminar"
+                        aria-label="Eliminar inversión"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
                     </div>
                   </div>
                 </div>

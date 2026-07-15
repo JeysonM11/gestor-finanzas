@@ -1,17 +1,6 @@
 import { cn } from '../../utils/cn'
 import Label from './Label'
 
-/**
- * Select nativo con el mismo look que `.input-field`.
- *
- * @param {object} props
- * @param {string} [props.label]
- * @param {string} [props.error]
- * @param {import('react').ReactNode} props.children - `<option>` elements
- * @param {string} [props.className]
- * @param {string} [props.selectClassName]
- * @param {string} [props.id]
- */
 const Select = ({
   label,
   error,
@@ -26,22 +15,27 @@ const Select = ({
   return (
     <div className={cn('w-full', className)}>
       {label && (
-        <Label htmlFor={selectId} className="mb-2">
+        <Label htmlFor={selectId} className="mb-1.5">
           {label}
         </Label>
       )}
       <select
         id={selectId}
+        aria-invalid={error ? true : undefined}
         className={cn(
-          'w-full input-field',
-          error && 'border-red-500',
+          'input-field appearance-none bg-[length:1rem] bg-[right_0.75rem_center] bg-no-repeat pr-10',
+          error && 'border-red-500 focus:border-red-500 focus:ring-red-500/30',
           selectClassName
         )}
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2494a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")",
+        }}
         {...props}
       >
         {children}
       </select>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
     </div>
   )
 }

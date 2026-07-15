@@ -1,24 +1,13 @@
 import { cn } from '../../utils/cn'
 import Label from './Label'
 
-/**
- * Textarea con el mismo look que `.input-field`.
- *
- * @param {object} props
- * @param {string} [props.label]
- * @param {string} [props.error]
- * @param {number|string} [props.rows=3]
- * @param {string} [props.className]
- * @param {string} [props.textareaClassName]
- * @param {string} [props.id]
- */
 const Textarea = ({
   label,
   error,
-  rows = 3,
   className = '',
   textareaClassName = '',
   id,
+  rows = 3,
   ...props
 }) => {
   const textareaId = id || props.name
@@ -26,21 +15,22 @@ const Textarea = ({
   return (
     <div className={cn('w-full', className)}>
       {label && (
-        <Label htmlFor={textareaId} className="mb-2">
+        <Label htmlFor={textareaId} className="mb-1.5">
           {label}
         </Label>
       )}
       <textarea
         id={textareaId}
         rows={rows}
+        aria-invalid={error ? true : undefined}
         className={cn(
-          'w-full input-field resize-none',
-          error && 'border-red-500',
+          'input-field min-h-[5rem] resize-y',
+          error && 'border-red-500 focus:border-red-500 focus:ring-red-500/30',
           textareaClassName
         )}
         {...props}
       />
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
     </div>
   )
 }

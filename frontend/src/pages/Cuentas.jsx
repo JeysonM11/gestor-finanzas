@@ -94,14 +94,14 @@ const Cuentas = () => {
   const totalesPorMoneda = calcularTotalPorMoneda()
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Cuentas Bancarias</h1>
-          <p className="text-gray-600">Gestiona tus cuentas y saldos</p>
+    <div className="page-shell">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Cuentas Bancarias</h1>
+          <p className="page-subtitle">Gestiona tus cuentas y saldos</p>
         </div>
-        <Button onClick={() => setModalAbierto(true)}>
-          <Plus className="h-5 w-5 mr-2" />
+        <Button onClick={() => setModalAbierto(true)} className="w-full sm:w-auto shrink-0">
+          <Plus className="h-4 w-4" />
           Nueva Cuenta
         </Button>
       </div>
@@ -128,13 +128,13 @@ const Cuentas = () => {
 
       {/* Resumen de totales por moneda */}
       {Object.keys(totalesPorMoneda).length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="stat-grid">
           {Object.entries(totalesPorMoneda).map(([moneda, total]) => (
             <Card key={moneda}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Total en {moneda}</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-ink-muted">Total en {moneda}</p>
+                  <p className="text-2xl font-bold text-ink">
                     {moneda} {total.toFixed(2)}
                   </p>
                 </div>
@@ -147,9 +147,9 @@ const Cuentas = () => {
 
       {/* Grid de cuentas */}
       {cuentas.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="card-grid">
           {cuentas.map((cuenta) => (
-            <Card key={cuenta.id} className="relative overflow-hidden">
+            <Card key={cuenta.id} hover className="relative overflow-hidden">
               {/* Barra de color */}
               <div 
                 className="absolute top-0 left-0 right-0 h-2"
@@ -168,38 +168,40 @@ const Cuentas = () => {
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg text-gray-900">{cuenta.nombre}</h3>
-                      <p className="text-sm text-gray-500">{cuenta.banco || 'Sin banco'}</p>
+                      <h3 className="font-bold text-lg text-ink">{cuenta.nombre}</h3>
+                      <p className="text-sm text-ink-muted">{cuenta.banco || 'Sin banco'}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <p className="text-sm text-gray-500 mb-1">Saldo Actual</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm text-ink-muted mb-1">Saldo Actual</p>
+                  <p className="text-3xl font-bold text-ink">
                     {cuenta.moneda} {(cuenta.saldoActual ?? 0).toFixed(2)}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                  <div className="text-sm text-gray-600">
+                <div className="flex items-center justify-between pt-4 border-t border-line">
+                  <div className="text-sm text-ink-muted">
                     <span className="font-medium">{cuenta.tipo}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => handleEditar(cuenta)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Editar saldo"
+                      aria-label="Editar saldo"
                     >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
+                      <Edit className="h-4 w-4 text-primary-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => handleEliminar(cuenta)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Eliminar cuenta"
+                      aria-label="Eliminar cuenta"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
                   </div>
                 </div>
               </div>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import Card from '../components/common/Card'
-import Button from '../components/common/Button'
+import { Card, Button, Spinner, EmptyState } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalTransaccionRecurrente from '../components/recurrentes/ModalTransaccionRecurrente'
 import { transaccionRecurrenteService } from '../services/transaccion-recurrente.service'
@@ -100,45 +99,40 @@ const TransaccionesRecurrentes = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    )
+    return <Spinner fullPage />
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Transacciones Recurrentes</h1>
-          <p className="text-gray-600">Automatiza tus pagos e ingresos periódicos</p>
+    <div className="page-shell">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Transacciones Recurrentes</h1>
+          <p className="page-subtitle">Automatiza tus pagos e ingresos periódicos</p>
         </div>
-        <div className="flex gap-3">
-          <Button 
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button
             onClick={handleEjecutar}
             variant="secondary"
             disabled={ejecutando}
+            className="w-full sm:w-auto shrink-0"
           >
-            <Play className="h-5 w-5 mr-2" />
+            <Play className="h-4 w-4" />
             {ejecutando ? 'Ejecutando...' : 'Forzar ahora'}
           </Button>
-          <Button onClick={() => setModalAbierto(true)}>
-            <Plus className="h-5 w-5 mr-2" />
+          <Button onClick={() => setModalAbierto(true)} className="w-full sm:w-auto shrink-0">
+            <Plus className="h-4 w-4" />
             Nueva Recurrente
           </Button>
         </div>
       </div>
 
-      {/* Modal */}
-      <ModalTransaccionRecurrente 
+      <ModalTransaccionRecurrente
         isOpen={modalAbierto}
         onClose={handleCloseModal}
         onSuccess={handleTransaccionGuardada}
         transaccion={transaccionSeleccionada}
       />
 
-      {/* Dialog de confirmación */}
       <ConfirmDialog
         isOpen={confirmDialogOpen}
         onClose={() => setConfirmDialogOpen(false)}
@@ -150,14 +144,13 @@ const TransaccionesRecurrentes = () => {
         type="danger"
       />
 
-      {/* Estadísticas */}
       {estadisticas && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="stat-grid sm:grid-cols-3 xl:grid-cols-3">
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Recurrentes</p>
-                <p className="text-2xl font-bold text-gray-900">{estadisticas.total || 0}</p>
+                <p className="text-sm text-ink-muted">Total Recurrentes</p>
+                <p className="text-2xl font-bold text-ink">{estadisticas.total || 0}</p>
               </div>
               <Calendar className="h-10 w-10 text-primary-600" />
             </div>
@@ -165,7 +158,7 @@ const TransaccionesRecurrentes = () => {
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Activas</p>
+                <p className="text-sm text-ink-muted">Activas</p>
                 <p className="text-2xl font-bold text-green-600">{estadisticas.activas || 0}</p>
               </div>
               <ToggleRight className="h-10 w-10 text-green-600" />
@@ -174,82 +167,79 @@ const TransaccionesRecurrentes = () => {
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Inactivas</p>
-                <p className="text-2xl font-bold text-gray-400">{estadisticas.inactivas || 0}</p>
+                <p className="text-sm text-ink-muted">Inactivas</p>
+                <p className="text-2xl font-bold text-ink-subtle">{estadisticas.inactivas || 0}</p>
               </div>
-              <ToggleLeft className="h-10 w-10 text-gray-400" />
+              <ToggleLeft className="h-10 w-10 text-ink-subtle" />
             </div>
           </Card>
         </div>
       )}
 
-      {/* Lista de transacciones recurrentes */}
       {transacciones.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card-grid">
           {transacciones.map((transaccion) => (
-            <Card key={transaccion.id} className={`${!transaccion.activa ? 'opacity-60' : ''}`}>
+            <Card key={transaccion.id} hover className={!transaccion.activa ? 'opacity-60' : ''}>
               <div className="space-y-4">
-                {/* Header */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-lg text-gray-900">{transaccion.nombre}</h3>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="font-bold text-lg text-ink">{transaccion.nombre}</h3>
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getFrecuenciaBadge(transaccion.frecuencia)}`}>
                         {transaccion.frecuencia}
                       </span>
                     </div>
                     {transaccion.descripcion && (
-                      <p className="text-sm text-gray-500">{transaccion.descripcion}</p>
+                      <p className="text-sm text-ink-muted">{transaccion.descripcion}</p>
                     )}
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => handleToggleActivo(transaccion.id, transaccion.activa)}
-                    className="ml-2"
-                    title={transaccion.activa ? 'Desactivar' : 'Activar'}
+                    aria-label={transaccion.activa ? 'Desactivar' : 'Activar'}
+                    className="shrink-0"
                   >
                     {transaccion.activa ? (
-                      <ToggleRight className="h-6 w-6 text-green-600" />
+                      <ToggleRight className="h-5 w-5 text-green-600" />
                     ) : (
-                      <ToggleLeft className="h-6 w-6 text-gray-400" />
+                      <ToggleLeft className="h-5 w-5 text-ink-subtle" />
                     )}
-                  </button>
+                  </Button>
                 </div>
 
-                {/* Detalles */}
-                <div className="grid grid-cols-2 gap-4 py-3 border-t border-b border-gray-200">
+                <div className="grid grid-cols-2 gap-4 py-3 border-t border-b border-line">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Monto</p>
+                    <p className="text-xs text-ink-subtle mb-1">Monto</p>
                     <p className={`text-xl font-bold ${transaccion.tipo === 'INGRESO' ? 'text-green-600' : 'text-red-600'}`}>
                       {transaccion.tipo === 'INGRESO' ? '+' : '-'}${transaccion.monto.toFixed(2)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Categoría</p>
-                    <p className="text-sm font-medium text-gray-900">{transaccion.categoria || 'Sin categoría'}</p>
+                    <p className="text-xs text-ink-subtle mb-1">Categoría</p>
+                    <p className="text-sm font-medium text-ink">{transaccion.categoria || 'Sin categoría'}</p>
                   </div>
                 </div>
 
-                {/* Próxima ejecución */}
                 <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">
-                    Próxima ejecución: {' '}
-                    <span className="font-medium text-gray-900">
-                      {transaccion.proximaEjecucion 
+                  <Clock className="h-4 w-4 text-ink-subtle shrink-0" />
+                  <span className="text-ink-muted">
+                    Próxima ejecución:{' '}
+                    <span className="font-medium text-ink">
+                      {transaccion.proximaEjecucion
                         ? dayjs(transaccion.proximaEjecucion).format('DD/MM/YYYY')
                         : 'No programada'}
                     </span>
                   </span>
                 </div>
 
-                {/* Historial reciente */}
                 {transaccion.transacciones && transaccion.transacciones.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-gray-500 mb-2">Últimas ejecuciones:</p>
+                    <p className="text-xs font-medium text-ink-subtle mb-2">Últimas ejecuciones:</p>
                     <div className="space-y-1">
                       {transaccion.transacciones.slice(0, 3).map((t, idx) => (
-                        <div key={idx} className="text-xs text-gray-600 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                        <div key={idx} className="text-xs text-ink-muted flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
                           {dayjs(t.fecha).format('DD/MM/YYYY')} - ${t.monto.toFixed(2)}
                         </div>
                       ))}
@@ -257,20 +247,23 @@ const TransaccionesRecurrentes = () => {
                   </div>
                 )}
 
-                {/* Acciones */}
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
-                  <button
+                <div className="flex items-center justify-end gap-1 pt-3 border-t border-line">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => handleEditar(transaccion)}
-                    className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    aria-label="Editar recurrente"
                   >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
+                    <Edit className="h-4 w-4 text-primary-600" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => handleEliminar(transaccion)}
-                    className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    aria-label="Eliminar recurrente"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -278,15 +271,17 @@ const TransaccionesRecurrentes = () => {
         </div>
       ) : (
         <Card>
-          <div className="text-center py-12">
-            <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay transacciones recurrentes</h3>
-            <p className="text-gray-500 mb-6">Crea tu primera transacción recurrente para automatizar pagos</p>
-            <Button onClick={() => setModalAbierto(true)}>
-              <Plus className="h-5 w-5 mr-2" />
-              Nueva Recurrente
-            </Button>
-          </div>
+          <EmptyState
+            icon={<Calendar className="h-16 w-16" />}
+            title="No hay transacciones recurrentes"
+            description="Crea tu primera transacción recurrente para automatizar pagos"
+            action={
+              <Button onClick={() => setModalAbierto(true)}>
+                <Plus className="h-4 w-4" />
+                Nueva Recurrente
+              </Button>
+            }
+          />
         </Card>
       )}
     </div>

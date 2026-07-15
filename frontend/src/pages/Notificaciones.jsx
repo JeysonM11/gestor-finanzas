@@ -103,51 +103,50 @@ const Notificaciones = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Notificaciones</h1>
-          <p className="text-gray-600">
+    <div className="page-shell">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Notificaciones</h1>
+          <p className="page-subtitle">
             {noLeidas > 0 ? `Tienes ${noLeidas} notificación${noLeidas > 1 ? 'es' : ''} sin leer` : 'No tienes notificaciones pendientes'}
           </p>
         </div>
         {noLeidas > 0 && (
-          <Button onClick={handleMarcarTodasLeidas} variant="secondary">
-            <CheckCheck className="h-5 w-5 mr-2" />
+          <Button onClick={handleMarcarTodasLeidas} variant="secondary" className="w-full sm:w-auto shrink-0">
+            <CheckCheck className="h-4 w-4" />
             Marcar todas como leídas
           </Button>
         )}
       </div>
 
-      {/* Filtros */}
       <Card>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFiltro('todas')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
               filtro === 'todas' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-surface-muted text-ink-muted hover:bg-slate-200'
             }`}
           >
             Todas ({notificaciones.length})
           </button>
           <button
             onClick={() => setFiltro('noLeidas')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
               filtro === 'noLeidas' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-surface-muted text-ink-muted hover:bg-slate-200'
             }`}
           >
             No leídas ({noLeidas})
           </button>
           <button
             onClick={() => setFiltro('leidas')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
               filtro === 'leidas' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-surface-muted text-ink-muted hover:bg-slate-200'
             }`}
           >
             Leídas ({notificaciones.length - noLeidas})
@@ -170,32 +169,36 @@ const Notificaciones = () => {
                 
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="font-semibold text-gray-900">{notif.titulo}</h3>
+                    <h3 className="font-semibold text-ink">{notif.titulo}</h3>
                     {!notif.leida && (
                       <span className="inline-block w-2 h-2 bg-primary-600 rounded-full"></span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{notif.mensaje}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">
+                  <p className="text-sm text-ink-muted mb-2">{notif.mensaje}</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <span className="text-xs text-ink-subtle">
                       {dayjs(notif.fechaEnvio || notif.createdAt).fromNow()}
                     </span>
                     <div className="flex items-center gap-2">
                       {!notif.leida && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleMarcarLeida(notif.id)}
-                          className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                          className="text-primary-600"
                         >
                           <Check className="h-4 w-4" />
                           Marcar como leída
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => handleEliminar(notif.id)}
-                        className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+                        aria-label="Eliminar notificación"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -215,7 +218,7 @@ const Notificaciones = () => {
                   : 'No hay notificaciones leídas'
             }
           >
-            <p className="text-gray-500">
+            <p className="text-ink-muted">
               Las nuevas notificaciones aparecerán aquí
             </p>
           </EmptyState>
