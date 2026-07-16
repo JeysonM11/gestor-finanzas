@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { todayDateInput, toDateInputValue } from '../../utils/date'
 import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
@@ -13,7 +14,7 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
     montoInicial: '',
     montoActual: '',
     cantidadUnidades: '',
-    fechaCompra: new Date().toISOString().split('T')[0],
+    fechaCompra: todayDateInput(),
     broker: '',
     notas: ''
   })
@@ -28,7 +29,7 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
         montoInicial: inversion.montoInicial ?? inversion.montoInvertido ?? '',
         montoActual: inversion.montoActual ?? inversion.valorActual ?? '',
         cantidadUnidades: inversion.cantidadUnidades ?? inversion.cantidad ?? '',
-        fechaCompra: inversion.fechaCompra ? new Date(inversion.fechaCompra).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        fechaCompra: inversion.fechaCompra ? toDateInputValue(inversion.fechaCompra) : todayDateInput(),
         broker: inversion.broker || '',
         notas: inversion.notas || ''
       })
@@ -39,7 +40,7 @@ const ModalInversion = ({ isOpen, onClose, onSuccess, inversion = null }) => {
         montoInicial: '',
         montoActual: '',
         cantidadUnidades: '',
-        fechaCompra: new Date().toISOString().split('T')[0],
+        fechaCompra: todayDateInput(),
         broker: '',
         notas: ''
       })

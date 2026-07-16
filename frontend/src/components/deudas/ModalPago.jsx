@@ -4,12 +4,13 @@ import Button from '../common/Button'
 import Input from '../common/Input'
 import { deudaService } from '../../services/deuda.service'
 import { useCurrency } from '../../hooks/useCurrency'
+import { todayDateInput } from '../../utils/date'
 
 const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
   const { formatMoney } = useCurrency()
   const [formData, setFormData] = useState({
     monto: '',
-    fecha: new Date().toISOString().split('T')[0]
+    fecha: todayDateInput()
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -36,7 +37,7 @@ const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
       
       setFormData({
         monto: '',
-        fecha: new Date().toISOString().split('T')[0]
+        fecha: todayDateInput()
       })
       
       onSuccess?.()

@@ -4,6 +4,7 @@ import Button from '../common/Button'
 import Input from '../common/Input'
 import { transaccionRecurrenteService } from '../../services/transaccion-recurrente.service'
 import { CATEGORIAS_DEFAULT, categoriasParaTipo } from '../../utils/constants'
+import { todayDateInput, toDateInputValue } from '../../utils/date'
 
 const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
@@ -16,7 +17,7 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
     categoria: '',
     frecuencia: 'MENSUAL',
     diaEjecucion: new Date().getDate(),
-    fechaInicio: new Date().toISOString().split('T')[0],
+    fechaInicio: todayDateInput(),
     fechaFin: '',
     activa: true
   })
@@ -33,8 +34,8 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
         categoria: transaccion.categoria || '',
         frecuencia: transaccion.frecuencia || 'MENSUAL',
         diaEjecucion: transaccion.diaEjecucion || new Date().getDate(),
-        fechaInicio: transaccion.fechaInicio ? new Date(transaccion.fechaInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        fechaFin: transaccion.fechaFin ? new Date(transaccion.fechaFin).toISOString().split('T')[0] : '',
+        fechaInicio: transaccion.fechaInicio ? toDateInputValue(transaccion.fechaInicio) : todayDateInput(),
+        fechaFin: transaccion.fechaFin ? toDateInputValue(transaccion.fechaFin) : '',
         activa: transaccion.activa !== undefined ? transaccion.activa : true
       })
     } else if (!isOpen) {
@@ -46,7 +47,7 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
         categoria: '',
         frecuencia: 'MENSUAL',
         diaEjecucion: new Date().getDate(),
-        fechaInicio: new Date().toISOString().split('T')[0],
+        fechaInicio: todayDateInput(),
         fechaFin: '',
         activa: true
       })

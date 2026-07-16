@@ -4,6 +4,7 @@ const prisma = require('../lib/prisma');
 const { catchAsync } = require('../middlewares/error.middleware');
 const { AppError, ConflictError, AuthenticationError } = require('../utils/errors');
 const { logUserAction, logSecurityEvent } = require('../utils/logger');
+const { parseDateOnly } = require('../utils/date');
 
 // Registro de usuario
 exports.register = catchAsync(async (req, res, next) => {
@@ -25,7 +26,7 @@ exports.register = catchAsync(async (req, res, next) => {
       email: email.toLowerCase().trim(),
       password: hashedPassword,
       telefono,
-      fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
+      fechaNacimiento: fechaNacimiento ? parseDateOnly(fechaNacimiento) : null,
       ocupacion: ocupacion?.trim() || null,
       salarioMensual: salarioMensual || null,
     },
@@ -205,7 +206,7 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
       ...(name != null && { name: name.trim() }),
       ...(telefono !== undefined && { telefono: telefono || null }),
       ...(fechaNacimiento !== undefined && {
-        fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
+        fechaNacimiento: fechaNacimiento ? parseDateOnly(fechaNacimiento) : null,
       }),
       ...(ocupacion !== undefined && { ocupacion: ocupacion || null }),
       ...(salarioMensual !== undefined && { salarioMensual }),

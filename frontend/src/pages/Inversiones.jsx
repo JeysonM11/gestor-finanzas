@@ -5,7 +5,7 @@ import ModalInversion from '../components/inversiones/ModalInversion'
 import { inversionService } from '../services/inversion.service'
 import { useCurrency } from '../hooks/useCurrency'
 import { Plus, TrendingUp, TrendingDown, Edit, Trash2, DollarSign, Percent } from 'lucide-react'
-import dayjs from 'dayjs'
+import { formatDate } from '../utils/date'
 
 const Inversiones = () => {
   const { formatMoney, formatSigned } = useCurrency()
@@ -268,7 +268,7 @@ const Inversiones = () => {
 
                   <div className="flex items-center justify-between pt-3 border-t border-line">
                     <span className="text-xs text-ink-subtle">
-                      Comprado: {dayjs(inversion.fechaCompra).format('DD/MM/YYYY')}
+                      Comprado: {formatDate(inversion.fechaCompra)}
                     </span>
                     <div className="flex items-center gap-1">
                       <Button

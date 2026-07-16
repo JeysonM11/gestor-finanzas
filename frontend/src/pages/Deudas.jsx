@@ -7,6 +7,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import { deudaService } from '../services/deuda.service'
 import { useToast } from '../context/ToastContext'
 import { useCurrency } from '../hooks/useCurrency'
+import { formatDate } from '../utils/date'
 
 const Deudas = () => {
   const toast = useToast()
@@ -289,7 +290,7 @@ const Deudas = () => {
                   {deuda.fechaVencimiento && (
                     <div className="flex items-center text-sm text-ink-muted">
                       <Calendar className="w-4 h-4 mr-2 shrink-0" />
-                      <span>Vence: {new Date(deuda.fechaVencimiento).toLocaleDateString()}</span>
+                      <span>Vence: {formatDate(deuda.fechaVencimiento)}</span>
                     </div>
                   )}
                 </div>

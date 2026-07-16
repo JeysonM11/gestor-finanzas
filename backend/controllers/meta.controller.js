@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma');
 const { catchAsync } = require('../middlewares/error.middleware');
 const { NotFoundError, ValidationError } = require('../utils/errors');
+const { parseDateOnly } = require('../utils/date');
 
 function calcProgreso(montoActual, montoObjetivo) {
   if (!montoObjetivo || montoObjetivo <= 0) return 0;
@@ -80,8 +81,8 @@ exports.crearMeta = catchAsync(async (req, res) => {
       tipo: tipo || 'AHORRO',
       montoObjetivo: objetivo,
       montoActual: actual,
-      fechaInicio: fechaInicio ? new Date(fechaInicio) : new Date(),
-      fechaLimite: new Date(fechaLimite),
+      fechaInicio: fechaInicio ? parseDateOnly(fechaInicio) : new Date(),
+      fechaLimite: parseDateOnly(fechaLimite),
       categoria,
       prioridad: prioridad || 'MEDIA',
       recordatorios: recordatorios !== undefined ? Boolean(recordatorios) : true,
@@ -130,8 +131,8 @@ exports.actualizarMeta = catchAsync(async (req, res) => {
   if (tipo != null) updateData.tipo = tipo;
   if (montoObjetivo != null) updateData.montoObjetivo = Number(montoObjetivo);
   if (montoActual != null) updateData.montoActual = Number(montoActual);
-  if (fechaInicio) updateData.fechaInicio = new Date(fechaInicio);
-  if (fechaLimite) updateData.fechaLimite = new Date(fechaLimite);
+  if (fechaInicio) updateData.fechaInicio = parseDateOnly(fechaInicio);
+  if (fechaLimite) updateData.fechaLimite = parseDateOnly(fechaLimite);
   if (categoria !== undefined) updateData.categoria = categoria;
   if (prioridad != null) updateData.prioridad = prioridad;
   if (recordatorios !== undefined) updateData.recordatorios = Boolean(recordatorios);

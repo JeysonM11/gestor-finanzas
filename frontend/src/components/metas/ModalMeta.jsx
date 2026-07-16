@@ -3,6 +3,7 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { metaService } from '../../services/meta.service'
+import { toDateInputValue } from '../../utils/date'
 
 const TIPOS = ['AHORRO', 'EMERGENCIA', 'INVERSION', 'DEUDA', 'GASTO']
 const PRIORIDADES = ['BAJA', 'MEDIA', 'ALTA', 'CRITICA']
@@ -31,7 +32,7 @@ const ModalMeta = ({ isOpen, onClose, onSuccess, meta = null }) => {
         montoObjetivo: meta.montoObjetivo ?? '',
         montoActual: meta.montoActual ?? 0,
         fechaLimite: meta.fechaLimite
-          ? new Date(meta.fechaLimite).toISOString().split('T')[0]
+          ? toDateInputValue(meta.fechaLimite)
           : '',
         categoria: meta.categoria || '',
         prioridad: meta.prioridad || 'MEDIA',
