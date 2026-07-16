@@ -3,24 +3,49 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { transaccionService } from '../../services/transaccion.service'
+import { cuentaService } from '../../services/cuenta.service'
 import { CATEGORIAS_DEFAULT, METODOS_PAGO, categoriasParaTipo } from '../../utils/constants'
+
+const initialForm = () => ({
+  tipo: 'GASTO',
+  monto: '',
+  descripcion: '',
+  categoria: '',
+  fecha: new Date().toISOString().split('T')[0],
+  metodoPago: 'EFECTIVO',
+  notas: '',
+  cuentaOrigenId: '',
+  cuentaDestinoId: '',
+})
 
 const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
-  
-  const [formData, setFormData] = useState({
-    tipo: 'GASTO',
-    monto: '',
-    descripcion: '',
-    categoria: '',
-    fecha: new Date().toISOString().split('T')[0],
-    metodoPago: 'EFECTIVO',
-    notas: ''
-  })
+
+  const [formData, setFormData] = useState(initialForm)
+  const [cuentas, setCuentas] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingCuentas, setLoadingCuentas] = useState(false)
   const [error, setError] = useState('')
 
-  // Cargar datos de transacción si estamos editando
+  useEffect(() => {
+    if (!isOpen) return
+
+    const cargarCuentas = async () => {
+      try {
+        setLoadingCuentas(true)
+        const data = await cuentaService.getAll()
+        setCuentas(data.cuentas || data || [])
+      } catch (err) {
+        console.error('Error al cargar cuentas:', err)
+        setCuentas([])
+      } finally {
+        setLoadingCuentas(false)
+      }
+    }
+
+    cargarCuentas()
+  }, [isOpen])
+
   useEffect(() => {
     if (transaccion && isOpen) {
       setFormData({
@@ -28,43 +53,98 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         monto: transaccion.monto || '',
         descripcion: transaccion.descripcion || '',
         categoria: transaccion.categoria || '',
-        fecha: transaccion.fecha ? new Date(transaccion.fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        fecha: transaccion.fecha
+          ? new Date(transaccion.fecha).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
         metodoPago: transaccion.metodoPago || 'EFECTIVO',
-        notas: transaccion.notas || ''
+        notas: transaccion.notas || '',
+        cuentaOrigenId: transaccion.cuentaOrigenId
+          ? String(transaccion.cuentaOrigenId)
+          : '',
+        cuentaDestinoId: transaccion.cuentaDestinoId
+          ? String(transaccion.cuentaDestinoId)
+          : '',
       })
     } else if (!isOpen) {
-      // Resetear formulario al cerrar
-      setFormData({
-        tipo: 'GASTO',
-        monto: '',
-        descripcion: '',
-        categoria: '',
-        fecha: new Date().toISOString().split('T')[0],
-        metodoPago: 'EFECTIVO',
-        notas: ''
-      })
+      setFormData(initialForm())
       setError('')
     }
   }, [transaccion, isOpen])
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value }
+
+      if (name === 'tipo') {
+        if (value === 'TRANSFERENCIA') {
+          next.metodoPago = 'TRANSFERENCIA'
+        } else if (prev.tipo === 'TRANSFERENCIA') {
+          next.cuentaDestinoId = ''
+          next.metodoPago = 'EFECTIVO'
+        }
+      }
+
+      return next
+    })
+  }
+
+  const etiquetaCuentaAfectada = () => {
+    if (formData.tipo === 'INGRESO') return 'Cuenta que recibe *'
+    if (formData.tipo === 'GASTO') return 'Cuenta de origen *'
+    return 'Cuenta origen *'
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (!formData.cuentaOrigenId) {
+      setError(
+        formData.tipo === 'INGRESO'
+          ? 'Selecciona la cuenta donde entra el dinero'
+          : 'Selecciona la cuenta de origen'
+      )
+      return
+    }
+
+    if (formData.tipo === 'TRANSFERENCIA') {
+      if (!formData.cuentaDestinoId) {
+        setError('Selecciona la cuenta destino')
+        return
+      }
+      if (formData.cuentaOrigenId === formData.cuentaDestinoId) {
+        setError('Origen y destino deben ser cuentas distintas')
+        return
+      }
+    }
+
+    if (cuentas.length === 0) {
+      setError('Crea al menos una cuenta antes de registrar transacciones')
+      return
+    }
+
     setLoading(true)
 
     try {
-      // Convertir monto a número
       const dataToSend = {
-        ...formData,
-        monto: parseFloat(formData.monto)
+        tipo: formData.tipo,
+        monto: parseFloat(formData.monto),
+        descripcion: formData.descripcion,
+        fecha: formData.fecha,
+        cuentaOrigenId: Number(formData.cuentaOrigenId),
+      }
+
+      if (formData.categoria) dataToSend.categoria = formData.categoria
+      if (formData.notas) dataToSend.notas = formData.notas
+
+      if (formData.tipo === 'TRANSFERENCIA') {
+        dataToSend.cuentaDestinoId = Number(formData.cuentaDestinoId)
+        dataToSend.metodoPago = 'TRANSFERENCIA'
+      } else {
+        dataToSend.metodoPago = formData.metodoPago
+        // Al editar, limpiar destino si ya no es transferencia entre cuentas
+        if (isEditing) dataToSend.cuentaDestinoId = null
       }
 
       if (isEditing) {
@@ -72,19 +152,28 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
       } else {
         await transaccionService.create(dataToSend)
       }
-      
+
       onSuccess?.()
       onClose()
     } catch (err) {
       console.error('Error al guardar transacción:', err)
-      setError(err.response?.data?.message || `Error al ${isEditing ? 'actualizar' : 'crear'} la transacción`)
+      setError(
+        err.response?.data?.message ||
+          `Error al ${isEditing ? 'actualizar' : 'crear'} la transacción`
+      )
     } finally {
       setLoading(false)
     }
   }
 
+  const esTransferencia = formData.tipo === 'TRANSFERENCIA'
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? "Editar Transacción" : "Nueva Transacción"}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditing ? 'Editar Transacción' : 'Nueva Transacción'}
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -93,7 +182,6 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Tipo */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tipo *
@@ -111,7 +199,6 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
             </select>
           </div>
 
-          {/* Monto */}
           <Input
             label="Monto *"
             type="number"
@@ -125,7 +212,6 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
           />
         </div>
 
-        {/* Descripción */}
         <Input
           label="Descripción *"
           type="text"
@@ -137,7 +223,89 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Categoría */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {etiquetaCuentaAfectada()}
+            </label>
+            <select
+              name="cuentaOrigenId"
+              value={formData.cuentaOrigenId}
+              onChange={handleChange}
+              className="w-full input-field"
+              required
+              disabled={loadingCuentas}
+            >
+              <option value="">
+                {loadingCuentas ? 'Cargando cuentas...' : 'Seleccionar cuenta'}
+              </option>
+              {cuentas.map((cuenta) => (
+                <option key={cuenta.id} value={cuenta.id}>
+                  {cuenta.nombre}
+                  {cuenta.saldoActual != null
+                    ? ` ($${Number(cuenta.saldoActual).toFixed(2)})`
+                    : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {esTransferencia ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cuenta destino *
+              </label>
+              <select
+                name="cuentaDestinoId"
+                value={formData.cuentaDestinoId}
+                onChange={handleChange}
+                className="w-full input-field"
+                required
+                disabled={loadingCuentas}
+              >
+                <option value="">
+                  {loadingCuentas ? 'Cargando cuentas...' : 'Seleccionar cuenta'}
+                </option>
+                {cuentas
+                  .filter((c) => String(c.id) !== String(formData.cuentaOrigenId))
+                  .map((cuenta) => (
+                    <option key={cuenta.id} value={cuenta.id}>
+                      {cuenta.nombre}
+                      {cuenta.saldoActual != null
+                        ? ` ($${Number(cuenta.saldoActual).toFixed(2)})`
+                        : ''}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Método de Pago
+              </label>
+              <select
+                name="metodoPago"
+                value={formData.metodoPago}
+                onChange={handleChange}
+                className="w-full input-field"
+              >
+                {METODOS_PAGO.map((m) => (
+                  <option key={m} value={m}>
+                    {m.replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {!esTransferencia && cuentas.length === 0 && !loadingCuentas && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            No tienes cuentas activas. Crea una en Cuentas para que el saldo se
+            actualice.
+          </p>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Categoría
@@ -154,7 +322,6 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
                   {c.nombre}
                 </option>
               ))}
-              {/* Mantener valor al editar si no está en la lista filtrada */}
               {formData.categoria &&
                 !CATEGORIAS_DEFAULT.some((c) => c.nombre === formData.categoria) && (
                   <option value={formData.categoria}>{formData.categoria}</option>
@@ -162,7 +329,6 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
             </select>
           </div>
 
-          {/* Fecha */}
           <Input
             label="Fecha *"
             type="date"
@@ -173,26 +339,6 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
           />
         </div>
 
-        {/* Método de Pago */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Método de Pago
-          </label>
-          <select
-            name="metodoPago"
-            value={formData.metodoPago}
-            onChange={handleChange}
-            className="w-full input-field"
-          >
-            {METODOS_PAGO.map((m) => (
-              <option key={m} value={m}>
-                {m.replace(/_/g, ' ')}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Notas */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Notas (opcional)
@@ -207,7 +353,6 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
           />
         </div>
 
-        {/* Botones */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
           <Button
             type="button"
@@ -217,11 +362,14 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
           >
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? (isEditing ? 'Actualizando...' : 'Creando...') : (isEditing ? 'Actualizar Transacción' : 'Crear Transacción')}
+          <Button type="submit" disabled={loading || loadingCuentas}>
+            {loading
+              ? isEditing
+                ? 'Actualizando...'
+                : 'Creando...'
+              : isEditing
+                ? 'Actualizar Transacción'
+                : 'Crear Transacción'}
           </Button>
         </div>
       </form>

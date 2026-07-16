@@ -126,6 +126,8 @@ exports.obtenerTransacciones = catchAsync(async (req, res) => {
         etiquetas: true,
         cuentaOrigenId: true,
         cuentaDestinoId: true,
+        cuentaOrigen: { select: { id: true, nombre: true } },
+        cuentaDestino: { select: { id: true, nombre: true } },
       },
     }),
     calcularResumen(where),
