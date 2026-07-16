@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { CreditCard, Plus, Edit, Trash2, DollarSign, Calendar, TrendingDown, AlertTriangle, BellRing } from 'lucide-react'
+import { CreditCard, Plus, Edit, Trash2, DollarSign, Calendar, TrendingDown, AlertTriangle, BellRing, CheckCircle } from 'lucide-react'
 import { Button, Spinner, Card, EmptyState, Badge } from '../components/ui'
 import ModalDeuda from '../components/deudas/ModalDeuda'
 import ModalPago from '../components/deudas/ModalPago'
 import ModalRecordatorio from '../components/recordatorios/ModalRecordatorio'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { deudaService } from '../services/deuda.service'
+import { recordatorioService } from '../services/recordatorio.service'
 import { useToast } from '../context/ToastContext'
 import { useCurrency } from '../hooks/useCurrency'
 import { formatDate, todayDateInput } from '../utils/date'
@@ -19,12 +20,28 @@ const Deudas = () => {
   const [modalPagoOpen, setModalPagoOpen] = useState(false)
   const [modalRecordatorioOpen, setModalRecordatorioOpen] = useState(false)
   const [recordatorioDefaults, setRecordatorioDefaults] = useState(null)
+  const [recordatorioSeleccionado, setRecordatorioSeleccionado] = useState(null)
+  const [recordatoriosPorDeuda, setRecordatoriosPorDeuda] = useState({})
   const [selectedDeuda, setSelectedDeuda] = useState(null)
   const [deudaToDelete, setDeudaToDelete] = useState(null)
 
   useEffect(() => {
     fetchDeudas()
+    fetchRecordatoriosDeudas()
   }, [])
+
+  const fetchRecordatoriosDeudas = async () => {
+    try {
+      const data = await recordatorioService.getAll({ tipo: 'DEUDA', soloPendientes: true })
+      const map = {}
+      for (const r of data.recordatorios || []) {
+        if (r.deudaId) map[r.deudaId] = r
+      }
+      setRecordatoriosPorDeuda(map)
+    } catch {
+      // No bloquear la página si falla la carga de recordatorios
+    }
+  }
 
   const fetchDeudas = async () => {
     try {
@@ -62,6 +79,14 @@ const Deudas = () => {
   }
 
   const handleRecordarme = (deuda) => {
+    const existente = recordatoriosPorDeuda[deuda.id]
+    if (existente) {
+      setRecordatorioSeleccionado(existente)
+      setRecordatorioDefaults(null)
+      setModalRecordatorioOpen(true)
+      return
+    }
+    setRecordatorioSeleccionado(null)
     setRecordatorioDefaults({
       titulo: `Pago: ${deuda.nombre}`,
       descripcion: deuda.acreedor
@@ -69,6 +94,7 @@ const Deudas = () => {
         : `Recordatorio de deuda "${deuda.nombre}"`,
       tipo: 'DEUDA',
       fechaRecordatorio: deuda.fechaVencimiento || todayDateInput(),
+      deudaId: deuda.id,
     })
     setModalRecordatorioOpen(true)
   }
@@ -228,6 +254,7 @@ const Deudas = () => {
             const montoTotal = deuda.montoTotal ?? deuda.montoInicial ?? 0
             const montoPagado = deuda.montoPagado ?? 0
             const plazoLabel = formatearPlazo(deuda.plazoMeses)
+            const recordatorioActivo = recordatoriosPorDeuda[deuda.id]
             
             return (
               <Card key={deuda.id} hover>
@@ -338,10 +365,19 @@ const Deudas = () => {
                     <Button
                       variant="outline"
                       onClick={() => handleRecordarme(deuda)}
-                      className="w-full"
+                      className={`w-full ${recordatorioActivo ? 'border-green-300 text-green-700 hover:bg-green-50' : ''}`}
                     >
-                      <BellRing className="w-4 h-4" />
-                      Recordarme
+                      {recordatorioActivo ? (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Ver recordatorio
+                        </>
+                      ) : (
+                        <>
+                          <BellRing className="w-4 h-4" />
+                          Recordarme
+                        </>
+                      )}
                     </Button>
                   </div>
                 )}
@@ -377,10 +413,15 @@ const Deudas = () => {
         onClose={() => {
           setModalRecordatorioOpen(false)
           setRecordatorioDefaults(null)
+          setRecordatorioSeleccionado(null)
         }}
         onSuccess={() => {
-          toast.success('Recordatorio creado')
+          toast.success(
+            recordatorioSeleccionado ? 'Recordatorio actualizado' : 'Recordatorio creado'
+          )
+          fetchRecordatoriosDeudas()
         }}
+        recordatorio={recordatorioSeleccionado}
         defaults={recordatorioDefaults}
       />
 

@@ -4,9 +4,10 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalMeta from '../components/metas/ModalMeta'
 import ModalRecordatorio from '../components/recordatorios/ModalRecordatorio'
 import { metaService } from '../services/meta.service'
+import { recordatorioService } from '../services/recordatorio.service'
 import { useToast } from '../context/ToastContext'
 import { useCurrency } from '../hooks/useCurrency'
-import { Plus, Target, Edit, Trash2, DollarSign, BellRing } from 'lucide-react'
+import { Plus, Target, Edit, Trash2, DollarSign, BellRing, CheckCircle } from 'lucide-react'
 import { formatDate, todayDateInput } from '../utils/date'
 
 const Metas = () => {
@@ -23,10 +24,26 @@ const Metas = () => {
   const [montoAporte, setMontoAporte] = useState('')
   const [modalRecordatorioOpen, setModalRecordatorioOpen] = useState(false)
   const [recordatorioDefaults, setRecordatorioDefaults] = useState(null)
+  const [recordatorioSeleccionado, setRecordatorioSeleccionado] = useState(null)
+  const [recordatoriosPorMeta, setRecordatoriosPorMeta] = useState({})
 
   useEffect(() => {
     cargar()
+    fetchRecordatoriosMetas()
   }, [])
+
+  const fetchRecordatoriosMetas = async () => {
+    try {
+      const data = await recordatorioService.getAll({ tipo: 'META', soloPendientes: true })
+      const map = {}
+      for (const r of data.recordatorios || []) {
+        if (r.metaId) map[r.metaId] = r
+      }
+      setRecordatoriosPorMeta(map)
+    } catch {
+      // No bloquear la página si falla la carga de recordatorios
+    }
+  }
 
   const cargar = async () => {
     try {
@@ -70,11 +87,20 @@ const Metas = () => {
   }
 
   const handleRecordarme = (meta) => {
+    const existente = recordatoriosPorMeta[meta.id]
+    if (existente) {
+      setRecordatorioSeleccionado(existente)
+      setRecordatorioDefaults(null)
+      setModalRecordatorioOpen(true)
+      return
+    }
+    setRecordatorioSeleccionado(null)
     setRecordatorioDefaults({
       titulo: `Meta: ${meta.titulo}`,
       descripcion: meta.descripcion || `Fecha objetivo de la meta "${meta.titulo}"`,
       tipo: 'META',
       fechaRecordatorio: meta.fechaLimite || todayDateInput(),
+      metaId: meta.id,
     })
     setModalRecordatorioOpen(true)
   }
@@ -117,10 +143,15 @@ const Metas = () => {
         onClose={() => {
           setModalRecordatorioOpen(false)
           setRecordatorioDefaults(null)
+          setRecordatorioSeleccionado(null)
         }}
         onSuccess={() => {
-          toast.success('Recordatorio creado')
+          toast.success(
+            recordatorioSeleccionado ? 'Recordatorio actualizado' : 'Recordatorio creado'
+          )
+          fetchRecordatoriosMetas()
         }}
+        recordatorio={recordatorioSeleccionado}
         defaults={recordatorioDefaults}
       />
 
@@ -156,7 +187,9 @@ const Metas = () => {
 
       {metas.length > 0 ? (
         <div className="card-grid">
-          {metas.map((meta) => (
+          {metas.map((meta) => {
+            const recordatorioActivo = recordatoriosPorMeta[meta.id]
+            return (
             <Card key={meta.id} hover className={meta.completada ? 'opacity-75' : ''}>
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-2">
@@ -258,10 +291,19 @@ const Metas = () => {
                         <Button
                           variant="outline"
                           onClick={() => handleRecordarme(meta)}
-                          className="w-full"
+                          className={`w-full ${recordatorioActivo ? 'border-green-300 text-green-700 hover:bg-green-50' : ''}`}
                         >
-                          <BellRing className="h-4 w-4" />
-                          Recordarme
+                          {recordatorioActivo ? (
+                            <>
+                              <CheckCircle className="h-4 w-4" />
+                              Ver recordatorio
+                            </>
+                          ) : (
+                            <>
+                              <BellRing className="h-4 w-4" />
+                              Recordarme
+                            </>
+                          )}
                         </Button>
                       </>
                     )}
@@ -269,7 +311,8 @@ const Metas = () => {
                 )}
               </div>
             </Card>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <Card>

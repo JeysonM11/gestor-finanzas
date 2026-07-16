@@ -16,9 +16,39 @@ function parseFechaRecordatorio(value) {
   return d;
 }
 
+async function assertVinculoRecordatorio(userId, { deudaId, metaId }) {
+  if (deudaId != null && metaId != null) {
+    throw new ValidationError('Solo se puede vincular un recordatorio a una deuda o a una meta');
+  }
+  if (deudaId != null) {
+    const deuda = await prisma.deuda.findFirst({
+      where: { id: deudaId, userId },
+    });
+    if (!deuda) throw new NotFoundError('Deuda');
+  }
+  if (metaId != null) {
+    const meta = await prisma.meta.findFirst({
+      where: { id: metaId, userId },
+    });
+    if (!meta) throw new NotFoundError('Meta');
+  }
+}
+
+async function assertSinRecordatorioActivo(userId, { deudaId, metaId, excludeId }) {
+  if (deudaId == null && metaId == null) return;
+  const where = { userId, activo: true, completado: false };
+  if (deudaId != null) where.deudaId = deudaId;
+  if (metaId != null) where.metaId = metaId;
+  if (excludeId != null) where.id = { not: excludeId };
+  const existente = await prisma.recordatorio.findFirst({ where });
+  if (existente) {
+    throw new ValidationError('Ya existe un recordatorio activo para este elemento');
+  }
+}
+
 exports.obtenerRecordatorios = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  const { soloPendientes, fechaInicio, fechaFin, tipo } = req.query;
+  const { soloPendientes, fechaInicio, fechaFin, tipo, deudaId, metaId } = req.query;
 
   const where = { userId, activo: true };
 
@@ -28,6 +58,14 @@ exports.obtenerRecordatorios = catchAsync(async (req, res) => {
 
   if (tipo) {
     where.tipo = tipo;
+  }
+
+  if (deudaId) {
+    where.deudaId = parseInt(deudaId, 10);
+  }
+
+  if (metaId) {
+    where.metaId = parseInt(metaId, 10);
   }
 
   if (fechaInicio || fechaFin) {
@@ -83,6 +121,8 @@ exports.crearRecordatorio = catchAsync(async (req, res) => {
     repetir = false,
     frecuencia,
     activo = true,
+    deudaId,
+    metaId,
   } = req.body;
 
   const fecha = parseFechaRecordatorio(fechaRecordatorio);
@@ -94,6 +134,17 @@ exports.crearRecordatorio = catchAsync(async (req, res) => {
     throw new ValidationError('frecuencia es obligatoria si repetir es true');
   }
 
+  const deudaIdParsed = deudaId != null ? parseInt(deudaId, 10) : null;
+  const metaIdParsed = metaId != null ? parseInt(metaId, 10) : null;
+  await assertVinculoRecordatorio(userId, {
+    deudaId: deudaIdParsed,
+    metaId: metaIdParsed,
+  });
+  await assertSinRecordatorioActivo(userId, {
+    deudaId: deudaIdParsed,
+    metaId: metaIdParsed,
+  });
+
   const recordatorio = await prisma.recordatorio.create({
     data: {
       titulo: titulo.trim(),
@@ -104,6 +155,8 @@ exports.crearRecordatorio = catchAsync(async (req, res) => {
       frecuencia: repetir ? frecuencia : frecuencia || null,
       activo: Boolean(activo),
       userId,
+      deudaId: deudaIdParsed,
+      metaId: metaIdParsed,
     },
   });
 
@@ -126,6 +179,8 @@ exports.actualizarRecordatorio = catchAsync(async (req, res) => {
     frecuencia,
     completado,
     activo,
+    deudaId,
+    metaId,
   } = req.body;
 
   const existente = await prisma.recordatorio.findFirst({
@@ -155,6 +210,33 @@ exports.actualizarRecordatorio = catchAsync(async (req, res) => {
   }
   if (completado !== undefined) data.completado = Boolean(completado);
   if (activo !== undefined) data.activo = Boolean(activo);
+
+  const deudaIdFinal =
+    deudaId !== undefined
+      ? deudaId != null
+        ? parseInt(deudaId, 10)
+        : null
+      : existente.deudaId;
+  const metaIdFinal =
+    metaId !== undefined
+      ? metaId != null
+        ? parseInt(metaId, 10)
+        : null
+      : existente.metaId;
+
+  if (deudaId !== undefined || metaId !== undefined) {
+    await assertVinculoRecordatorio(userId, {
+      deudaId: deudaIdFinal,
+      metaId: metaIdFinal,
+    });
+    await assertSinRecordatorioActivo(userId, {
+      deudaId: deudaIdFinal,
+      metaId: metaIdFinal,
+      excludeId: existente.id,
+    });
+    data.deudaId = deudaIdFinal;
+    data.metaId = metaIdFinal;
+  }
 
   const repetirFinal =
     data.repetir !== undefined ? data.repetir : existente.repetir;

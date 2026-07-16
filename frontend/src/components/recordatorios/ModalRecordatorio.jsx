@@ -26,12 +26,14 @@ const ModalRecordatorio = ({
 }) => {
   const isEditing = !!recordatorio
   const [formData, setFormData] = useState(initialForm)
+  const [vinculo, setVinculo] = useState({ deudaId: null, metaId: null })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (!isOpen) {
       setFormData(initialForm())
+      setVinculo({ deudaId: null, metaId: null })
       setError('')
       return
     }
@@ -46,6 +48,10 @@ const ModalRecordatorio = ({
           : todayDateInput(),
         repetir: Boolean(recordatorio.repetir),
         frecuencia: recordatorio.frecuencia || 'MENSUAL',
+      })
+      setVinculo({
+        deudaId: recordatorio.deudaId ?? null,
+        metaId: recordatorio.metaId ?? null,
       })
       return
     }
@@ -62,8 +68,13 @@ const ModalRecordatorio = ({
         repetir: Boolean(defaults.repetir),
         frecuencia: defaults.frecuencia || 'MENSUAL',
       })
+      setVinculo({
+        deudaId: defaults.deudaId ?? null,
+        metaId: defaults.metaId ?? null,
+      })
     } else {
       setFormData(initialForm())
+      setVinculo({ deudaId: null, metaId: null })
     }
   }, [recordatorio, defaults, isOpen])
 
@@ -88,6 +99,8 @@ const ModalRecordatorio = ({
         repetir: Boolean(formData.repetir),
         frecuencia: formData.repetir ? formData.frecuencia : null,
       }
+      if (vinculo.deudaId != null) payload.deudaId = vinculo.deudaId
+      if (vinculo.metaId != null) payload.metaId = vinculo.metaId
       if (isEditing) {
         await recordatorioService.update(recordatorio.id, payload)
       } else {

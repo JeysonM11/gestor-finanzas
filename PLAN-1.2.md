@@ -191,10 +191,10 @@ Modelo existente: `SesionUsuario`.
 
 ## Sprint E — Calidad y CI (P2, en paralelo o al cierre)
 
-- [ ] Tests de integración ownership (IDOR) con DB de test en CI (transacciones, recordatorios, categorías).
-- [ ] Incluir `frontend` lint (y opcionalmente `npm run build`) en `.github/workflows/ci.yml`.
-- [ ] Cobertura mínima documentada de mappers / saldos / recordatorios vencidos.
-- [ ] Revisar rate limit en rutas auth nuevas (verify-email / sessions).
+- [x] Tests de integración ownership (IDOR) con DB de test en CI (transacciones, recordatorios, categorías).
+- [x] Incluir `frontend` lint (y opcionalmente `npm run build`) en `.github/workflows/ci.yml`.
+- [x] Cobertura mínima documentada de mappers / saldos / recordatorios vencidos.
+- [x] Revisar rate limit en rutas auth nuevas (verify-email / sessions).
 
 **Criterio de salida:** CI falla si rompen ownership básico o el build del frontend.
 

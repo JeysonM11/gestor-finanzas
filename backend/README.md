@@ -48,7 +48,7 @@ Servidor: `http://localhost:5000`
 
 | Prefijo | Recursos |
 |---------|----------|
-| `/api/auth` | register, login, me, profile, change-password, preferences |
+| `/api/auth` | register, login, me, sessions, logout, profile, change-password, preferences |
 | `/api/transacciones` | CRUD, resumen (ownership + sync saldos) |
 | `/api/finanzas/cuentas` | CRUD / soft delete |
 | `/api/finanzas/inversiones` | CRUD |
@@ -70,13 +70,31 @@ Contratos de campos/enums: [docs/CONTRATOS-API.md](../docs/CONTRATOS-API.md).
 ```bash
 npm run dev
 npm start                 # aplica migraciones pendientes y arranca (producciùn)
-npm test
+npm test                  # unitarios (sin DB)
+npm run test:integration  # ownership + recordatorios vencidos
+npm run test:all
 npm run prisma:migrate    # solo desarrollo
 npm run prisma:deploy     # solo aplicar migraciones (sin arrancar)
 npm run prisma:generate
 npm run prisma:studio
 npm run prisma:seed
 ```
+
+## Tests y cobertura minima
+
+| Area | Archivo | Que valida |
+|------|---------|------------|
+| Mappers / enums | `tests/mappers.test.js` | Normalizacion de tipos cuenta, transaccion, etc. |
+| Saldos | `tests/saldo.test.js` | Efecto INGRESO/GASTO/TRANSFERENCIA en cuentas |
+| Recordatorios (logica) | `tests/recordatorios.test.js` | Frecuencias, validacion Joi |
+| Recordatorios vencidos | `tests/integration/ownership.test.js` | `notificarVencidos` idempotente |
+| Ownership (IDOR) | `tests/integration/ownership.test.js` | Usuario B no accede a recursos de A |
+| Sesiones | `tests/sessions.test.js` | Hash token, parse dispositivo |
+| Auth middleware | `tests/auth.middleware.test.js` | JWT + sesion revocada |
+
+`npm test` corre unitarios; `npm run test:integration` requiere `DATABASE_URL` (CI usa PostgreSQL + migrate deploy).
+
+Rate limit: `authLimiter` en register/login; sesiones usan JWT + `apiLimiter` general.
 
 ### Migraciones en producciùn
 

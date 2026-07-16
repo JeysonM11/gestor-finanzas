@@ -17,6 +17,9 @@ const {
 router.post('/register', authLimiter, validateBody(registerSchema), authController.register);
 router.post('/login', authLimiter, validateBody(loginSchema), authController.login);
 
+// Sesiones y logout: requieren JWT; usan apiLimiter global (no authLimiter).
+// authLimiter solo aplica a credenciales sin autenticar (register/login).
+
 // Obtener usuario actual (protegido)
 router.get('/me', authenticateToken, authController.getCurrentUser);
 

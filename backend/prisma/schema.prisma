@@ -165,6 +165,7 @@ model Meta {
   
   user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId              Int
+  recordatoriosVinculados Recordatorio[]
   
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -274,6 +275,7 @@ model Deuda {
   userId              Int
   pagos               PagoDeuda[]
   transacciones       Transaccion[]
+  recordatoriosVinculados Recordatorio[]
   
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -366,12 +368,18 @@ model Recordatorio {
 
   user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId                Int
+  deuda                 Deuda?              @relation(fields: [deudaId], references: [id], onDelete: SetNull)
+  deudaId               Int?
+  meta                  Meta?               @relation(fields: [metaId], references: [id], onDelete: SetNull)
+  metaId                Int?
 
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
   @@index([userId, activo, completado])
   @@index([fechaRecordatorio, notificacionEnviada])
+  @@index([deudaId, activo, completado])
+  @@index([metaId, activo, completado])
   @@map("recordatorios")
 }
 

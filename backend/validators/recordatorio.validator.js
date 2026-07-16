@@ -23,6 +23,8 @@ const createRecordatorioSchema = Joi.object({
       .optional(),
   }),
   activo: Joi.boolean().optional(),
+  deudaId: Joi.number().integer().positive().allow(null).optional(),
+  metaId: Joi.number().integer().positive().allow(null).optional(),
 });
 
 const updateRecordatorioSchema = Joi.object({
@@ -39,6 +41,8 @@ const updateRecordatorioSchema = Joi.object({
     .optional(),
   completado: Joi.boolean().optional(),
   activo: Joi.boolean().optional(),
+  deudaId: Joi.number().integer().positive().allow(null).optional(),
+  metaId: Joi.number().integer().positive().allow(null).optional(),
 }).min(1);
 
 module.exports = {
