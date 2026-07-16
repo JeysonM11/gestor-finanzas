@@ -66,7 +66,8 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 - [backend/README.md](backend/README.md) — endpoints, env, seed, deploy
 - [frontend/README.md](frontend/README.md) — estructura UI
 - [docs/CONTRATOS-API.md](docs/CONTRATOS-API.md) — enums y contratos de campos
-- [PLAN-DE-TRABAJO.md](PLAN-DE-TRABAJO.md) — sprints y criterios de cierre
+- [PLAN-DE-TRABAJO.md](PLAN-DE-TRABAJO.md) — sprints y criterios de cierre (MVP)
+- [PLAN-1.2.md](PLAN-1.2.md) — plan de la versión 1.2 (categorías, recordatorios, moneda, confianza)
 
 ## Checklist de despliegue
 

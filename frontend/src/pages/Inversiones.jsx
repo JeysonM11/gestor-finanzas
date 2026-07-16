@@ -3,10 +3,12 @@ import { Card, Button, Spinner, EmptyState } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalInversion from '../components/inversiones/ModalInversion'
 import { inversionService } from '../services/inversion.service'
+import { useCurrency } from '../hooks/useCurrency'
 import { Plus, TrendingUp, TrendingDown, Edit, Trash2, DollarSign, Percent } from 'lucide-react'
-import dayjs from 'dayjs'
+import { formatDate } from '../utils/date'
 
 const Inversiones = () => {
+  const { formatMoney, formatSigned } = useCurrency()
   const [inversiones, setInversiones] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -145,7 +147,7 @@ const Inversiones = () => {
               <div>
                 <p className="text-sm text-ink-muted">Total Invertido</p>
                 <p className="text-2xl font-bold text-ink">
-                  ${totales.totalInvertido.toFixed(2)}
+                  {formatMoney(totales.totalInvertido)}
                 </p>
               </div>
               <DollarSign className="h-10 w-10 text-blue-600" />
@@ -157,7 +159,7 @@ const Inversiones = () => {
               <div>
                 <p className="text-sm text-ink-muted">Valor Actual</p>
                 <p className="text-2xl font-bold text-ink">
-                  ${totales.totalActual.toFixed(2)}
+                  {formatMoney(totales.totalActual)}
                 </p>
               </div>
               <TrendingUp className="h-10 w-10 text-primary-600" />
@@ -169,7 +171,7 @@ const Inversiones = () => {
               <div>
                 <p className="text-sm text-ink-muted">Ganancia/Pérdida</p>
                 <p className={`text-2xl font-bold ${totales.gananciaTotal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {totales.gananciaTotal >= 0 ? '+' : ''}${totales.gananciaTotal.toFixed(2)}
+                  {formatSigned(totales.gananciaTotal)}
                 </p>
               </div>
               {totales.gananciaTotal >= 0 ? (
@@ -222,13 +224,13 @@ const Inversiones = () => {
                     <div>
                       <p className="text-xs text-ink-subtle mb-1">Invertido</p>
                       <p className="text-lg font-bold text-ink">
-                        ${inicial.toFixed(2)}
+                        {formatMoney(inicial)}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-ink-subtle mb-1">Valor Actual</p>
                       <p className="text-lg font-bold text-ink">
-                        ${actual.toFixed(2)}
+                        {formatMoney(actual)}
                       </p>
                     </div>
                   </div>
@@ -238,7 +240,7 @@ const Inversiones = () => {
                       <div>
                         <p className="text-xs text-ink-muted mb-1">Ganancia/Pérdida</p>
                         <p className={`text-xl font-bold ${esPositivo ? 'text-green-600' : 'text-red-600'}`}>
-                          {esPositivo ? '+' : ''}${ganancia.toFixed(2)}
+                          {formatSigned(ganancia)}
                         </p>
                       </div>
                       <div className="text-right">
@@ -266,7 +268,7 @@ const Inversiones = () => {
 
                   <div className="flex items-center justify-between pt-3 border-t border-line">
                     <span className="text-xs text-ink-subtle">
-                      Comprado: {dayjs(inversion.fechaCompra).format('DD/MM/YYYY')}
+                      Comprado: {formatDate(inversion.fechaCompra)}
                     </span>
                     <div className="flex items-center gap-1">
                       <Button

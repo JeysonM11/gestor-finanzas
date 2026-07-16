@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { startOfDayUTC, endOfDayUTC } = require('../utils/date');
 
 const CATEGORIAS_PREDEFINIDAS = [
   'Alimentacion',
@@ -180,8 +181,8 @@ exports.obtenerEstadisticasPorCategoria = async (req, res) => {
     const filtroFecha = {};
     if (fechaInicio && fechaFin) {
       filtroFecha.fecha = {
-        gte: new Date(fechaInicio),
-        lte: new Date(fechaFin),
+        gte: startOfDayUTC(fechaInicio),
+        lte: endOfDayUTC(fechaFin),
       };
     }
 

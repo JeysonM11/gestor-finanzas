@@ -4,11 +4,13 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalMeta from '../components/metas/ModalMeta'
 import { metaService } from '../services/meta.service'
 import { useToast } from '../context/ToastContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { Plus, Target, Edit, Trash2, DollarSign } from 'lucide-react'
-import dayjs from 'dayjs'
+import { formatDate } from '../utils/date'
 
 const Metas = () => {
   const toast = useToast()
+  const { formatMoney } = useCurrency()
   const [metas, setMetas] = useState([])
   const [resumen, setResumen] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -120,8 +122,8 @@ const Metas = () => {
           <Card>
             <p className="text-sm text-ink-muted">Ahorrado / Objetivo</p>
             <p className="text-2xl font-bold text-primary-600">
-              ${Number(resumen.montoActualTotal || 0).toFixed(0)} / $
-              {Number(resumen.montoObjetivoTotal || 0).toFixed(0)}
+              {formatMoney(resumen.montoActualTotal || 0)} /{' '}
+              {formatMoney(resumen.montoObjetivoTotal || 0)}
             </p>
           </Card>
         </div>
@@ -175,8 +177,7 @@ const Metas = () => {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-ink-muted">
-                      ${Number(meta.montoActual).toFixed(2)} / $
-                      {Number(meta.montoObjetivo).toFixed(2)}
+                      {formatMoney(meta.montoActual)} / {formatMoney(meta.montoObjetivo)}
                     </span>
                     <span className="font-medium">{Number(meta.progreso).toFixed(0)}%</span>
                   </div>
@@ -191,7 +192,7 @@ const Metas = () => {
                 </div>
 
                 <p className="text-xs text-ink-subtle">
-                  Límite: {dayjs(meta.fechaLimite).format('DD/MM/YYYY')} · Prioridad:{' '}
+                  Límite: {formatDate(meta.fechaLimite)} · Prioridad:{' '}
                   {meta.prioridad}
                 </p>
 

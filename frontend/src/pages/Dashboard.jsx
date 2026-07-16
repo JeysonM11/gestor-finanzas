@@ -1,14 +1,79 @@
-import { useState, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, Badge, PageSkeleton } from '../components/ui'
+import { useState, useEffect, useMemo } from 'react'
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  ArrowLeftRight,
+  PlusCircle,
+  BarChart3,
+  CreditCard,
+  Target,
+} from 'lucide-react'
+import { PageSkeleton } from '../components/ui'
+import {
+  DashboardHeader,
+  KpiCard,
+  QuickActions,
+  RecentActivity,
+  DashboardCharts,
+  SummaryWidgets,
+} from '../components/dashboard'
 import { transaccionService } from '../services/transaccion.service'
+import { reporteService } from '../services/reporte.service'
+import { notificacionService } from '../services/notificacion.service'
 import { useAuth } from '../context/AuthContext'
-import { TrendingUp, TrendingDown, Wallet, Calendar, Shield } from 'lucide-react'
-import dayjs from 'dayjs'
+import { useCurrency } from '../hooks/useCurrency'
+
+/** Calcula variación % entre mes actual y anterior (presentación). */
+function calcChange(current, previous) {
+  if (previous == null || !Number.isFinite(previous) || previous === 0) {
+    return null
+  }
+  if (!Number.isFinite(current)) return null
+  return ((current - previous) / Math.abs(previous)) * 100
+}
+
+const QUICK_ACTIONS = [
+  {
+    label: 'Nueva transacción',
+    description: 'Registrar ingreso o gasto',
+    to: '/transacciones',
+    icon: PlusCircle,
+    tone: 'bg-primary-50 text-primary-600',
+  },
+  {
+    label: 'Ver reportes',
+    description: 'Estadísticas y exportar',
+    to: '/reportes',
+    icon: BarChart3,
+    tone: 'bg-emerald-50 text-emerald-600',
+  },
+  {
+    label: 'Mis cuentas',
+    description: 'Saldos y productos',
+    to: '/cuentas',
+    icon: CreditCard,
+    tone: 'bg-sky-50 text-sky-600',
+  },
+  {
+    label: 'Metas de ahorro',
+    description: 'Seguimiento de objetivos',
+    to: '/metas',
+    icon: Target,
+    tone: 'bg-amber-50 text-amber-700',
+  },
+]
 
 const Dashboard = () => {
   const { isAdmin } = useAuth()
+  const { formatMoney } = useCurrency()
   const [resumen, setResumen] = useState(null)
   const [transacciones, setTransacciones] = useState([])
+  const [totalMovimientos, setTotalMovimientos] = useState(0)
+  const [evolucionMensual, setEvolucionMensual] = useState([])
+  const [gastosPorCategoria, setGastosPorCategoria] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [systemOk, setSystemOk] = useState(true)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -17,134 +82,150 @@ const Dashboard = () => {
 
   const cargarDatos = async () => {
     try {
-      const [resumenData, transaccionesData] = await Promise.all([
-        transaccionService.getResumen(),
-        transaccionService.getAll({ limit: 5 }),
-      ])
-      setResumen(resumenData)
-      setTransacciones(transaccionesData.transacciones || transaccionesData)
+      const [resumenResult, transaccionesResult, evolucion, categorias, notifs] =
+        await Promise.all([
+          transaccionService.getResumen(),
+          transaccionService.getAll({ limit: 5 }),
+          reporteService.getEvolucionMensual(6).catch(() => []),
+          reporteService.getGastosPorCategoria().catch(() => []),
+          notificacionService.getNoLeidas().catch(() => null),
+        ])
+
+      setResumen(resumenResult)
+      setTransacciones(
+        transaccionesResult.transacciones || transaccionesResult || []
+      )
+      setTotalMovimientos(
+        resumenResult?.cantidadTransacciones ??
+          transaccionesResult?.pagination?.total ??
+          0
+      )
+      setEvolucionMensual(Array.isArray(evolucion) ? evolucion : [])
+      setGastosPorCategoria(Array.isArray(categorias) ? categorias : [])
+
+      const listaNotifs =
+        notifs?.notificaciones || (Array.isArray(notifs) ? notifs : [])
+      setUnreadCount(notifs?.contadores?.noLeidas ?? listaNotifs.length)
+      setSystemOk(true)
     } catch (error) {
       console.error('Error al cargar datos:', error)
+      setSystemOk(false)
     } finally {
       setLoading(false)
     }
   }
 
+  const changes = useMemo(() => {
+    if (!Array.isArray(evolucionMensual) || evolucionMensual.length < 2) {
+      return { ingresos: null, gastos: null, balance: null }
+    }
+    const prev = evolucionMensual[evolucionMensual.length - 2]
+    const curr = evolucionMensual[evolucionMensual.length - 1]
+    const prevBalance = (prev.ingresos || 0) - (prev.gastos || 0)
+    const currBalance = (curr.ingresos || 0) - (curr.gastos || 0)
+    return {
+      ingresos: calcChange(curr.ingresos, prev.ingresos),
+      gastos: calcChange(curr.gastos, prev.gastos),
+      balance: calcChange(currBalance, prevBalance),
+    }
+  }, [evolucionMensual])
+
+  const dateLabel = useMemo(
+    () =>
+      new Date().toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+    []
+  )
+
   if (loading) {
     return <PageSkeleton />
   }
 
-  const stats = [
-    {
-      label: 'Total Ingresos',
-      value: resumen?.totalIngresos?.toFixed(2) || '0.00',
-      icon: TrendingUp,
-      tone: 'text-emerald-600',
-      iconBg: 'bg-emerald-50 text-emerald-600',
-    },
-    {
-      label: 'Total Gastos',
-      value: resumen?.totalGastos?.toFixed(2) || '0.00',
-      icon: TrendingDown,
-      tone: 'text-red-600',
-      iconBg: 'bg-red-50 text-red-600',
-    },
-    {
-      label: 'Balance',
-      value: resumen?.balance?.toFixed(2) || '0.00',
-      icon: Wallet,
-      tone: (resumen?.balance || 0) >= 0 ? 'text-emerald-600' : 'text-red-600',
-      iconBg: 'bg-primary-50 text-primary-600',
-    },
-    {
-      label: 'Movimientos',
-      value: String(transacciones?.length ?? 0),
-      icon: Calendar,
-      tone: 'text-ink',
-      iconBg: 'bg-slate-100 text-slate-600',
-      prefix: '',
-    },
-  ]
+  const totalIngresos = resumen?.totalIngresos || 0
+  const totalGastos = resumen?.totalGastos || 0
+  const balance = resumen?.balance || 0
 
   return (
     <div className="page-shell">
-      <div className="page-header">
+      <DashboardHeader
+        title="Dashboard"
+        description="Panel de control de tus finanzas: KPIs, tendencias y actividad reciente."
+        dateLabel={dateLabel}
+        isAdmin={isAdmin}
+      />
+
+      <section aria-label="Indicadores clave" className="stat-grid">
+        <KpiCard
+          label="Total ingresos"
+          value={formatMoney(totalIngresos)}
+          description="Suma de ingresos registrados"
+          icon={TrendingUp}
+          tone="emerald"
+          change={changes.ingresos}
+        />
+        <KpiCard
+          label="Total gastos"
+          value={formatMoney(totalGastos)}
+          description="Suma de gastos registrados"
+          icon={TrendingDown}
+          tone="red"
+          change={changes.gastos}
+          invertTrend
+        />
+        <KpiCard
+          label="Balance"
+          value={formatMoney(balance)}
+          description="Ingresos menos gastos"
+          icon={Wallet}
+          tone={balance >= 0 ? 'emerald' : 'red'}
+          change={changes.balance}
+        />
+        <KpiCard
+          label="Movimientos"
+          value={String(totalMovimientos)}
+          description="Total de transacciones"
+          icon={ArrowLeftRight}
+          tone="primary"
+          change={null}
+        />
+      </section>
+
+      <section aria-label="Gráficas">
+        <DashboardCharts
+          evolucionMensual={evolucionMensual}
+          gastosPorCategoria={gastosPorCategoria}
+          formatMoney={formatMoney}
+        />
+      </section>
+
+      <section
+        aria-label="Actividad y acciones"
+        className="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-4"
+      >
+        <div className="xl:col-span-2 min-w-0">
+          <RecentActivity
+            transacciones={transacciones}
+            formatMoney={formatMoney}
+          />
+        </div>
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="page-title">Dashboard</h1>
-            {isAdmin && (
-              <Badge variant="purple">
-                <Shield className="h-3 w-3" />
-                Administrador
-              </Badge>
-            )}
-          </div>
-          <p className="page-subtitle">Resumen de tus finanzas</p>
+          <QuickActions actions={QUICK_ACTIONS} />
         </div>
-      </div>
+      </section>
 
-      <div className="stat-grid">
-        {stats.map((stat) => (
-          <Card key={stat.label} hover className="min-w-0">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">
-                  {stat.label}
-                </p>
-                <p className={`mt-2 text-xl sm:text-2xl font-semibold tabular-nums truncate ${stat.tone}`}>
-                  {stat.prefix === '' ? stat.value : `$${stat.value}`}
-                </p>
-              </div>
-              <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${stat.iconBg}`}
-              >
-                <stat.icon className="h-5 w-5" aria-hidden="true" />
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>Transacciones recientes</CardTitle>
-            <p className="text-sm text-ink-muted mt-0.5">Últimos movimientos registrados</p>
-          </div>
-          <Calendar className="h-4 w-4 text-ink-subtle shrink-0 hidden sm:block" aria-hidden="true" />
-        </CardHeader>
-
-        <div className="space-y-2">
-          {transacciones.length > 0 ? (
-            transacciones.map((transaccion) => (
-              <div
-                key={transaccion.id}
-                className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-control border border-line bg-surface-muted/40 px-3.5 py-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-ink truncate">{transaccion.descripcion}</p>
-                  <p className="text-xs text-ink-muted mt-0.5">
-                    {dayjs(transaccion.fecha).format('DD/MM/YYYY')} ·{' '}
-                    {transaccion.categoria || 'Sin categoría'}
-                  </p>
-                </div>
-                <p
-                  className={`text-base font-semibold tabular-nums shrink-0 ${
-                    transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
-                  }`}
-                >
-                  {transaccion.tipo === 'INGRESO' ? '+' : '-'}$
-                  {Number(transaccion.monto).toFixed(2)}
-                </p>
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-ink-muted py-10 text-sm">
-              No hay transacciones recientes
-            </p>
-          )}
-        </div>
-      </Card>
+      <section aria-label="Resumen adicional">
+        <SummaryWidgets
+          systemOk={systemOk}
+          unreadCount={unreadCount}
+          balance={balance}
+          totalMovimientos={totalMovimientos}
+          formatMoney={formatMoney}
+        />
+      </section>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { startOfDayUTC, endOfDayUTC } = require('../utils/date');
 
 // Generar reporte mensual
 exports.generarReporteMensual = async (req, res) => {
@@ -192,8 +193,8 @@ exports.exportarCSV = async (req, res) => {
     const filtros = { userId };
     if (fechaInicio || fechaFin) {
       filtros.fecha = {};
-      if (fechaInicio) filtros.fecha.gte = new Date(fechaInicio);
-      if (fechaFin) filtros.fecha.lte = new Date(fechaFin);
+      if (fechaInicio) filtros.fecha.gte = startOfDayUTC(fechaInicio);
+      if (fechaFin) filtros.fecha.lte = endOfDayUTC(fechaFin);
     }
 
     const transacciones = await prisma.transaccion.findMany({

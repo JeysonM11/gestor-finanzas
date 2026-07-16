@@ -3,9 +3,12 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { deudaService } from '../../services/deuda.service'
+import { useCurrency } from '../../hooks/useCurrency'
+import { todayDateInput, toDateInputValue } from '../../utils/date'
 
 const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
   const isEditing = !!deuda
+  const { formatMoney } = useCurrency()
   
   const [formData, setFormData] = useState({
     nombre: '',
@@ -15,7 +18,7 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
     tasaInteres: '',
     tipoTasa: 'MENSUAL',
     plazoMeses: '',
-    fechaInicio: new Date().toISOString().split('T')[0],
+    fechaInicio: todayDateInput(),
     fechaVencimiento: '',
     acreedor: '',
     notas: ''
@@ -33,8 +36,8 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
         tasaInteres: deuda.tasaInteres || '',
         tipoTasa: deuda.tipoTasa || 'MENSUAL',
         plazoMeses: deuda.plazoMeses || '',
-        fechaInicio: deuda.fechaInicio ? new Date(deuda.fechaInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        fechaVencimiento: deuda.fechaVencimiento ? new Date(deuda.fechaVencimiento).toISOString().split('T')[0] : '',
+        fechaInicio: deuda.fechaInicio ? toDateInputValue(deuda.fechaInicio) : todayDateInput(),
+        fechaVencimiento: deuda.fechaVencimiento ? toDateInputValue(deuda.fechaVencimiento) : '',
         acreedor: deuda.acreedor || '',
         notas: deuda.notas || ''
       })
@@ -47,7 +50,7 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
         tasaInteres: '',
         tipoTasa: 'MENSUAL',
         plazoMeses: '',
-        fechaInicio: new Date().toISOString().split('T')[0],
+        fechaInicio: todayDateInput(),
         fechaVencimiento: '',
         acreedor: '',
         notas: ''
@@ -229,7 +232,7 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
                 <>
                   Con interés ({formData.tasaInteres}% {tipoLabel} × {meses}{' '}
                   {meses === 1 ? 'mes' : 'meses'}):{' '}
-                  <span className="font-semibold">${total.toFixed(2)}</span>
+                  <span className="font-semibold">{formatMoney(total)}</span>
                 </>
               )
             })()}

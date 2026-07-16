@@ -4,11 +4,13 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalTransaccion from '../components/transacciones/ModalTransaccion'
 import { transaccionService } from '../services/transaccion.service'
 import { useToast } from '../context/ToastContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { Plus, Search, Filter, Edit, Trash2 } from 'lucide-react'
-import dayjs from 'dayjs'
+import { formatDate } from '../utils/date'
 
 const Transacciones = () => {
   const toast = useToast()
+  const { formatMoney } = useCurrency()
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -210,7 +212,7 @@ const Transacciones = () => {
                 <div className="min-w-0">
                   <p className="font-medium text-ink truncate">{transaccion.descripcion}</p>
                   <p className="text-xs text-ink-muted mt-0.5">
-                    {dayjs(transaccion.fecha).format('DD/MM/YYYY')} ·{' '}
+                    {formatDate(transaccion.fecha)} ·{' '}
                     {transaccion.categoria || '-'}
                     {cuentaLabel ? ` · ${cuentaLabel}` : ''}
                   </p>
@@ -224,8 +226,8 @@ const Transacciones = () => {
                       transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
                     }`}
                   >
-                    {transaccion.tipo === 'INGRESO' ? '+' : '-'}$
-                    {Number(transaccion.monto).toFixed(2)}
+                    {transaccion.tipo === 'INGRESO' ? '+' : '-'}
+                    {formatMoney(transaccion.monto)}
                   </p>
                   <div className="flex justify-end gap-1 mt-2">
                     <Button
@@ -279,7 +281,7 @@ const Transacciones = () => {
                 transacciones.map((transaccion) => (
                   <tr key={transaccion.id}>
                     <td className="whitespace-nowrap">
-                      {dayjs(transaccion.fecha).format('DD/MM/YYYY')}
+                      {formatDate(transaccion.fecha)}
                     </td>
                     <td className="max-w-[14rem] truncate">{transaccion.descripcion}</td>
                     <td className="text-ink-muted">{transaccion.categoria || '-'}</td>
@@ -294,8 +296,8 @@ const Transacciones = () => {
                         transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
                       }`}
                     >
-                      {transaccion.tipo === 'INGRESO' ? '+' : '-'}$
-                      {Number(transaccion.monto).toFixed(2)}
+                      {transaccion.tipo === 'INGRESO' ? '+' : '-'}
+                      {formatMoney(transaccion.monto)}
                     </td>
                     <td>
                       <div className="flex items-center justify-center gap-1">

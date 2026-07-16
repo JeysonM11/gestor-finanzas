@@ -4,12 +4,14 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalPresupuesto from '../components/presupuestos/ModalPresupuesto'
 import { presupuestoService } from '../services/presupuesto.service'
 import { useToast } from '../context/ToastContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { Plus, PieChart, Edit, Trash2, RefreshCw } from 'lucide-react'
 
 const ahora = new Date()
 
 const Presupuestos = () => {
   const toast = useToast()
+  const { formatMoney } = useCurrency()
   const [presupuestos, setPresupuestos] = useState([])
   const [resumen, setResumen] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -126,12 +128,12 @@ const Presupuestos = () => {
         <div className="stat-grid">
           <Card>
             <p className="text-sm text-ink-muted">Límite total</p>
-            <p className="text-2xl font-bold text-ink">${Number(resumen.totalLimite || 0).toFixed(2)}</p>
+            <p className="text-2xl font-bold text-ink">{formatMoney(resumen.totalLimite || 0)}</p>
           </Card>
           <Card>
             <p className="text-sm text-ink-muted">Gastado</p>
             <p className="text-2xl font-bold text-orange-600">
-              ${Number(resumen.totalGastado || 0).toFixed(2)}
+              {formatMoney(resumen.totalGastado || 0)}
             </p>
           </Card>
           <Card>
@@ -188,7 +190,7 @@ const Presupuestos = () => {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-ink-muted">
-                    ${Number(p.gastado).toFixed(2)} / ${Number(p.limite).toFixed(2)}
+                    {formatMoney(p.gastado)} / {formatMoney(p.limite)}
                   </span>
                   <span
                     className={
@@ -211,7 +213,7 @@ const Presupuestos = () => {
                   />
                 </div>
                 <p className="text-xs text-ink-subtle">
-                  Restante: ${Number(p.restante || 0).toFixed(2)}
+                  Restante: {formatMoney(p.restante || 0)}
                   {p.alertaEn != null && ` · Alerta al ${p.alertaEn}%`}
                 </p>
               </div>

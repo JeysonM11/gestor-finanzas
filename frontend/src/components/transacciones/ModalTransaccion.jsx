@@ -5,18 +5,25 @@ import Input from '../common/Input'
 import { transaccionService } from '../../services/transaccion.service'
 import { cuentaService } from '../../services/cuenta.service'
 import { CATEGORIAS_DEFAULT, METODOS_PAGO, categoriasParaTipo } from '../../utils/constants'
+import { todayDateInput, toDateInputValue } from '../../utils/date'
 
 const initialForm = () => ({
   tipo: 'GASTO',
   monto: '',
   descripcion: '',
   categoria: '',
-  fecha: new Date().toISOString().split('T')[0],
+  fecha: todayDateInput(),
   metodoPago: 'EFECTIVO',
   notas: '',
   cuentaOrigenId: '',
   cuentaDestinoId: '',
 })
+
+const idCuentaAfectada = (transaccion) => {
+  if (!transaccion) return ''
+  const id = transaccion.cuentaOrigenId || transaccion.cuentaDestinoId
+  return id ? String(id) : ''
+}
 
 const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
@@ -25,6 +32,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
   const [cuentas, setCuentas] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingCuentas, setLoadingCuentas] = useState(false)
+  const [errorCuentas, setErrorCuentas] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -33,34 +41,84 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
     const cargarCuentas = async () => {
       try {
         setLoadingCuentas(true)
+        setErrorCuentas(false)
         const data = await cuentaService.getAll()
-        setCuentas(data.cuentas || data || [])
+        const activas = data.cuentas || data || []
+
+        // Incluir cuentas vinculadas a la edición aunque estén inactivas
+        const extras = []
+        if (transaccion?.cuentaOrigen && !activas.some((c) => c.id === transaccion.cuentaOrigen.id)) {
+          extras.push({
+            ...transaccion.cuentaOrigen,
+            activa: false,
+            saldoActual: transaccion.cuentaOrigen.saldoActual,
+          })
+        }
+        if (
+          transaccion?.cuentaDestino &&
+          !activas.some((c) => c.id === transaccion.cuentaDestino.id) &&
+          !extras.some((c) => c.id === transaccion.cuentaDestino.id)
+        ) {
+          extras.push({
+            ...transaccion.cuentaDestino,
+            activa: false,
+            saldoActual: transaccion.cuentaDestino.saldoActual,
+          })
+        }
+
+        // Fallback por IDs si la API no trajo el objeto cuenta
+        const idsActivas = new Set(activas.map((c) => c.id))
+        const idsExtras = new Set(extras.map((c) => c.id))
+        if (transaccion?.cuentaOrigenId && !idsActivas.has(transaccion.cuentaOrigenId) && !idsExtras.has(transaccion.cuentaOrigenId)) {
+          extras.push({
+            id: transaccion.cuentaOrigenId,
+            nombre: `Cuenta #${transaccion.cuentaOrigenId} (inactiva)`,
+            activa: false,
+          })
+        }
+        if (
+          transaccion?.cuentaDestinoId &&
+          !idsActivas.has(transaccion.cuentaDestinoId) &&
+          !idsExtras.has(transaccion.cuentaDestinoId)
+        ) {
+          extras.push({
+            id: transaccion.cuentaDestinoId,
+            nombre: `Cuenta #${transaccion.cuentaDestinoId} (inactiva)`,
+            activa: false,
+          })
+        }
+
+        setCuentas([...activas, ...extras])
       } catch (err) {
         console.error('Error al cargar cuentas:', err)
         setCuentas([])
+        setErrorCuentas(true)
       } finally {
         setLoadingCuentas(false)
       }
     }
 
     cargarCuentas()
-  }, [isOpen])
+  }, [isOpen, transaccion])
 
   useEffect(() => {
     if (transaccion && isOpen) {
+      const origenId =
+        transaccion.tipo === 'INGRESO'
+          ? idCuentaAfectada(transaccion)
+          : transaccion.cuentaOrigenId
+            ? String(transaccion.cuentaOrigenId)
+            : ''
+
       setFormData({
         tipo: transaccion.tipo || 'GASTO',
         monto: transaccion.monto || '',
         descripcion: transaccion.descripcion || '',
         categoria: transaccion.categoria || '',
-        fecha: transaccion.fecha
-          ? new Date(transaccion.fecha).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0],
+        fecha: transaccion.fecha ? toDateInputValue(transaccion.fecha) : todayDateInput(),
         metodoPago: transaccion.metodoPago || 'EFECTIVO',
         notas: transaccion.notas || '',
-        cuentaOrigenId: transaccion.cuentaOrigenId
-          ? String(transaccion.cuentaOrigenId)
-          : '',
+        cuentaOrigenId: origenId,
         cuentaDestinoId: transaccion.cuentaDestinoId
           ? String(transaccion.cuentaDestinoId)
           : '',
@@ -68,6 +126,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
     } else if (!isOpen) {
       setFormData(initialForm())
       setError('')
+      setErrorCuentas(false)
     }
   }, [transaccion, isOpen])
 
@@ -119,6 +178,11 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
       }
     }
 
+    if (errorCuentas) {
+      setError('No se pudieron cargar las cuentas. Reintenta antes de guardar.')
+      return
+    }
+
     if (cuentas.length === 0) {
       setError('Crea al menos una cuenta antes de registrar transacciones')
       return
@@ -167,6 +231,13 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
   }
 
   const esTransferencia = formData.tipo === 'TRANSFERENCIA'
+
+  const etiquetaOpcionCuenta = (cuenta) => {
+    const saldo =
+      cuenta.saldoActual != null ? ` ($${Number(cuenta.saldoActual).toFixed(2)})` : ''
+    const inactiva = cuenta.activa === false ? ' — inactiva' : ''
+    return `${cuenta.nombre}${saldo}${inactiva}`
+  }
 
   return (
     <Modal
@@ -240,10 +311,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
               </option>
               {cuentas.map((cuenta) => (
                 <option key={cuenta.id} value={cuenta.id}>
-                  {cuenta.nombre}
-                  {cuenta.saldoActual != null
-                    ? ` ($${Number(cuenta.saldoActual).toFixed(2)})`
-                    : ''}
+                  {etiquetaOpcionCuenta(cuenta)}
                 </option>
               ))}
             </select>
@@ -269,10 +337,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
                   .filter((c) => String(c.id) !== String(formData.cuentaOrigenId))
                   .map((cuenta) => (
                     <option key={cuenta.id} value={cuenta.id}>
-                      {cuenta.nombre}
-                      {cuenta.saldoActual != null
-                        ? ` ($${Number(cuenta.saldoActual).toFixed(2)})`
-                        : ''}
+                      {etiquetaOpcionCuenta(cuenta)}
                     </option>
                   ))}
               </select>
@@ -298,7 +363,14 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
           )}
         </div>
 
-        {!esTransferencia && cuentas.length === 0 && !loadingCuentas && (
+        {errorCuentas && !loadingCuentas && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            No se pudieron cargar las cuentas. Cierra y vuelve a abrir el
+            formulario.
+          </p>
+        )}
+
+        {!esTransferencia && !errorCuentas && cuentas.length === 0 && !loadingCuentas && (
           <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
             No tienes cuentas activas. Crea una en Cuentas para que el saldo se
             actualice.
