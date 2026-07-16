@@ -365,7 +365,7 @@ PlanDto: `id`, `estrategia`, `resumen`, `generadoPorIA`, `snapshot`, `plan` (`di
 
 Fallback: sin `GEMINI_API_KEY` o error del proveedor → plan numérico + tips de plantilla, `generadoPorIA: false` (nunca éxito simulado de IA).
 
-Env: `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-2.5-flash`), `GEMINI_TIMEOUT_MS`, `ASESOR_RATE_LIMIT_MAX`.
+Env: `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-flash-latest`), `GEMINI_TIMEOUT_MS`, `ASESOR_RATE_LIMIT_MAX`.
 
 ---
 

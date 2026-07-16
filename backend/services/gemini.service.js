@@ -10,7 +10,10 @@
 
 const { logger } = require('../utils/logger');
 
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+// Alias estable de Google: apunta al modelo flash vigente. Los modelos con
+// versión fija (p. ej. gemini-2.5-flash) dejan de estar disponibles para
+// cuentas nuevas y devuelven 404.
+const DEFAULT_MODEL = 'gemini-flash-latest';
 const DEFAULT_TIMEOUT_MS = 20000;
 
 function asesorDisponible() {
