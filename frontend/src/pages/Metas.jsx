@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { Card, Button, Spinner, EmptyState, Badge } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalMeta from '../components/metas/ModalMeta'
+import ModalRecordatorio from '../components/recordatorios/ModalRecordatorio'
 import { metaService } from '../services/meta.service'
 import { useToast } from '../context/ToastContext'
 import { useCurrency } from '../hooks/useCurrency'
-import { Plus, Target, Edit, Trash2, DollarSign } from 'lucide-react'
-import { formatDate } from '../utils/date'
+import { Plus, Target, Edit, Trash2, DollarSign, BellRing } from 'lucide-react'
+import { formatDate, todayDateInput } from '../utils/date'
 
 const Metas = () => {
   const toast = useToast()
@@ -20,6 +21,8 @@ const Metas = () => {
   const [metaAEliminar, setMetaAEliminar] = useState(null)
   const [aporteId, setAporteId] = useState(null)
   const [montoAporte, setMontoAporte] = useState('')
+  const [modalRecordatorioOpen, setModalRecordatorioOpen] = useState(false)
+  const [recordatorioDefaults, setRecordatorioDefaults] = useState(null)
 
   useEffect(() => {
     cargar()
@@ -66,6 +69,16 @@ const Metas = () => {
     }
   }
 
+  const handleRecordarme = (meta) => {
+    setRecordatorioDefaults({
+      titulo: `Meta: ${meta.titulo}`,
+      descripcion: meta.descripcion || `Fecha objetivo de la meta "${meta.titulo}"`,
+      tipo: 'META',
+      fechaRecordatorio: meta.fechaLimite || todayDateInput(),
+    })
+    setModalRecordatorioOpen(true)
+  }
+
   if (loading) {
     return <Spinner fullPage />
   }
@@ -97,6 +110,18 @@ const Metas = () => {
         }}
         onSuccess={cargar}
         meta={metaSeleccionada}
+      />
+
+      <ModalRecordatorio
+        isOpen={modalRecordatorioOpen}
+        onClose={() => {
+          setModalRecordatorioOpen(false)
+          setRecordatorioDefaults(null)
+        }}
+        onSuccess={() => {
+          toast.success('Recordatorio creado')
+        }}
+        defaults={recordatorioDefaults}
       />
 
       <ConfirmDialog
@@ -197,7 +222,7 @@ const Metas = () => {
                 </p>
 
                 {!meta.completada && (
-                  <div className="pt-2 border-t border-line">
+                  <div className="pt-2 border-t border-line space-y-2">
                     {aporteId === meta.id ? (
                       <div className="flex gap-2">
                         <input
@@ -221,14 +246,24 @@ const Metas = () => {
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        variant="secondary"
-                        onClick={() => setAporteId(meta.id)}
-                        className="w-full"
-                      >
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        Registrar aporte
-                      </Button>
+                      <>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setAporteId(meta.id)}
+                          className="w-full"
+                        >
+                          <DollarSign className="h-4 w-4 mr-2" />
+                          Registrar aporte
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleRecordarme(meta)}
+                          className="w-full"
+                        >
+                          <BellRing className="h-4 w-4" />
+                          Recordarme
+                        </Button>
+                      </>
                     )}
                   </div>
                 )}

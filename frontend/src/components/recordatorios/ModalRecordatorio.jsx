@@ -17,14 +17,26 @@ const initialForm = () => ({
   frecuencia: 'MENSUAL',
 })
 
-const ModalRecordatorio = ({ isOpen, onClose, onSuccess, recordatorio = null }) => {
+const ModalRecordatorio = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  recordatorio = null,
+  defaults = null,
+}) => {
   const isEditing = !!recordatorio
   const [formData, setFormData] = useState(initialForm)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (recordatorio && isOpen) {
+    if (!isOpen) {
+      setFormData(initialForm())
+      setError('')
+      return
+    }
+
+    if (recordatorio) {
       setFormData({
         titulo: recordatorio.titulo || '',
         descripcion: recordatorio.descripcion || '',
@@ -35,11 +47,25 @@ const ModalRecordatorio = ({ isOpen, onClose, onSuccess, recordatorio = null }) 
         repetir: Boolean(recordatorio.repetir),
         frecuencia: recordatorio.frecuencia || 'MENSUAL',
       })
-    } else if (!isOpen) {
-      setFormData(initialForm())
-      setError('')
+      return
     }
-  }, [recordatorio, isOpen])
+
+    if (defaults) {
+      setFormData({
+        ...initialForm(),
+        titulo: defaults.titulo || '',
+        descripcion: defaults.descripcion || '',
+        tipo: defaults.tipo || 'GENERAL',
+        fechaRecordatorio: defaults.fechaRecordatorio
+          ? toDateInputValue(defaults.fechaRecordatorio)
+          : todayDateInput(),
+        repetir: Boolean(defaults.repetir),
+        frecuencia: defaults.frecuencia || 'MENSUAL',
+      })
+    } else {
+      setFormData(initialForm())
+    }
+  }, [recordatorio, defaults, isOpen])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
-import { CreditCard, Plus, Edit, Trash2, DollarSign, Calendar, TrendingDown, AlertTriangle } from 'lucide-react'
+import { CreditCard, Plus, Edit, Trash2, DollarSign, Calendar, TrendingDown, AlertTriangle, BellRing } from 'lucide-react'
 import { Button, Spinner, Card, EmptyState, Badge } from '../components/ui'
 import ModalDeuda from '../components/deudas/ModalDeuda'
 import ModalPago from '../components/deudas/ModalPago'
+import ModalRecordatorio from '../components/recordatorios/ModalRecordatorio'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { deudaService } from '../services/deuda.service'
 import { useToast } from '../context/ToastContext'
 import { useCurrency } from '../hooks/useCurrency'
-import { formatDate } from '../utils/date'
+import { formatDate, todayDateInput } from '../utils/date'
 
 const Deudas = () => {
   const toast = useToast()
@@ -16,6 +17,8 @@ const Deudas = () => {
   const [loading, setLoading] = useState(true)
   const [modalDeudaOpen, setModalDeudaOpen] = useState(false)
   const [modalPagoOpen, setModalPagoOpen] = useState(false)
+  const [modalRecordatorioOpen, setModalRecordatorioOpen] = useState(false)
+  const [recordatorioDefaults, setRecordatorioDefaults] = useState(null)
   const [selectedDeuda, setSelectedDeuda] = useState(null)
   const [deudaToDelete, setDeudaToDelete] = useState(null)
 
@@ -56,6 +59,18 @@ const Deudas = () => {
   const handleRegistrarPago = (deuda) => {
     setSelectedDeuda(deuda)
     setModalPagoOpen(true)
+  }
+
+  const handleRecordarme = (deuda) => {
+    setRecordatorioDefaults({
+      titulo: `Pago: ${deuda.nombre}`,
+      descripcion: deuda.acreedor
+        ? `Recordatorio de deuda con ${deuda.acreedor}`
+        : `Recordatorio de deuda "${deuda.nombre}"`,
+      tipo: 'DEUDA',
+      fechaRecordatorio: deuda.fechaVencimiento || todayDateInput(),
+    })
+    setModalRecordatorioOpen(true)
   }
 
   const closeModalDeuda = () => {
@@ -311,14 +326,24 @@ const Deudas = () => {
                 </div>
 
                 {restante > 0 && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => handleRegistrarPago(deuda)}
-                    className="w-full"
-                  >
-                    <DollarSign className="w-4 h-4" />
-                    Registrar Pago
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleRegistrarPago(deuda)}
+                      className="w-full"
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      Registrar Pago
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleRecordarme(deuda)}
+                      className="w-full"
+                    >
+                      <BellRing className="w-4 h-4" />
+                      Recordarme
+                    </Button>
+                  </div>
                 )}
 
                 {progreso === 100 && (
@@ -345,6 +370,18 @@ const Deudas = () => {
         onClose={closeModalPago}
         onSuccess={fetchDeudas}
         deuda={selectedDeuda}
+      />
+
+      <ModalRecordatorio
+        isOpen={modalRecordatorioOpen}
+        onClose={() => {
+          setModalRecordatorioOpen(false)
+          setRecordatorioDefaults(null)
+        }}
+        onSuccess={() => {
+          toast.success('Recordatorio creado')
+        }}
+        defaults={recordatorioDefaults}
       />
 
       <ConfirmDialog

@@ -113,8 +113,8 @@ Modelo de referencia (`Recordatorio`):
 
 ### B.3 Integraciones ligeras (si da tiempo en el mismo sprint)
 
-- [ ] Atajo “recordarme” desde una deuda (fecha ≈ vencimiento).
-- [ ] Atajo desde meta (fecha objetivo).
+- [x] Atajo “recordarme” desde una deuda (fecha ≈ vencimiento).
+- [x] Atajo desde meta (fecha objetivo).
 
 **Criterio de salida:** usuario crea recordatorio, lo ve en lista, al vencer recibe notificación in-app; solo ve los suyos.
 
