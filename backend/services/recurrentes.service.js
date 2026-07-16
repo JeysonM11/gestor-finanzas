@@ -1,5 +1,7 @@
 const prisma = require('../lib/prisma');
 const { logger } = require('../utils/logger');
+const { crearMovimientoEnTx } = require('./movimiento.service');
+const { sincronizarPorTransaccion } = require('../utils/presupuesto');
 
 function getLastDayOfMonth(fecha) {
   return new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
@@ -12,9 +14,17 @@ function calcularProximaEjecucion(frecuencia, fechaBase, diaEjecucion, diaSemana
     case 'DIARIA':
       fecha.setDate(fecha.getDate() + 1);
       break;
-    case 'SEMANAL':
-      fecha.setDate(fecha.getDate() + 7);
+    case 'SEMANAL': {
+      if (diaSemana != null && diaSemana >= 0 && diaSemana <= 6) {
+        const actual = fecha.getDay();
+        let delta = (Number(diaSemana) - actual + 7) % 7;
+        if (delta === 0) delta = 7;
+        fecha.setDate(fecha.getDate() + delta);
+      } else {
+        fecha.setDate(fecha.getDate() + 7);
+      }
       break;
+    }
     case 'QUINCENAL':
       fecha.setDate(fecha.getDate() + 15);
       break;
@@ -45,9 +55,17 @@ function calcularProximaEjecucion(frecuencia, fechaBase, diaEjecucion, diaSemana
   return fecha;
 }
 
+function requiereConfiguracion(tr) {
+  if (!tr.cuentaOrigenId) return true;
+  if (tr.tipo === 'TRANSFERENCIA' && !tr.cuentaDestinoId) return true;
+  if (tr.tipo === 'PAGO_DEUDA' && !tr.deudaId) return true;
+  return false;
+}
+
 /**
  * Ejecuta recurrentes pendientes.
- * @param {{ userId?: number }} options - Si se pasa userId, solo ese usuario (botón UI).
+ * Una ocurrencia por tick; claim atómico evita duplicados.
+ * @param {{ userId?: number }} options
  */
 async function ejecutarPendientes({ userId } = {}) {
   const ahora = new Date();
@@ -55,6 +73,7 @@ async function ejecutarPendientes({ userId } = {}) {
     activa: true,
     proximaEjecucion: { lte: ahora },
     OR: [{ fechaFin: null }, { fechaFin: { gte: ahora } }],
+    cuentaOrigenId: { not: null },
   };
   if (userId != null) {
     where.userId = userId;
@@ -64,18 +83,19 @@ async function ejecutarPendientes({ userId } = {}) {
   const resultados = [];
 
   for (const tr of pendientes) {
-    try {
-      const nuevaTransaccion = await prisma.transaccion.create({
-        data: {
-          tipo: tr.tipo,
-          monto: tr.monto,
-          descripcion: tr.descripcion || `${tr.nombre} (Automatica)`,
-          categoria: tr.categoria,
-          userId: tr.userId,
-          transaccionRecurrenteId: tr.id,
-        },
+    if (requiereConfiguracion(tr)) {
+      resultados.push({
+        id: tr.id,
+        userId: tr.userId,
+        transaccionRecurrente: tr.nombre,
+        error: 'Requiere configuracion de cuenta',
+        omitida: true,
       });
+      continue;
+    }
 
+    try {
+      const ocurrencia = new Date(tr.proximaEjecucion);
       const siguienteEjecucion = calcularProximaEjecucion(
         tr.frecuencia,
         tr.proximaEjecucion,
@@ -83,21 +103,62 @@ async function ejecutarPendientes({ userId } = {}) {
         tr.diaSemana
       );
 
-      await prisma.transaccionRecurrente.update({
-        where: { id: tr.id },
-        data: {
-          proximaEjecucion: siguienteEjecucion,
-          ejecutadas: tr.ejecutadas + 1,
-        },
+      const resultado = await prisma.$transaction(async (tx) => {
+        // Claim atómico: solo un worker avanza la fila
+        const claimed = await tx.transaccionRecurrente.updateMany({
+          where: {
+            id: tr.id,
+            activa: true,
+            proximaEjecucion: tr.proximaEjecucion,
+          },
+          data: {
+            proximaEjecucion: siguienteEjecucion,
+            ejecutadas: { increment: 1 },
+          },
+        });
+
+        if (claimed.count === 0) {
+          return { skipped: true };
+        }
+
+        const payload = {
+          tipo: tr.tipo,
+          monto: tr.monto,
+          descripcion: tr.descripcion || `${tr.nombre} (Automatica)`,
+          categoria: tr.categoria,
+          cuentaOrigenId: tr.cuentaOrigenId,
+          cuentaDestinoId: tr.cuentaDestinoId,
+          deudaId: tr.deudaId,
+          transaccionRecurrenteId: tr.id,
+          ocurrenciaRecurrente: ocurrencia,
+          fecha: ocurrencia,
+        };
+
+        const nuevaTransaccion = await crearMovimientoEnTx(tx, tr.userId, payload);
+        return { nuevaTransaccion, siguienteEjecucion };
       });
+
+      if (resultado.skipped) {
+        resultados.push({
+          id: tr.id,
+          userId: tr.userId,
+          transaccionRecurrente: tr.nombre,
+          skipped: true,
+        });
+        continue;
+      }
+
+      await sincronizarPorTransaccion(tr.userId, resultado.nuevaTransaccion).catch(
+        () => {}
+      );
 
       resultados.push({
         id: tr.id,
         userId: tr.userId,
         transaccionRecurrente: tr.nombre,
-        transaccionCreada: nuevaTransaccion.id,
+        transaccionCreada: resultado.nuevaTransaccion.id,
         monto: tr.monto,
-        siguienteEjecucion,
+        siguienteEjecucion: resultado.siguienteEjecucion,
       });
     } catch (error) {
       logger.error('Error al ejecutar recurrente', {
@@ -109,15 +170,16 @@ async function ejecutarPendientes({ userId } = {}) {
         id: tr.id,
         userId: tr.userId,
         transaccionRecurrente: tr.nombre,
-        error: 'Error al crear transaccion',
+        error: error.message || 'Error al crear transaccion',
       });
     }
   }
 
   return {
     pendientes: pendientes.length,
-    procesadas: resultados.filter((r) => !r.error).length,
+    procesadas: resultados.filter((r) => !r.error && !r.skipped && !r.omitida).length,
     errores: resultados.filter((r) => r.error).length,
+    omitidas: resultados.filter((r) => r.omitida || r.skipped).length,
     resultados,
   };
 }
@@ -125,4 +187,5 @@ async function ejecutarPendientes({ userId } = {}) {
 module.exports = {
   calcularProximaEjecucion,
   ejecutarPendientes,
+  requiereConfiguracion,
 };

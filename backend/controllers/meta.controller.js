@@ -2,6 +2,8 @@ const prisma = require('../lib/prisma');
 const { catchAsync } = require('../middlewares/error.middleware');
 const { NotFoundError, ValidationError } = require('../utils/errors');
 const { parseDateOnly } = require('../utils/date');
+const { crearMovimientoEnTx } = require('../services/movimiento.service');
+const { sincronizarPorTransaccion } = require('../utils/presupuesto');
 
 function calcProgreso(montoActual, montoObjetivo) {
   if (!montoObjetivo || montoObjetivo <= 0) return 0;
@@ -66,10 +68,18 @@ exports.crearMeta = catchAsync(async (req, res) => {
     prioridad,
     recordatorios,
     publica,
+    cuentaOrigenId,
   } = req.body;
 
   if (!titulo || !montoObjetivo || !fechaLimite) {
     throw new ValidationError('titulo, montoObjetivo y fechaLimite son obligatorios');
+  }
+
+  if (cuentaOrigenId) {
+    const cuenta = await prisma.cuenta.findFirst({
+      where: { id: Number(cuentaOrigenId), userId, activa: true },
+    });
+    if (!cuenta) throw new ValidationError('Cuenta de origen no encontrada');
   }
 
   const actual = Number(montoActual) || 0;
@@ -87,6 +97,7 @@ exports.crearMeta = catchAsync(async (req, res) => {
       prioridad: prioridad || 'MEDIA',
       recordatorios: recordatorios !== undefined ? Boolean(recordatorios) : true,
       publica: Boolean(publica),
+      cuentaOrigenId: cuentaOrigenId ? Number(cuentaOrigenId) : null,
       userId,
     },
     actual,
@@ -94,6 +105,12 @@ exports.crearMeta = catchAsync(async (req, res) => {
   );
 
   const meta = await prisma.meta.create({ data });
+  try {
+    const { verificarLogrosAsync } = require('../services/gamificacion.service');
+    verificarLogrosAsync(userId);
+  } catch (_) {
+    /* no bloquear */
+  }
   res.status(201).json({
     success: true,
     message: 'Meta creada exitosamente',
@@ -123,6 +140,7 @@ exports.actualizarMeta = catchAsync(async (req, res) => {
     recordatorios,
     publica,
     completada,
+    cuentaOrigenId,
   } = req.body;
 
   const updateData = {};
@@ -137,6 +155,15 @@ exports.actualizarMeta = catchAsync(async (req, res) => {
   if (prioridad != null) updateData.prioridad = prioridad;
   if (recordatorios !== undefined) updateData.recordatorios = Boolean(recordatorios);
   if (publica !== undefined) updateData.publica = Boolean(publica);
+  if (cuentaOrigenId !== undefined) {
+    if (cuentaOrigenId) {
+      const cuenta = await prisma.cuenta.findFirst({
+        where: { id: Number(cuentaOrigenId), userId, activa: true },
+      });
+      if (!cuenta) throw new ValidationError('Cuenta de origen no encontrada');
+    }
+    updateData.cuentaOrigenId = cuentaOrigenId ? Number(cuentaOrigenId) : null;
+  }
 
   const nuevoActual =
     updateData.montoActual != null ? updateData.montoActual : existente.montoActual;
@@ -167,6 +194,11 @@ exports.aportarMeta = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { id } = req.params;
   const monto = Number(req.body.monto);
+  const cuentaOrigenId =
+    req.body.cuentaOrigenId != null
+      ? Number(req.body.cuentaOrigenId)
+      : null;
+  const categoria = req.body.categoria || null;
 
   if (!monto || monto <= 0) {
     throw new ValidationError('monto debe ser un número positivo');
@@ -177,23 +209,66 @@ exports.aportarMeta = catchAsync(async (req, res) => {
   });
   if (!existente) throw new NotFoundError('Meta');
 
-  const montoActual = existente.montoActual + monto;
-  const updateData = aplicarCompletada(
-    { montoActual },
-    montoActual,
-    existente.montoObjetivo
-  );
+  const cuentaId = cuentaOrigenId || existente.cuentaOrigenId || null;
 
-  const meta = await prisma.meta.update({
-    where: { id: parseInt(id) },
-    data: updateData,
-  });
+  let meta;
+  let transaccion = null;
+
+  if (cuentaId) {
+    const result = await prisma.$transaction(async (tx) => {
+      const movimiento = await crearMovimientoEnTx(tx, userId, {
+        tipo: 'GASTO',
+        monto,
+        cuentaOrigenId: cuentaId,
+        categoria: categoria || existente.categoria || 'Ahorro',
+        descripcion: `Aporte a meta: ${existente.titulo}`,
+      });
+
+      const montoActual = existente.montoActual + monto;
+      const updateData = aplicarCompletada(
+        { montoActual },
+        montoActual,
+        existente.montoObjetivo
+      );
+
+      const metaActualizada = await tx.meta.update({
+        where: { id: parseInt(id) },
+        data: updateData,
+      });
+
+      return { meta: metaActualizada, transaccion: movimiento };
+    });
+
+    meta = result.meta;
+    transaccion = result.transaccion;
+    await sincronizarPorTransaccion(userId, transaccion).catch(() => {});
+  } else {
+    const montoActual = existente.montoActual + monto;
+    const updateData = aplicarCompletada(
+      { montoActual },
+      montoActual,
+      existente.montoObjetivo
+    );
+
+    meta = await prisma.meta.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+    });
+  }
+
+  try {
+    const { verificarLogrosAsync } = require('../services/gamificacion.service');
+    verificarLogrosAsync(userId);
+  } catch (_) {
+    /* no bloquear */
+  }
 
   res.json({
     success: true,
     message: 'Aporte registrado',
     meta,
     aporte: monto,
+    transaccion,
   });
 });
 

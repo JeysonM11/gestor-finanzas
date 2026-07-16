@@ -6,11 +6,13 @@ const { validateBody } = require('../middlewares/validation.middleware');
 const {
   createCuentaSchema,
   updateSaldoSchema,
+  updateCuentaSchema,
   createInversionSchema,
   createDeudaSchema,
   createMetaSchema,
   aporteMetaSchema,
   createPresupuestoSchema,
+  registrarPagoDeudaSchema,
 } = require('../validators/finanzas.validator');
 const metaController = require('../controllers/meta.controller');
 const presupuestoController = require('../controllers/presupuesto.controller');
@@ -31,6 +33,12 @@ router.put(
   authenticateToken,
   validateBody(updateSaldoSchema),
   finanzasAvanzadasController.actualizarSaldo
+);
+router.put(
+  '/cuentas/:id',
+  authenticateToken,
+  validateBody(updateCuentaSchema),
+  finanzasAvanzadasController.actualizarCuenta
 );
 router.delete('/cuentas/:id', authenticateToken, finanzasAvanzadasController.eliminarCuenta);
 
@@ -55,7 +63,12 @@ router.post(
 );
 router.put('/deudas/:id', authenticateToken, finanzasAvanzadasController.actualizarDeuda);
 router.delete('/deudas/:id', authenticateToken, finanzasAvanzadasController.eliminarDeuda);
-router.post('/deudas/:deudaId/pagos', authenticateToken, finanzasAvanzadasController.registrarPagoDeuda);
+router.post(
+  '/deudas/:deudaId/pagos',
+  authenticateToken,
+  validateBody(registrarPagoDeudaSchema),
+  finanzasAvanzadasController.registrarPagoDeuda
+);
 
 // ============= RUTAS DE METAS =============
 router.get('/metas', authenticateToken, metaController.obtenerMetas);

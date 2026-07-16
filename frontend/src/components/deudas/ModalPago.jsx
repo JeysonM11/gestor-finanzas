@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
-import { deudaService } from '../../services/deuda.service'
+import { transaccionService } from '../../services/transaccion.service'
+import { cuentaService } from '../../services/cuenta.service'
 import { useCurrency } from '../../hooks/useCurrency'
 import { todayDateInput } from '../../utils/date'
 
@@ -10,16 +11,49 @@ const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
   const { formatMoney } = useCurrency()
   const [formData, setFormData] = useState({
     monto: '',
-    fecha: todayDateInput()
+    fecha: todayDateInput(),
+    cuentaOrigenId: '',
   })
+  const [cuentas, setCuentas] = useState([])
+  const [loadingCuentas, setLoadingCuentas] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    const cargarCuentas = async () => {
+      try {
+        setLoadingCuentas(true)
+        const data = await cuentaService.getAll()
+        setCuentas(data.cuentas || data || [])
+      } catch (err) {
+        console.error('Error al cargar cuentas:', err)
+        setCuentas([])
+      } finally {
+        setLoadingCuentas(false)
+      }
+    }
+
+    cargarCuentas()
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        monto: '',
+        fecha: todayDateInput(),
+        cuentaOrigenId: '',
+      })
+      setError('')
+    }
+  }, [isOpen])
+
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
   }
 
@@ -29,17 +63,20 @@ const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
     setLoading(true)
 
     try {
-      await deudaService.registrarPago(
-        deuda.id,
-        parseFloat(formData.monto),
-        formData.fecha
-      )
-      
+      await transaccionService.create({
+        tipo: 'PAGO_DEUDA',
+        monto: parseFloat(formData.monto),
+        fecha: formData.fecha,
+        deudaId: deuda.id,
+        cuentaOrigenId: Number(formData.cuentaOrigenId),
+      })
+
       setFormData({
         monto: '',
-        fecha: todayDateInput()
+        fecha: todayDateInput(),
+        cuentaOrigenId: '',
       })
-      
+
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -95,6 +132,29 @@ const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
           max={montoRestante}
           required
         />
+
+        <div>
+          <label className="block text-sm font-medium text-ink-muted mb-2">
+            Cuenta *
+          </label>
+          <select
+            name="cuentaOrigenId"
+            value={formData.cuentaOrigenId}
+            onChange={handleChange}
+            className="w-full input-field"
+            required
+            disabled={loadingCuentas}
+          >
+            <option value="">
+              {loadingCuentas ? 'Cargando cuentas...' : 'Seleccionar cuenta'}
+            </option>
+            {cuentas.map((cuenta) => (
+              <option key={cuenta.id} value={cuenta.id}>
+                {cuenta.nombre} ({formatMoney(cuenta.saldoActual ?? 0)})
+              </option>
+            ))}
+          </select>
+        </div>
 
         <Input
           label="Fecha del Pago *"

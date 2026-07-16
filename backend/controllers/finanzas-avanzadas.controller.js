@@ -8,6 +8,7 @@ const {
   toInversionDto,
 } = require('../utils/mappers');
 const { parseDateOnly } = require('../utils/date');
+const { crearMovimientoFinanciero } = require('../services/movimiento.service');
 
 // ============= CONTROLADOR DE CUENTAS =============
 
@@ -175,6 +176,62 @@ exports.actualizarSaldo = async (req, res) => {
   }
 };
 
+exports.actualizarCuenta = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const {
+      nombre,
+      tipo,
+      banco,
+      numeroCuenta,
+      moneda,
+      color,
+      icono,
+      descripcion,
+      fechaApertura,
+      incluirEnBalance,
+      activa,
+    } = req.body;
+
+    const existente = await prisma.cuenta.findFirst({
+      where: { id: parseInt(id), userId },
+    });
+
+    if (!existente) {
+      return res.status(404).json({ message: 'Cuenta no encontrada' });
+    }
+
+    const data = {};
+    if (nombre != null) data.nombre = nombre;
+    if (tipo != null) data.tipo = mapTipoCuenta(tipo);
+    if (banco !== undefined) data.banco = banco || null;
+    if (numeroCuenta !== undefined) data.numeroCuenta = numeroCuenta || null;
+    if (moneda != null) data.moneda = String(moneda).toUpperCase();
+    if (color != null) data.color = color;
+    if (icono !== undefined) data.icono = icono || null;
+    if (descripcion !== undefined) data.descripcion = descripcion || null;
+    if (fechaApertura !== undefined) {
+      data.fechaApertura = fechaApertura ? parseDateOnly(fechaApertura) : null;
+    }
+    if (incluirEnBalance !== undefined) data.incluirEnBalance = Boolean(incluirEnBalance);
+    if (activa !== undefined) data.activa = Boolean(activa);
+
+    const cuenta = await prisma.cuenta.update({
+      where: { id: parseInt(id) },
+      data,
+    });
+
+    res.status(200).json({
+      message: 'Cuenta actualizada exitosamente',
+      cuenta,
+    });
+  } catch (error) {
+    console.error('Error al actualizar cuenta:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
 exports.eliminarCuenta = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -227,16 +284,28 @@ exports.obtenerInversiones = async (req, res) => {
       (sum, inv) => sum + (inv.valorActual || inv.montoInvertido),
       0
     );
-    const gananciaTotal = valorActualTotal - totalInvertido;
+    const dividendosTotal = inversiones.reduce(
+      (sum, inv) => sum + (inv.dividendos || 0),
+      0
+    );
+    const comisionesTotal = inversiones.reduce(
+      (sum, inv) => sum + (inv.comisiones || 0),
+      0
+    );
+    const gananciaBruta = valorActualTotal - totalInvertido;
+    const gananciaNeta =
+      valorActualTotal + dividendosTotal - totalInvertido - comisionesTotal;
     const porcentajeGanancia =
-      totalInvertido > 0 ? (gananciaTotal / totalInvertido) * 100 : 0;
+      totalInvertido > 0 ? (gananciaNeta / totalInvertido) * 100 : 0;
 
     res.status(200).json({
       inversiones: inversionesDto,
       resumen: {
         totalInvertido,
         valorActualTotal,
-        gananciaTotal,
+        gananciaTotal: gananciaNeta,
+        gananciaBruta,
+        gananciaNeta,
         porcentajeGanancia,
         cantidadInversiones: inversiones.length,
       },
@@ -280,6 +349,13 @@ exports.crearInversion = async (req, res) => {
         inversionId: inversion.id,
       },
     });
+
+    try {
+      const { verificarLogrosAsync } = require('../services/gamificacion.service');
+      verificarLogrosAsync(userId);
+    } catch (_) {
+      /* no bloquear */
+    }
 
     res.status(201).json({
       message: 'Inversion creada exitosamente',
@@ -573,11 +649,21 @@ exports.eliminarDeuda = async (req, res) => {
   }
 };
 
+/**
+ * Adapter backward-compatible: delega al pipeline PAGO_DEUDA canónico.
+ * Requiere cuentaOrigenId para descontar saldo.
+ */
 exports.registrarPagoDeuda = async (req, res) => {
   try {
     const userId = req.user.id;
     const { deudaId } = req.params;
-    const { monto, capital, interes, fecha, notas } = req.body;
+    const { monto, fecha, notas, cuentaOrigenId } = req.body;
+
+    if (!cuentaOrigenId) {
+      return res.status(400).json({
+        message: 'Se requiere cuentaOrigenId para registrar el pago',
+      });
+    }
 
     const deuda = await prisma.deuda.findFirst({
       where: { id: parseInt(deudaId), userId },
@@ -587,34 +673,32 @@ exports.registrarPagoDeuda = async (req, res) => {
       return res.status(404).json({ message: 'Deuda no encontrada' });
     }
 
-    const pago = await prisma.pagoDeuda.create({
-      data: {
-        monto,
-        capital: capital || monto,
-        interes: interes || 0,
-        fecha: fecha ? parseDateOnly(fecha) : new Date(),
-        notas,
-        deudaId: parseInt(deudaId),
-      },
+    const transaccion = await crearMovimientoFinanciero(prisma, userId, {
+      tipo: 'PAGO_DEUDA',
+      monto: Number(monto),
+      fecha,
+      notas,
+      cuentaOrigenId: Number(cuentaOrigenId),
+      deudaId: parseInt(deudaId),
     });
 
-    const nuevoMonto = Math.max(0, deuda.montoActual - (capital || monto));
-    const deudaActualizada = await prisma.deuda.update({
-      where: { id: parseInt(deudaId) },
-      data: {
-        montoActual: nuevoMonto,
-        pagada: nuevoMonto === 0,
-      },
-    });
+    const [pago, deudaActualizada] = await Promise.all([
+      prisma.pagoDeuda.findFirst({ where: { transaccionId: transaccion.id } }),
+      prisma.deuda.findUnique({ where: { id: parseInt(deudaId) } }),
+    ]);
 
     res.status(201).json({
       message: 'Pago registrado exitosamente',
       pago,
       deuda: toDeudaDto(deudaActualizada),
+      transaccion,
     });
   } catch (error) {
     console.error('Error al registrar pago:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    const status = error.statusCode || 500;
+    res.status(status).json({
+      message: error.message || 'Error interno del servidor',
+    });
   }
 };
 
@@ -752,70 +836,11 @@ exports.obtenerHistorialPuntos = async (req, res) => {
 
 exports.verificarLogros = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const otorgados = [];
-
-    const [transacciones, inversiones, deudasPagadas, deudasTotales] =
-      await Promise.all([
-        prisma.transaccion.count({ where: { userId } }),
-        prisma.inversion.count({ where: { userId, activa: true } }),
-        prisma.deuda.count({ where: { userId, pagada: true } }),
-        prisma.deuda.count({ where: { userId } }),
-      ]);
-
-    const reglas = [
-      { nombre: 'Primera Transacción', ok: transacciones >= 1 },
-      { nombre: 'Inversionista', ok: inversiones >= 1 },
-      {
-        nombre: 'Libre de Deudas',
-        ok: deudasTotales > 0 && deudasPagadas === deudasTotales,
-      },
-    ];
-
-    for (const regla of reglas) {
-      if (!regla.ok) continue;
-
-      const logro = await prisma.logro.findFirst({
-        where: { nombre: regla.nombre, activo: true },
-      });
-      if (!logro) continue;
-
-      const resultado = await prisma.userLogro.upsert({
-        where: {
-          userId_logroId: { userId, logroId: logro.id },
-        },
-        create: { userId, logroId: logro.id },
-        update: {},
-      });
-
-      if (resultado) {
-        otorgados.push(logro.nombre);
-      }
-    }
-
-    const logrosObtenidos = await prisma.userLogro.findMany({
-      where: { userId },
-      include: { logro: true },
-    });
-    const puntosTotal = logrosObtenidos.reduce(
-      (sum, ul) => sum + ul.logro.puntos,
-      0
-    );
-    const nivel = Math.floor(puntosTotal / 1000) + 1;
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        puntosAcumulados: puntosTotal,
-        nivel,
-      },
-    });
-
+    const { verificarYOtorgarLogros } = require('../services/gamificacion.service');
+    const resultado = await verificarYOtorgarLogros(req.user.id);
     res.status(200).json({
       message: 'Logros verificados',
-      otorgados,
-      puntosTotal,
-      nivel,
+      ...resultado,
     });
   } catch (error) {
     console.error('Error al verificar logros:', error);

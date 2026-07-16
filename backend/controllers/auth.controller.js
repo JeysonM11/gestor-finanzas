@@ -1,25 +1,47 @@
 const bcrypt = require('bcryptjs');
 const prisma = require('../lib/prisma');
 const { catchAsync } = require('../middlewares/error.middleware');
-const { ConflictError, AuthenticationError } = require('../utils/errors');
+const { ConflictError, AuthenticationError, ValidationError } = require('../utils/errors');
 const { logUserAction, logSecurityEvent } = require('../utils/logger');
 const { parseDateOnly } = require('../utils/date');
-const { createUserSession } = require('../utils/sessions');
+const {
+  createUserSession,
+  setRefreshCookie,
+  clearRefreshCookie,
+  readRefreshFromRequest,
+  rotateRefreshToken,
+  revokeAllSessions,
+  ACCESS_TTL_SECONDS,
+} = require('../utils/sessions');
+const { registrarAuditoria } = require('../services/auditoria-acceso.service');
 
-// Registro de usuario
+function publicUser(user) {
+  const { password, ...rest } = user;
+  return rest;
+}
+
+function authResponse(res, payload, message, statusCode = 200) {
+  setRefreshCookie(res, payload.refreshToken);
+  res.status(statusCode).json({
+    success: true,
+    message,
+    token: payload.accessToken,
+    accessToken: payload.accessToken,
+    expiresIn: payload.expiresIn || ACCESS_TTL_SECONDS,
+    user: payload.user,
+  });
+}
+
 exports.register = catchAsync(async (req, res, next) => {
   const { name, email, password, telefono, fechaNacimiento, ocupacion, salarioMensual } = req.body;
 
-  // Verificar si el usuario ya existe
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     return next(new ConflictError('Ya existe un usuario con este email'));
   }
 
-  // Encriptar contraseña
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  // Crear usuario
   const user = await prisma.user.create({
     data: {
       name: name.trim(),
@@ -32,39 +54,47 @@ exports.register = catchAsync(async (req, res, next) => {
     },
   });
 
-  // Token + sesión en BD
-  const { token } = await createUserSession(user, req);
+  const session = await createUserSession(user, req);
+  await registrarAuditoria(req, {
+    userId: user.id,
+    accion: 'LOGIN_SUCCESS',
+    exitoso: true,
+    detalles: { via: 'register' },
+  });
+
   logUserAction('USER_REGISTERED', user.id, {
     email: user.email,
     name: user.name,
     ip: req.ip,
-    userAgent: req.get('User-Agent'),
   });
 
-  res.status(201).json({
-    success: true,
-    message: "Usuario registrado exitosamente",
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      rol: user.rol,
-      telefono: user.telefono,
-      ocupacion: user.ocupacion,
-      salarioMensual: user.salarioMensual,
-      monedaPrincipal: user.monedaPrincipal,
-      createdAt: user.createdAt,
+  authResponse(
+    res,
+    {
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      expiresIn: session.expiresIn,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        rol: user.rol,
+        telefono: user.telefono,
+        ocupacion: user.ocupacion,
+        salarioMensual: user.salarioMensual,
+        monedaPrincipal: user.monedaPrincipal,
+        createdAt: user.createdAt,
+      },
     },
-  });
+    'Usuario registrado exitosamente',
+    201
+  );
 });
 
-// Login de usuario
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
-  // Buscar usuario por email
-  const user = await prisma.user.findUnique({ 
+  const user = await prisma.user.findUnique({
     where: { email: email.toLowerCase().trim() },
     select: {
       id: true,
@@ -80,66 +110,91 @@ exports.login = catchAsync(async (req, res, next) => {
       monedaPrincipal: true,
       puntosAcumulados: true,
       nivel: true,
-    }
+    },
   });
 
   if (!user) {
-    logSecurityEvent('LOGIN_ATTEMPT_INVALID_EMAIL', {
-      email: email,
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
+    await registrarAuditoria(req, {
+      accion: 'LOGIN_FAILURE',
+      exitoso: false,
+      detalles: { email: email.toLowerCase().trim() },
     });
+    logSecurityEvent('LOGIN_ATTEMPT_INVALID_EMAIL', { email, ip: req.ip });
     return next(new AuthenticationError('Email o contraseña incorrectos'));
   }
 
-  // Verificar si el usuario está activo
   if (!user.activo) {
+    await registrarAuditoria(req, {
+      userId: user.id,
+      accion: 'LOGIN_FAILURE',
+      exitoso: false,
+      detalles: { reason: 'inactive' },
+    });
     return next(new AuthenticationError('Tu cuenta ha sido desactivada. Contacta al soporte.'));
   }
 
-  // Verificar contraseña
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
+    await registrarAuditoria(req, {
+      userId: user.id,
+      accion: 'LOGIN_FAILURE',
+      exitoso: false,
+      detalles: { reason: 'bad_password' },
+    });
     logSecurityEvent('LOGIN_ATTEMPT_INVALID_PASSWORD', {
       userId: user.id,
       email: user.email,
       ip: req.ip,
-      userAgent: req.get('User-Agent'),
     });
     return next(new AuthenticationError('Email o contraseña incorrectos'));
   }
 
-  // Actualizar último acceso
   await prisma.user.update({
     where: { id: user.id },
-    data: { ultimoAcceso: new Date() }
+    data: { ultimoAcceso: new Date() },
   });
 
-  // Token + sesión en BD
-  const { token } = await createUserSession(user, req);
-
-  // Remover password de la respuesta
-  const { password: userPassword, ...userWithoutPassword } = user;
-
-  // Log de login exitoso
-  logUserAction('USER_LOGIN', user.id, {
-    email: user.email,
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    lastAccess: user.ultimoAcceso,
+  const session = await createUserSession(user, req);
+  await registrarAuditoria(req, {
+    userId: user.id,
+    accion: 'LOGIN_SUCCESS',
+    exitoso: true,
   });
 
-  res.status(200).json({
-    success: true,
-    message: 'Login exitoso',
-    token,
-    user: userWithoutPassword,
-  });
+  logUserAction('USER_LOGIN', user.id, { email: user.email, ip: req.ip });
+
+  authResponse(res, {
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken,
+    expiresIn: session.expiresIn,
+    user: publicUser(user),
+  }, 'Login exitoso');
 });
 
-// Obtener usuario actual
+exports.refresh = catchAsync(async (req, res, next) => {
+  try {
+    const refreshToken = readRefreshFromRequest(req);
+    const rotated = await rotateRefreshToken(refreshToken);
+    const { password, ...userWithoutPassword } = rotated.user;
+
+    setRefreshCookie(res, rotated.refreshToken);
+    res.status(200).json({
+      success: true,
+      message: 'Token renovado',
+      token: rotated.accessToken,
+      accessToken: rotated.accessToken,
+      expiresIn: rotated.expiresIn,
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    clearRefreshCookie(res);
+    return next(
+      new AuthenticationError(error.message || 'No se pudo renovar la sesión')
+    );
+  }
+});
+
 exports.getCurrentUser = catchAsync(async (req, res, next) => {
-  // req.user viene del middleware authenticateToken
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
     select: {
@@ -158,17 +213,14 @@ exports.getCurrentUser = catchAsync(async (req, res, next) => {
       configuracion: true,
       createdAt: true,
       updatedAt: true,
-    }
+    },
   });
 
-  if (!user) {
+  if (!user || !user.activo) {
     return next(new AuthenticationError('Usuario no encontrado'));
   }
 
-  res.status(200).json({
-    success: true,
-    user,
-  });
+  res.status(200).json({ success: true, user });
 });
 
 const userPublicSelect = {
@@ -189,10 +241,10 @@ const userPublicSelect = {
   updatedAt: true,
 };
 
-// Actualizar perfil
-exports.updateProfile = catchAsync(async (req, res, next) => {
+exports.updateProfile = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { name, telefono, fechaNacimiento, ocupacion, salarioMensual, monedaPrincipal } = req.body;
+  const fields = Object.keys(req.body);
 
   const user = await prisma.user.update({
     where: { id: userId },
@@ -209,7 +261,14 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
     select: userPublicSelect,
   });
 
-  logUserAction('USER_PROFILE_UPDATED', userId, { fields: Object.keys(req.body) });
+  await registrarAuditoria(req, {
+    userId,
+    accion: 'PROFILE_UPDATE',
+    exitoso: true,
+    detalles: { fields },
+  });
+
+  logUserAction('USER_PROFILE_UPDATED', userId, { fields });
 
   res.status(200).json({
     success: true,
@@ -218,7 +277,6 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
   });
 });
 
-// Cambiar contraseña
 exports.changePassword = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
   const { currentPassword, newPassword } = req.body;
@@ -234,6 +292,11 @@ exports.changePassword = catchAsync(async (req, res, next) => {
 
   const isValid = await bcrypt.compare(currentPassword, user.password);
   if (!isValid) {
+    await registrarAuditoria(req, {
+      userId,
+      accion: 'PASSWORD_CHANGE_FAILURE',
+      exitoso: false,
+    });
     return next(new AuthenticationError('La contraseña actual es incorrecta'));
   }
 
@@ -243,10 +306,15 @@ exports.changePassword = catchAsync(async (req, res, next) => {
     data: { password: hashedPassword },
   });
 
-  logUserAction('USER_PASSWORD_CHANGED', userId, {
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
+  await revokeAllSessions(userId, req.sessionId);
+
+  await registrarAuditoria(req, {
+    userId,
+    accion: 'PASSWORD_CHANGE_SUCCESS',
+    exitoso: true,
   });
+
+  logUserAction('USER_PASSWORD_CHANGED', userId, { ip: req.ip });
 
   res.status(200).json({
     success: true,
@@ -254,8 +322,7 @@ exports.changePassword = catchAsync(async (req, res, next) => {
   });
 });
 
-// Actualizar preferencias
-exports.updatePreferences = catchAsync(async (req, res, next) => {
+exports.updatePreferences = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { monedaPrincipal, ...preferencias } = req.body;
 
@@ -285,5 +352,65 @@ exports.updatePreferences = catchAsync(async (req, res, next) => {
     success: true,
     message: 'Preferencias guardadas exitosamente',
     user,
+  });
+});
+
+/**
+ * Borrado lógico: activo=false + revocar todas las sesiones.
+ */
+exports.deleteAccount = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  const { password } = req.body;
+
+  if (!password) {
+    return next(new ValidationError('La contraseña es requerida'));
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, password: true, activo: true },
+  });
+
+  if (!user || !user.activo) {
+    return next(new AuthenticationError('Usuario no encontrado'));
+  }
+
+  const ok = await bcrypt.compare(password, user.password);
+  if (!ok) {
+    await registrarAuditoria(req, {
+      userId,
+      accion: 'ACCOUNT_DELETE',
+      exitoso: false,
+      detalles: { reason: 'bad_password' },
+    });
+    return next(new AuthenticationError('Contraseña incorrecta'));
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: userId },
+      data: { activo: false },
+    });
+    await tx.sesionUsuario.updateMany({
+      where: { userId, activa: true },
+      data: {
+        activa: false,
+        revokedAt: new Date(),
+        refreshTokenHash: null,
+      },
+    });
+  });
+
+  await registrarAuditoria(req, {
+    userId,
+    accion: 'ACCOUNT_DELETE',
+    exitoso: true,
+  });
+
+  clearRefreshCookie(res);
+
+  res.status(200).json({
+    success: true,
+    message: 'Cuenta desactivada correctamente',
   });
 });

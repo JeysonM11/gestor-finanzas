@@ -4,7 +4,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalRecordatorio from '../components/recordatorios/ModalRecordatorio'
 import { recordatorioService } from '../services/recordatorio.service'
 import { useToast } from '../context/ToastContext'
-import { Plus, BellRing, Edit, Trash2, Check, RotateCcw } from 'lucide-react'
+import { Plus, BellRing, Edit, Trash2, Check, RotateCcw, Play } from 'lucide-react'
 import { formatDate } from '../utils/date'
 
 const Recordatorios = () => {
@@ -12,6 +12,7 @@ const Recordatorios = () => {
   const [recordatorios, setRecordatorios] = useState([])
   const [resumen, setResumen] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [ejecutando, setEjecutando] = useState(false)
   const [soloPendientes, setSoloPendientes] = useState(false)
   const [modalAbierto, setModalAbierto] = useState(false)
   const [seleccionado, setSeleccionado] = useState(null)
@@ -67,6 +68,26 @@ const Recordatorios = () => {
     }
   }
 
+  const handleEjecutar = async () => {
+    try {
+      setEjecutando(true)
+      const data = await recordatorioService.ejecutar()
+      const r = data.resumen || data
+      const notificados = r.notificados ?? 0
+      const errores = r.errores ?? 0
+      if (errores > 0) {
+        toast.warning(`Procesados: ${notificados} notificados, ${errores} errores`)
+      } else {
+        toast.success(`Procesados: ${notificados} notificados, ${errores} errores`)
+      }
+      await cargar()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Error al procesar vencidos')
+    } finally {
+      setEjecutando(false)
+    }
+  }
+
   if (loading && recordatorios.length === 0) {
     return <Spinner fullPage />
   }
@@ -78,16 +99,28 @@ const Recordatorios = () => {
           <h1 className="page-title">Recordatorios</h1>
           <p className="page-subtitle">Avisos in-app para pagos, metas y más</p>
         </div>
-        <Button
-          onClick={() => {
-            setSeleccionado(null)
-            setModalAbierto(true)
-          }}
-          className="w-full sm:w-auto shrink-0"
-        >
-          <Plus className="h-4 w-4" />
-          Nuevo
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0">
+          <Button
+            variant="secondary"
+            onClick={handleEjecutar}
+            disabled={ejecutando}
+            className="w-full sm:w-auto"
+            title="Procesar vencidos"
+          >
+            <Play className="h-4 w-4" />
+            {ejecutando ? 'Procesando...' : 'Ejecutar ahora'}
+          </Button>
+          <Button
+            onClick={() => {
+              setSeleccionado(null)
+              setModalAbierto(true)
+            }}
+            className="w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo
+          </Button>
+        </div>
       </div>
 
       <ModalRecordatorio

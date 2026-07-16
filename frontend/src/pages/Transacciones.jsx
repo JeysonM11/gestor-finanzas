@@ -22,6 +22,8 @@ const Transacciones = () => {
     fechaInicio: '',
     fechaFin: '',
     search: '',
+    montoMin: '',
+    montoMax: '',
   })
   const [searchInput, setSearchInput] = useState('')
 
@@ -173,7 +175,7 @@ const Transacciones = () => {
       <Card>
         <form
           onSubmit={handleBuscar}
-          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4"
         >
           <Select
             label={
@@ -207,6 +209,28 @@ const Transacciones = () => {
             name="fechaFin"
             value={filtros.fechaFin}
             onChange={handleFiltroChange}
+          />
+
+          <Input
+            label="Monto mín."
+            type="number"
+            name="montoMin"
+            value={filtros.montoMin}
+            onChange={handleFiltroChange}
+            placeholder="0"
+            step="0.01"
+            min="0"
+          />
+
+          <Input
+            label="Monto máx."
+            type="number"
+            name="montoMax"
+            value={filtros.montoMax}
+            onChange={handleFiltroChange}
+            placeholder="0"
+            step="0.01"
+            min="0"
           />
 
           <Input

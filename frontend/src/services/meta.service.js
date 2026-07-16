@@ -21,8 +21,13 @@ export const metaService = {
     return response.data
   },
 
-  async aportar(id, monto) {
-    const response = await api.post(`/finanzas/metas/${id}/aportar`, { monto })
+  async aportar(id, monto, cuentaOrigenId) {
+    const response = await api.post(`/finanzas/metas/${id}/aportar`, {
+      monto,
+      ...(cuentaOrigenId != null && cuentaOrigenId !== ''
+        ? { cuentaOrigenId: Number(cuentaOrigenId) }
+        : {}),
+    })
     return response.data
   },
 

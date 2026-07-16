@@ -4,7 +4,7 @@ const {
   validateUserSession,
 } = require('../utils/sessions');
 
-describe('sessions Sprint D', () => {
+describe('sessions Sprint D + v1.4', () => {
   test('hashToken es determinista', () => {
     const a = hashToken('jwt-ejemplo-123');
     const b = hashToken('jwt-ejemplo-123');
@@ -22,13 +22,12 @@ describe('sessions Sprint D', () => {
     expect(parseDevice(safariIos)).toBe('Safari en iOS');
   });
 
-  test('validateUserSession acepta tokens legacy sin sid', async () => {
+  test('validateUserSession rechaza tokens legacy sin sid (v1.4)', async () => {
     const ok = await validateUserSession({ id: 1, rol: 'USUARIO' }, 'token');
-    expect(ok).toBe(true);
+    expect(ok).toBe(false);
   });
 
   test('validateUserSession con sid requiere BD (contrato middleware)', () => {
-    // La validación con sid consulta SesionUsuario; cubierto en E2E / integración.
     expect(typeof validateUserSession).toBe('function');
   });
 });

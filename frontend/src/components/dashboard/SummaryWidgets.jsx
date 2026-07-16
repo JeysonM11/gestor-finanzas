@@ -45,8 +45,8 @@ const SummaryWidgets = ({
         </div>
         <p className="mt-2 text-xs text-ink-muted">
           {systemOk
-            ? 'Los datos del panel se cargaron correctamente.'
-            : 'Algunos datos no pudieron cargarse. Intenta recargar.'}
+            ? 'El endpoint /api/health responde correctamente.'
+            : 'No se pudo verificar el estado de la API.'}
         </p>
       </Card>
 

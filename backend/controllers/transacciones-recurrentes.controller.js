@@ -55,10 +55,42 @@ exports.crearTransaccionRecurrente = catchAsync(async (req, res) => {
     fechaInicio,
     fechaFin,
     activa,
+    cuentaOrigenId,
+    cuentaDestinoId,
+    deudaId,
   } = req.body;
 
   if (!nombre || !tipo || !monto || !frecuencia) {
     throw new ValidationError('Nombre, tipo, monto y frecuencia son obligatorios');
+  }
+
+  if (!cuentaOrigenId) {
+    throw new ValidationError('Debes seleccionar una cuenta de origen');
+  }
+
+  const cuenta = await prisma.cuenta.findFirst({
+    where: { id: Number(cuentaOrigenId), userId, activa: true },
+  });
+  if (!cuenta) {
+    throw new ValidationError('Cuenta de origen no encontrada');
+  }
+
+  if (cuentaDestinoId) {
+    const destino = await prisma.cuenta.findFirst({
+      where: { id: Number(cuentaDestinoId), userId, activa: true },
+    });
+    if (!destino) {
+      throw new ValidationError('Cuenta de destino no encontrada');
+    }
+  }
+
+  if (deudaId) {
+    const deuda = await prisma.deuda.findFirst({
+      where: { id: Number(deudaId), userId },
+    });
+    if (!deuda) {
+      throw new ValidationError('Deuda no encontrada');
+    }
   }
 
   const proximaEjecucion = calcularProximaEjecucion(
@@ -83,6 +115,9 @@ exports.crearTransaccionRecurrente = catchAsync(async (req, res) => {
       proximaEjecucion,
       activa: activa !== undefined ? Boolean(activa) : true,
       userId,
+      cuentaOrigenId: Number(cuentaOrigenId),
+      cuentaDestinoId: cuentaDestinoId ? Number(cuentaDestinoId) : null,
+      deudaId: deudaId ? Number(deudaId) : null,
     },
   });
 
@@ -108,6 +143,9 @@ exports.actualizarTransaccionRecurrente = catchAsync(async (req, res) => {
     fechaInicio,
     fechaFin,
     activa,
+    cuentaOrigenId,
+    cuentaDestinoId,
+    deudaId,
   } = req.body;
 
   const existente = await prisma.transaccionRecurrente.findFirst({
@@ -136,6 +174,33 @@ exports.actualizarTransaccionRecurrente = catchAsync(async (req, res) => {
     updateData.fechaFin = fechaFin ? parseDateOnly(fechaFin) : null;
   }
   if (activa !== undefined) updateData.activa = Boolean(activa);
+  if (cuentaOrigenId !== undefined) {
+    if (cuentaOrigenId) {
+      const cuenta = await prisma.cuenta.findFirst({
+        where: { id: Number(cuentaOrigenId), userId, activa: true },
+      });
+      if (!cuenta) throw new ValidationError('Cuenta de origen no encontrada');
+    }
+    updateData.cuentaOrigenId = cuentaOrigenId ? Number(cuentaOrigenId) : null;
+  }
+  if (cuentaDestinoId !== undefined) {
+    if (cuentaDestinoId) {
+      const destino = await prisma.cuenta.findFirst({
+        where: { id: Number(cuentaDestinoId), userId, activa: true },
+      });
+      if (!destino) throw new ValidationError('Cuenta de destino no encontrada');
+    }
+    updateData.cuentaDestinoId = cuentaDestinoId ? Number(cuentaDestinoId) : null;
+  }
+  if (deudaId !== undefined) {
+    if (deudaId) {
+      const deuda = await prisma.deuda.findFirst({
+        where: { id: Number(deudaId), userId },
+      });
+      if (!deuda) throw new ValidationError('Deuda no encontrada');
+    }
+    updateData.deudaId = deudaId ? Number(deudaId) : null;
+  }
 
   if (frecuencia || fechaInicio || diaEjecucion !== undefined || diaSemana !== undefined) {
     updateData.proximaEjecucion = calcularProximaEjecucion(

@@ -44,10 +44,16 @@ const TIPO_INVERSION_UI_A_PRISMA = {
 };
 
 const TIPO_NOTIFICACION_UI_A_PRISMA = {
-  EXITO: 'INFO',
-  ADVERTENCIA: 'ALERTA',
-  ERROR: 'ALERTA',
+  EXITO: 'SUCCESS',
+  SUCCESS: 'SUCCESS',
+  success: 'SUCCESS',
+  ADVERTENCIA: 'WARNING',
+  WARNING: 'WARNING',
+  warning: 'WARNING',
+  ERROR: 'ERROR',
+  error: 'ERROR',
   INFO: 'INFO',
+  info: 'INFO',
   ALERTA: 'ALERTA',
   RECORDATORIO: 'RECORDATORIO',
   LOGRO: 'LOGRO',
@@ -72,7 +78,12 @@ function mapTipoInversion(tipo) {
 
 function mapTipoNotificacion(tipo) {
   if (!tipo) return null;
-  return TIPO_NOTIFICACION_UI_A_PRISMA[tipo] || tipo;
+  const key = String(tipo);
+  return (
+    TIPO_NOTIFICACION_UI_A_PRISMA[key] ||
+    TIPO_NOTIFICACION_UI_A_PRISMA[key.toUpperCase()] ||
+    key.toUpperCase()
+  );
 }
 
 /**
@@ -119,11 +130,33 @@ function normalizeInversionInput(body = {}) {
  */
 function toInversionDto(inversion) {
   if (!inversion) return null;
+  const montoInvertido = Number(inversion.montoInvertido) || 0;
+  const valorActual = Number(inversion.valorActual ?? inversion.montoInvertido) || 0;
+  const comisiones = Number(inversion.comisiones) || 0;
+  const dividendos = Number(inversion.dividendos) || 0;
+  const gananciaBruta = valorActual - montoInvertido;
+  const gananciaNeta = valorActual + dividendos - montoInvertido - comisiones;
+  const rentabilidadBruta =
+    montoInvertido > 0 ? (gananciaBruta / montoInvertido) * 100 : 0;
+  const rentabilidadNeta =
+    montoInvertido > 0 ? (gananciaNeta / montoInvertido) * 100 : 0;
+  const historial = Array.isArray(inversion.historialValores)
+    ? inversion.historialValores
+    : [];
+
   return {
     ...inversion,
-    montoInicial: inversion.montoInvertido,
-    montoActual: inversion.valorActual ?? inversion.montoInvertido,
+    montoInicial: montoInvertido,
+    montoActual: valorActual,
     cantidadUnidades: inversion.cantidad,
+    gananciaBruta,
+    gananciaNeta,
+    ganancia: gananciaNeta,
+    perdida: gananciaNeta < 0 ? Math.abs(gananciaNeta) : 0,
+    rentabilidadBruta,
+    rentabilidadNeta,
+    rentabilidad: rentabilidadNeta,
+    historial,
   };
 }
 
@@ -132,9 +165,14 @@ function toInversionDto(inversion) {
  */
 function toNotificacionDto(notificacion) {
   if (!notificacion) return null;
+  const datos =
+    notificacion.datos && typeof notificacion.datos === 'object'
+      ? notificacion.datos
+      : {};
   return {
     ...notificacion,
     createdAt: notificacion.fechaEnvio,
+    variant: datos.variant || null,
   };
 }
 

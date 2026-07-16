@@ -7,6 +7,7 @@ if (!process.env.JWT_SECRET) {
 
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
@@ -24,6 +25,7 @@ const { apiLimiter } = require('./middlewares/rateLimit.middleware');
 const { logger, morganStream } = require('./utils/logger');
 const { startRecurrentesCron } = require('./jobs/recurrentes.cron');
 const { startRecordatoriosCron } = require('./jobs/recordatorios.cron');
+const prisma = require('./lib/prisma');
 
 const app = express();
 
@@ -35,9 +37,13 @@ app.set('trust proxy', 1);
 app.use(helmet());
 const corsOptions =
   process.env.NODE_ENV === 'production'
-    ? { origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }
-    : {};
+    ? {
+        origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+        credentials: true,
+      }
+    : { origin: true, credentials: true };
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json());
 
 // HTTP Request Logging
@@ -59,13 +65,39 @@ app.use('/api/sistema', sistemaRoutes);
 app.use('/api/reportes', reporteRoutes);
 app.use('/api/categorias', categoriaRoutes);
 
+// Health check real (API + BD)
+app.get('/api/health', async (req, res) => {
+  const started = Date.now();
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({
+      status: 'ok',
+      database: 'up',
+      version: '1.4.0',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      latencyMs: Date.now() - started,
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'degraded',
+      database: 'down',
+      version: '1.4.0',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      message: 'Base de datos no disponible',
+    });
+  }
+});
+
 // Ruta principal
 app.get('/', (req, res) => {
   res.json({
     message: 'API de Gestor de Finanzas Avanzado',
-    version: '2.0.0',
+    version: '1.4.0',
     endpoints: {
       auth: '/api/auth',
+      health: '/api/health',
       transacciones: '/api/transacciones',
       cuentas: '/api/finanzas/cuentas',
       inversiones: '/api/finanzas/inversiones',
@@ -73,6 +105,7 @@ app.get('/', (req, res) => {
       metas: '/api/finanzas/metas',
       presupuestos: '/api/finanzas/presupuestos',
       gamificacion: '/api/finanzas/logros',
+      asesor: '/api/finanzas/asesor',
       recurrentes: '/api/sistema/recurrentes',
       recordatorios: '/api/sistema/recordatorios',
       notificaciones: '/api/sistema/notificaciones',

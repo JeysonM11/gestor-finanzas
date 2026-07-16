@@ -11,25 +11,20 @@ const {
   updateProfileSchema,
   changePasswordSchema,
   updatePreferencesSchema,
+  deleteAccountSchema,
 } = require('../validators/auth.validator');
 
-// Registro y login (rate limit anti fuerza bruta)
 router.post('/register', authLimiter, validateBody(registerSchema), authController.register);
 router.post('/login', authLimiter, validateBody(loginSchema), authController.login);
+router.post('/refresh', authLimiter, authController.refresh);
 
-// Sesiones y logout: requieren JWT; usan apiLimiter global (no authLimiter).
-// authLimiter solo aplica a credenciales sin autenticar (register/login).
-
-// Obtener usuario actual (protegido)
 router.get('/me', authenticateToken, authController.getCurrentUser);
 
-// Sesiones activas (Sprint D)
 router.get('/sessions', authenticateToken, sessionController.listarSesiones);
 router.delete('/sessions/others', authenticateToken, sessionController.revocarOtrasSesiones);
 router.delete('/sessions/:id', authenticateToken, sessionController.revocarSesion);
 router.post('/logout', authenticateToken, sessionController.logout);
 
-// Perfil y preferencias
 router.put(
   '/profile',
   authenticateToken,
@@ -47,6 +42,12 @@ router.put(
   authenticateToken,
   validateBody(updatePreferencesSchema),
   authController.updatePreferences
+);
+router.delete(
+  '/account',
+  authenticateToken,
+  validateBody(deleteAccountSchema),
+  authController.deleteAccount
 );
 
 module.exports = router;

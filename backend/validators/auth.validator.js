@@ -159,10 +159,22 @@ const updatePreferencesSchema = Joi.object({
   notificacionesRecurrentes: Joi.boolean().optional(),
 }).unknown(true);
 
+const deleteAccountSchema = Joi.object({
+  password: Joi.string().required().messages({
+    'any.required': 'La contraseña es requerida',
+  }),
+});
+
+const refreshSchema = Joi.object({
+  refreshToken: Joi.string().optional(),
+}).unknown(true);
+
 module.exports = {
   registerSchema,
   loginSchema,
   updateProfileSchema,
   changePasswordSchema,
   updatePreferencesSchema,
+  deleteAccountSchema,
+  refreshSchema,
 };

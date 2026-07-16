@@ -74,6 +74,9 @@ model Cuenta {
   // Relaciones
   transaccionesOrigen Transaccion[]       @relation("CuentaOrigen")
   transaccionesDestino Transaccion[]      @relation("CuentaDestino")
+  recurrentesOrigen   TransaccionRecurrente[] @relation("RecurrenteCuentaOrigen")
+  recurrentesDestino  TransaccionRecurrente[] @relation("RecurrenteCuentaDestino")
+  metasOrigen         Meta[]              @relation("MetaCuentaOrigen")
   
   @@map("cuentas")
 }
@@ -109,10 +112,12 @@ model Transaccion {
   pagoDeuda           PagoDeuda?
   transaccionRecurrente TransaccionRecurrente? @relation(fields: [transaccionRecurrenteId], references: [id])
   transaccionRecurrenteId Int?
+  ocurrenciaRecurrente DateTime?          // Clave de ocurrencia para idempotencia del cron
   
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   
+  @@unique([transaccionRecurrenteId, ocurrenciaRecurrente])
   @@index([userId, fecha])
   @@index([categoria])
   @@index([tipo])
@@ -139,6 +144,12 @@ model TransaccionRecurrente {
   
   user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId              Int
+  cuentaOrigen        Cuenta?             @relation("RecurrenteCuentaOrigen", fields: [cuentaOrigenId], references: [id], onDelete: SetNull)
+  cuentaOrigenId      Int?
+  cuentaDestino       Cuenta?             @relation("RecurrenteCuentaDestino", fields: [cuentaDestinoId], references: [id], onDelete: SetNull)
+  cuentaDestinoId     Int?
+  deuda               Deuda?              @relation(fields: [deudaId], references: [id], onDelete: SetNull)
+  deudaId             Int?
   transacciones       Transaccion[]       // Transacciones generadas
   
   createdAt           DateTime            @default(now())
@@ -166,6 +177,8 @@ model Meta {
   
   user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId              Int
+  cuentaOrigen        Cuenta?             @relation("MetaCuentaOrigen", fields: [cuentaOrigenId], references: [id], onDelete: SetNull)
+  cuentaOrigenId      Int?
   recordatoriosVinculados Recordatorio[]
   
   createdAt           DateTime            @default(now())
@@ -277,6 +290,7 @@ model Deuda {
   userId              Int
   pagos               PagoDeuda[]
   transacciones       Transaccion[]
+  recurrentes         TransaccionRecurrente[]
   recordatoriosVinculados Recordatorio[]
   
   createdAt           DateTime            @default(now())
@@ -390,12 +404,15 @@ model Recordatorio {
 model SesionUsuario {
   id                  Int                 @id @default(autoincrement())
   token               String              @unique
+  refreshTokenHash    String?             @unique
   dispositivo         String?
   ip                  String?
   ubicacion           String?
   userAgent           String?
   activa              Boolean             @default(true)
   fechaExpiracion     DateTime
+  revokedAt           DateTime?
+  lastUsedAt          DateTime?
   
   user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId              Int
@@ -405,6 +422,7 @@ model SesionUsuario {
   
   @@index([token])
   @@index([userId, activa])
+  @@index([userId, activa, fechaExpiracion])
   @@map("sesiones_usuario")
 }
 
@@ -579,6 +597,9 @@ enum TipoNotificacion {
   LOGRO
   SISTEMA
   PROMOCION
+  SUCCESS
+  WARNING
+  ERROR
 }
 
 enum TipoRecordatorio {

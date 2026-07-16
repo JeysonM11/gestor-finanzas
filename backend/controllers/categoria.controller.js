@@ -28,6 +28,7 @@ exports.obtenerCategorias = catchAsync(async (req, res) => {
         tipo: c.tipo,
         color: c.color,
         icono: c.icono,
+        orden: c.orden,
         descripcion: c.descripcion,
         activa: c.activa,
         origen: 'personalizada',
@@ -66,7 +67,7 @@ exports.obtenerCategorias = catchAsync(async (req, res) => {
 
 exports.crearCategoria = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  const { nombre, tipo, color, icono, descripcion } = req.body;
+  const { nombre, tipo, color, icono, orden, descripcion } = req.body;
   const nombreNorm = nombre.trim();
 
   const existente = await prisma.categoriaPersonalizada.findFirst({
@@ -84,6 +85,7 @@ exports.crearCategoria = catchAsync(async (req, res) => {
         tipo,
         color: color || existente.color || '#6B7280',
         icono: icono !== undefined ? icono : existente.icono,
+        orden: orden !== undefined ? orden : existente.orden,
         descripcion: descripcion !== undefined ? descripcion : existente.descripcion,
         activa: true,
       },
@@ -103,6 +105,7 @@ exports.crearCategoria = catchAsync(async (req, res) => {
         tipo,
         color: color || '#6B7280',
         icono: icono || null,
+        orden: orden != null ? orden : null,
         descripcion: descripcion || null,
         userId,
       },
@@ -124,7 +127,7 @@ exports.crearCategoria = catchAsync(async (req, res) => {
 exports.actualizarCategoria = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { id } = req.params;
-  const { nombre, tipo, color, icono, descripcion, activa } = req.body;
+  const { nombre, tipo, color, icono, orden, descripcion, activa } = req.body;
 
   const existente = await prisma.categoriaPersonalizada.findFirst({
     where: { id: parseInt(id, 10), userId },
@@ -142,6 +145,7 @@ exports.actualizarCategoria = catchAsync(async (req, res) => {
         ...(tipo != null && { tipo }),
         ...(color != null && { color }),
         ...(icono !== undefined && { icono }),
+        ...(orden !== undefined && { orden }),
         ...(descripcion !== undefined && { descripcion }),
         ...(activa !== undefined && { activa: Boolean(activa) }),
       },

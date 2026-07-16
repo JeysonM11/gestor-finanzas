@@ -3,6 +3,7 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { metaService } from '../../services/meta.service'
+import { useCategorias } from '../../hooks/useCategorias'
 import { toDateInputValue } from '../../utils/date'
 
 const TIPOS = ['AHORRO', 'EMERGENCIA', 'INVERSION', 'DEUDA', 'GASTO']
@@ -10,6 +11,7 @@ const PRIORIDADES = ['BAJA', 'MEDIA', 'ALTA', 'CRITICA']
 
 const ModalMeta = ({ isOpen, onClose, onSuccess, meta = null }) => {
   const isEditing = !!meta
+  const { categorias } = useCategorias({ enabled: isOpen })
   const [formData, setFormData] = useState({
     titulo: '',
     descripcion: '',
@@ -167,12 +169,26 @@ const ModalMeta = ({ isOpen, onClose, onSuccess, meta = null }) => {
             onChange={handleChange}
             required
           />
-          <Input
-            label="Categoría"
-            name="categoria"
-            value={formData.categoria}
-            onChange={handleChange}
-          />
+          <div>
+            <label className="block text-sm font-medium text-ink-muted mb-2">Categoría</label>
+            <select
+              name="categoria"
+              value={formData.categoria}
+              onChange={handleChange}
+              className="w-full input-field"
+            >
+              <option value="">Sin categoría</option>
+              {categorias.map((c) => (
+                <option key={c.id || c.nombre} value={c.nombre}>
+                  {c.nombre}
+                </option>
+              ))}
+              {formData.categoria &&
+                !categorias.some((c) => c.nombre === formData.categoria) && (
+                  <option value={formData.categoria}>{formData.categoria}</option>
+                )}
+            </select>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">

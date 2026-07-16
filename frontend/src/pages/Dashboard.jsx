@@ -17,10 +17,12 @@ import {
   RecentActivity,
   DashboardCharts,
   SummaryWidgets,
+  FinancialWidgets,
 } from '../components/dashboard'
 import { transaccionService } from '../services/transaccion.service'
 import { reporteService } from '../services/reporte.service'
 import { notificacionService } from '../services/notificacion.service'
+import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useCurrency } from '../hooks/useCurrency'
 
@@ -73,7 +75,7 @@ const Dashboard = () => {
   const [evolucionMensual, setEvolucionMensual] = useState([])
   const [gastosPorCategoria, setGastosPorCategoria] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
-  const [systemOk, setSystemOk] = useState(true)
+  const [systemOk, setSystemOk] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -82,13 +84,14 @@ const Dashboard = () => {
 
   const cargarDatos = async () => {
     try {
-      const [resumenResult, transaccionesResult, evolucion, categorias, notifs] =
+      const [resumenResult, transaccionesResult, evolucion, categorias, notifs, healthResult] =
         await Promise.all([
           transaccionService.getResumen(),
           transaccionService.getAll({ limit: 5 }),
           reporteService.getEvolucionMensual(6).catch(() => []),
           reporteService.getGastosPorCategoria().catch(() => []),
           notificacionService.getNoLeidas().catch(() => null),
+          api.get('/health').then(() => true).catch(() => false),
         ])
 
       setResumen(resumenResult)
@@ -106,10 +109,15 @@ const Dashboard = () => {
       const listaNotifs =
         notifs?.notificaciones || (Array.isArray(notifs) ? notifs : [])
       setUnreadCount(notifs?.contadores?.noLeidas ?? listaNotifs.length)
-      setSystemOk(true)
+      setSystemOk(healthResult === true)
     } catch (error) {
       console.error('Error al cargar datos:', error)
-      setSystemOk(false)
+      try {
+        await api.get('/health')
+        setSystemOk(true)
+      } catch {
+        setSystemOk(false)
+      }
     } finally {
       setLoading(false)
     }
@@ -215,6 +223,13 @@ const Dashboard = () => {
         <div className="min-w-0">
           <QuickActions actions={QUICK_ACTIONS} />
         </div>
+      </section>
+
+      <section aria-label="Resumen financiero">
+        <FinancialWidgets
+          gastosPorCategoria={gastosPorCategoria}
+          formatMoney={formatMoney}
+        />
       </section>
 
       <section aria-label="Resumen adicional">

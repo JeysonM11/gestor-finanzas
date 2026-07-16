@@ -1,7 +1,13 @@
 const prisma = require('../lib/prisma');
 const { catchAsync } = require('../middlewares/error.middleware');
 const { NotFoundError } = require('../utils/errors');
-const { toSessionDto } = require('../utils/sessions');
+const {
+  toSessionDto,
+  revokeSession,
+  clearRefreshCookie,
+  readRefreshFromRequest,
+} = require('../utils/sessions');
+const { registrarAuditoria } = require('../services/auditoria-acceso.service');
 
 exports.listarSesiones = catchAsync(async (req, res) => {
   const userId = req.user.id;
@@ -21,17 +27,27 @@ exports.listarSesiones = catchAsync(async (req, res) => {
 
 exports.revocarSesion = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  const { id } = req.params;
-  const sessionId = parseInt(id, 10);
+  const sessionId = parseInt(req.params.id, 10);
 
   const resultado = await prisma.sesionUsuario.updateMany({
     where: { id: sessionId, userId, activa: true },
-    data: { activa: false },
+    data: {
+      activa: false,
+      revokedAt: new Date(),
+      refreshTokenHash: null,
+    },
   });
 
   if (resultado.count === 0) {
     throw new NotFoundError('Sesión');
   }
+
+  await registrarAuditoria(req, {
+    userId,
+    accion: 'SESSION_REVOKED',
+    exitoso: true,
+    detalles: { sessionId },
+  });
 
   res.status(200).json({
     success: true,
@@ -58,7 +74,11 @@ exports.revocarOtrasSesiones = catchAsync(async (req, res) => {
       activa: true,
       id: { not: currentSessionId },
     },
-    data: { activa: false },
+    data: {
+      activa: false,
+      revokedAt: new Date(),
+      refreshTokenHash: null,
+    },
   });
 
   res.status(200).json({
@@ -69,15 +89,36 @@ exports.revocarOtrasSesiones = catchAsync(async (req, res) => {
 });
 
 exports.logout = catchAsync(async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user?.id;
   const currentSessionId = req.sessionId;
 
   if (currentSessionId) {
-    await prisma.sesionUsuario.updateMany({
-      where: { id: currentSessionId, userId },
-      data: { activa: false },
+    await revokeSession(currentSessionId, userId);
+  } else {
+    // Permitir logout con refresh aunque el access haya expirado
+    try {
+      const refreshToken = readRefreshFromRequest(req);
+      if (refreshToken) {
+        const [sidRaw] = refreshToken.split('.');
+        const sid = parseInt(sidRaw, 10);
+        if (Number.isFinite(sid)) {
+          await revokeSession(sid);
+        }
+      }
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  if (userId) {
+    await registrarAuditoria(req, {
+      userId,
+      accion: 'LOGOUT',
+      exitoso: true,
     });
   }
+
+  clearRefreshCookie(res);
 
   res.status(200).json({
     success: true,

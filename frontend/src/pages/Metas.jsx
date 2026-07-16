@@ -4,6 +4,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalMeta from '../components/metas/ModalMeta'
 import ModalRecordatorio from '../components/recordatorios/ModalRecordatorio'
 import { metaService } from '../services/meta.service'
+import { cuentaService } from '../services/cuenta.service'
 import { recordatorioService } from '../services/recordatorio.service'
 import { useToast } from '../context/ToastContext'
 import { useCurrency } from '../hooks/useCurrency'
@@ -22,6 +23,8 @@ const Metas = () => {
   const [metaAEliminar, setMetaAEliminar] = useState(null)
   const [aporteId, setAporteId] = useState(null)
   const [montoAporte, setMontoAporte] = useState('')
+  const [cuentaAporteId, setCuentaAporteId] = useState('')
+  const [cuentas, setCuentas] = useState([])
   const [modalRecordatorioOpen, setModalRecordatorioOpen] = useState(false)
   const [recordatorioDefaults, setRecordatorioDefaults] = useState(null)
   const [recordatorioSeleccionado, setRecordatorioSeleccionado] = useState(null)
@@ -30,7 +33,17 @@ const Metas = () => {
   useEffect(() => {
     cargar()
     fetchRecordatoriosMetas()
+    cargarCuentas()
   }, [])
+
+  const cargarCuentas = async () => {
+    try {
+      const data = await cuentaService.getAll()
+      setCuentas(data.cuentas || data || [])
+    } catch {
+      setCuentas([])
+    }
+  }
 
   const fetchRecordatoriosMetas = async () => {
     try {
@@ -76,10 +89,11 @@ const Metas = () => {
       return
     }
     try {
-      await metaService.aportar(id, monto)
+      await metaService.aportar(id, monto, cuentaAporteId || undefined)
       toast.success('Aporte registrado')
       setAporteId(null)
       setMontoAporte('')
+      setCuentaAporteId('')
       cargar()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al aportar')
@@ -257,7 +271,7 @@ const Metas = () => {
                 {!meta.completada && (
                   <div className="pt-2 border-t border-line space-y-2">
                     {aporteId === meta.id ? (
-                      <div className="flex gap-2">
+                      <div className="space-y-2">
                         <input
                           type="number"
                           min="0"
@@ -265,18 +279,35 @@ const Metas = () => {
                           value={montoAporte}
                           onChange={(e) => setMontoAporte(e.target.value)}
                           placeholder="Monto"
-                          className="input-field flex-1"
+                          className="input-field w-full"
                         />
-                        <Button onClick={() => handleAportar(meta.id)}>Guardar</Button>
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            setAporteId(null)
-                            setMontoAporte('')
-                          }}
+                        <select
+                          value={cuentaAporteId}
+                          onChange={(e) => setCuentaAporteId(e.target.value)}
+                          className="w-full input-field"
                         >
-                          Cancelar
-                        </Button>
+                          <option value="">Sin cuenta (opcional)</option>
+                          {cuentas.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.nombre} ({formatMoney(c.saldoActual ?? 0)})
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex gap-2">
+                          <Button onClick={() => handleAportar(meta.id)} className="flex-1">
+                            Guardar
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              setAporteId(null)
+                              setMontoAporte('')
+                              setCuentaAporteId('')
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
                       </div>
                     ) : (
                       <>
