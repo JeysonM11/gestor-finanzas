@@ -14,6 +14,9 @@ const {
 } = require('../validators/finanzas.validator');
 const metaController = require('../controllers/meta.controller');
 const presupuestoController = require('../controllers/presupuesto.controller');
+const asesorController = require('../controllers/asesor.controller');
+const { generarPlanSchema } = require('../validators/asesor.validator');
+const { asesorLimiter } = require('../middlewares/rateLimit.middleware');
 
 // ============= RUTAS DE CUENTAS =============
 router.get('/cuentas', authenticateToken, finanzasAvanzadasController.obtenerCuentas);
@@ -87,6 +90,18 @@ router.post(
 );
 router.put('/presupuestos/:id', authenticateToken, presupuestoController.actualizarPresupuesto);
 router.delete('/presupuestos/:id', authenticateToken, presupuestoController.eliminarPresupuesto);
+
+// ============= RUTAS DEL ASESOR IA (v1.3) =============
+router.post(
+  '/asesor/generar',
+  authenticateToken,
+  asesorLimiter,
+  validateBody(generarPlanSchema),
+  asesorController.generarPlan
+);
+router.get('/asesor/planes', authenticateToken, asesorController.listarPlanes);
+router.get('/asesor/planes/:id', authenticateToken, asesorController.obtenerPlan);
+router.get('/asesor/ultimo', authenticateToken, asesorController.ultimoPlan);
 
 // ============= RUTAS DE GAMIFICACION =============
 router.get('/logros', authenticateToken, finanzasAvanzadasController.obtenerLogrosUsuario);

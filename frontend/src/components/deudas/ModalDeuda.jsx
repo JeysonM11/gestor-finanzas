@@ -15,6 +15,7 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
     tipo: 'PRESTAMO_PERSONAL',
     montoTotal: '',
     montoPagado: '',
+    pagoMinimo: '',
     tasaInteres: '',
     tipoTasa: 'MENSUAL',
     plazoMeses: '',
@@ -33,6 +34,7 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
         tipo: deuda.tipo || 'PRESTAMO_PERSONAL',
         montoTotal: deuda.montoTotal ?? deuda.montoInicial ?? '',
         montoPagado: deuda.montoPagado ?? '',
+        pagoMinimo: deuda.pagoMinimo ?? '',
         tasaInteres: deuda.tasaInteres || '',
         tipoTasa: deuda.tipoTasa || 'MENSUAL',
         plazoMeses: deuda.plazoMeses || '',
@@ -47,6 +49,7 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
         tipo: 'PRESTAMO_PERSONAL',
         montoTotal: '',
         montoPagado: '',
+        pagoMinimo: '',
         tasaInteres: '',
         tipoTasa: 'MENSUAL',
         plazoMeses: '',
@@ -78,6 +81,7 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
         tipo: formData.tipo,
         montoTotal: parseFloat(formData.montoTotal),
         montoPagado: parseFloat(formData.montoPagado) || 0,
+        pagoMinimo: formData.pagoMinimo !== '' ? parseFloat(formData.pagoMinimo) : null,
         tasaInteres: parseFloat(formData.tasaInteres) || 0,
         tipoTasa: formData.tipoTasa || 'MENSUAL',
         plazoMeses: formData.plazoMeses ? parseInt(formData.plazoMeses, 10) : null,
@@ -154,7 +158,7 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label="Monto Total *"
             type="number"
@@ -172,6 +176,17 @@ const ModalDeuda = ({ isOpen, onClose, onSuccess, deuda = null }) => {
             type="number"
             name="montoPagado"
             value={formData.montoPagado}
+            onChange={handleChange}
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+          />
+
+          <Input
+            label="Pago mínimo mensual"
+            type="number"
+            name="pagoMinimo"
+            value={formData.pagoMinimo}
             onChange={handleChange}
             placeholder="0.00"
             step="0.01"

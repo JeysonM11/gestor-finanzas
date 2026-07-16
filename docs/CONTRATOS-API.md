@@ -3,7 +3,7 @@
 Documento de referencia para alinear **frontend**, **backend** y **Prisma**.  
 Fuente de verdad de nombres de campos y enums: `backend/prisma/schema.prisma`.
 
-> Estado: MVP (Sprints 0–4 + 6). Fuente de verdad: Prisma + este documento.
+> Estado: contratos vigentes al cierre de **v1.2** (MVP Sprints 0–6 + v1.2 Sprints A–E). Fuente de verdad: Prisma + este documento.
 
 ---
 
@@ -211,7 +211,9 @@ El JWT incluye `rol` (`ADMIN` | `USUARIO`). `requireRole('ADMIN')` se usa en rut
 
 ## Recordatorios — `/api/sistema/recordatorios`
 
-Modelo Prisma: `Recordatorio` (`titulo`, `descripcion?`, `tipo`, `fechaRecordatorio`, `repetir`, `frecuencia?`, `completado`, `activo`, `notificacionEnviada`, `userId`).
+Modelo Prisma: `Recordatorio` (`titulo`, `descripcion?`, `tipo`, `fechaRecordatorio`, `repetir`, `frecuencia?`, `completado`, `activo`, `notificacionEnviada`, `userId`, `deudaId?`, `metaId?`).
+
+Vínculos opcionales (v1.2 B.3): `deudaId` y `metaId` asocian el recordatorio a una deuda o meta (`onDelete: SetNull`). El listado con filtro `tipo=DEUDA` / `tipo=META` los expone para los atajos "Recordarme" de la UI.
 
 ### TipoRecordatorio
 
@@ -344,6 +346,29 @@ Al crear/editar/eliminar un `GASTO`, se recalcula `gastado` y puede emitir notif
 
 ---
 
+## Asesor IA — `/api/finanzas/asesor` (v1.3)
+
+Modelo Prisma: `AsesorPlan` (`estrategia` `AVALANCHE|SNOWBALL`, `resumen`, `snapshotJson`, `planJson`, `generadoPorIA`, `userId`).
+
+Principio: **el backend calcula los números** (motor en `backend/services/asesor-deudas.service.js`); Gemini solo redacta diagnóstico/tips sobre un snapshot **agregado y anonimizado** (deudas como `D1..Dn`; sin PII, acreedores, notas ni transacciones crudas).
+
+### Endpoints (todos con JWT)
+
+| Método | Ruta | Notas |
+|--------|------|--------|
+| POST | `/generar` | Body: `{ estrategia?, presupuestoExtra? }`. Rate limit por usuario (`ASESOR_RATE_LIMIT_MAX`/hora). 400 `SIN_DEUDAS` si no hay deudas activas. |
+| GET | `/planes` | Historial: `{ planes: [{ id, estrategia, resumen, generadoPorIA, createdAt }] }`. |
+| GET | `/planes/:id` | Detalle con ownership (404 si no es del usuario). |
+| GET | `/ultimo` | `{ plan: PlanDto \| null, iaDisponible }`. |
+
+PlanDto: `id`, `estrategia`, `resumen`, `generadoPorIA`, `snapshot`, `plan` (`diagnostico`, `tips`, `pasos`, `motivacion`, `pagos` = plan numérico, `presupuestoExtraUsado`), `createdAt`, `disclaimer`.
+
+Fallback: sin `GEMINI_API_KEY` o error del proveedor → plan numérico + tips de plantilla, `generadoPorIA: false` (nunca éxito simulado de IA).
+
+Env: `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-2.5-flash`), `GEMINI_TIMEOUT_MS`, `ASESOR_RATE_LIMIT_MAX`.
+
+---
+
 ## Checklist de alineación (por sprint)
 
 - [x] **Sprint 0:** este documento creado
@@ -353,6 +378,8 @@ Al crear/editar/eliminar un `GASTO`, se recalcula `gastado` y puede emitir notif
 - [x] **Sprint 4:** cron recurrentes, helmet/rate-limit, catchAsync, CI, toasts
 - [x] **Sprint 5:** metas + presupuestos (API + UI + alertas)
 - [x] **Sprint 6:** limpieza, README honesto, 404, búsqueda transacciones
+- [x] **v1.2 A–E:** categorías end-to-end, recordatorios, moneda, sesiones, CI integración
+- [ ] **v1.3:** asesor IA (contrato arriba)
 
 ---
 

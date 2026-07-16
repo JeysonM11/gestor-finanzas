@@ -155,6 +155,60 @@ const shouldRun = process.env.RUN_INTEGRATION_TESTS === '1';
     });
   });
 
+  describe('asesor IA', () => {
+    test('usuario B no puede leer plan de A; generar requiere deudas', async () => {
+      if (skipIfNoDb()) return;
+      const userA = await registerUser(app, 'ase-a');
+      const userB = await registerUser(app, 'ase-b');
+
+      // Sin deudas: 400 con código claro (sin éxito simulado)
+      const sinDeudas = await request(app)
+        .post('/api/finanzas/asesor/generar')
+        .set(authHeader(userA.token))
+        .send({});
+      expect(sinDeudas.status).toBe(400);
+      expect(sinDeudas.body.code).toBe('SIN_DEUDAS');
+
+      const deudaRes = await request(app)
+        .post('/api/finanzas/deudas')
+        .set(authHeader(userA.token))
+        .send({
+          nombre: 'Deuda asesor test',
+          tipo: 'PRESTAMO_PERSONAL',
+          montoInicial: 1000,
+          fechaInicio: new Date().toISOString().slice(0, 10),
+          pagoMinimo: 100,
+          acreedor: 'Banco test',
+        });
+      expect(deudaRes.status).toBe(201);
+
+      const genRes = await request(app)
+        .post('/api/finanzas/asesor/generar')
+        .set(authHeader(userA.token))
+        .send({ estrategia: 'SNOWBALL', presupuestoExtra: 50 });
+      expect(genRes.status).toBe(201);
+      const planId = genRes.body.plan.id;
+      expect(genRes.body.plan.plan.pagos.estrategia).toBe('SNOWBALL');
+
+      const idorRes = await request(app)
+        .get(`/api/finanzas/asesor/planes/${planId}`)
+        .set(authHeader(userB.token));
+      expect(idorRes.status).toBe(404);
+
+      const listB = await request(app)
+        .get('/api/finanzas/asesor/planes')
+        .set(authHeader(userB.token));
+      expect(listB.status).toBe(200);
+      expect(listB.body.planes).toHaveLength(0);
+
+      const ownerGet = await request(app)
+        .get(`/api/finanzas/asesor/planes/${planId}`)
+        .set(authHeader(userA.token));
+      expect(ownerGet.status).toBe(200);
+      expect(ownerGet.body.plan.id).toBe(planId);
+    });
+  });
+
   describe('recordatorios vencidos', () => {
     test('notificarVencidos es idempotente (una sola notificación)', async () => {
       if (skipIfNoDb()) return;

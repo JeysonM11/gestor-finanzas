@@ -1,7 +1,7 @@
 # Plan de trabajo — Gestor de Finanzas
 
 > **Estado: MVP CERRADO** (Sprints 0–6 + Metas/Presupuestos).  
-> Trabajo siguiente: [`PLAN-1.2.md`](PLAN-1.2.md).
+> Cadena histórica: MVP → [`PLAN-1.2.md`](PLAN-1.2.md) (cerrada) → [`PLAN-1.3.md`](PLAN-1.3.md) (activa).
 
 Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar el sistema **usable, consistente y seguro** para uso real con múltiples usuarios.
 

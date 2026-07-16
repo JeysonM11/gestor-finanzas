@@ -1,6 +1,10 @@
 # Plan v1.2 — Gestor de Finanzas
 
-Plan activo a partir del **MVP cerrado** ([`PLAN-DE-TRABAJO.md`](PLAN-DE-TRABAJO.md)).  
+> **Estado: v1.2 CERRADA** (16 jul 2026). Documento histórico.  
+> Trabajo siguiente: [`PLAN-1.3.md`](PLAN-1.3.md) (Asesor IA de deudas).  
+> Entregado: Sprints A (categorías), B (recordatorios), C (moneda), D2 (sesiones), E (CI + tests ownership). D1 (email verify) diferido a v1.3+.
+
+Plan a partir del **MVP cerrado** ([`PLAN-DE-TRABAJO.md`](PLAN-DE-TRABAJO.md)).  
 Objetivo: hacer el producto **más útil día a día y más confiable**, sin abrir dominios nuevos grandes.
 
 > Tema: **“Más útil + más confiable”** — no “más módulos”.  
@@ -239,7 +243,7 @@ Al retomar este plan en otra sesión:
 
 ---
 
-## Backlog candidato a v1.3
+## Backlog candidato a v1.3 (→ ver [`PLAN-1.3.md`](PLAN-1.3.md))
 
 | Idea | Notas |
 |------|--------|
@@ -265,10 +269,7 @@ Al retomar este plan en otra sesión:
 
 ---
 
-## Cómo usar este plan
+## Cierre
 
-1. Trabajar **un sprint a la vez**.
-2. Marcar checkboxes al completar.
-3. Cada PR debería decir a qué sprint/ítem apunta (`A.2`, `B.1`, …).
-4. No marcar un módulo como “listo” hasta create/read/update/delete (o la UI equivalente) contra backend real.
-)
+Todos los criterios de “v1.2 terminada” se cumplieron (D1 email verify diferido a propósito).
+El backlog candidato a v1.3 se retoma en [`PLAN-1.3.md`](PLAN-1.3.md).

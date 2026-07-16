@@ -2,7 +2,7 @@
 
 Aplicación full-stack de finanzas personales: autenticación JWT, transacciones con sync de saldos, cuentas, inversiones, deudas, recurrentes (cron), notificaciones, reportes/CSV, gamificación básica y configuración real.
 
-> **MVP cerrado.** Continuación en [PLAN-1.2.md](PLAN-1.2.md) (categorías UI, recordatorios, moneda, confianza).
+> **MVP y v1.2 cerrados.** Plan activo: [PLAN-1.3.md](PLAN-1.3.md) (Asesor IA de deudas con Gemini). Histórico: [PLAN-1.2.md](PLAN-1.2.md).
 
 ## Arquitectura
 
@@ -61,7 +61,8 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 | Presupuestos + alertas | ✅ |
 | Recordatorios (API + cron + UI) | ✅ |
 | Sesiones (confianza) | ✅ |
-| Email verify | → v1.3 |
+| Email verify | → backlog (post v1.3) |
+| Asesor IA de deudas (Gemini) | 🚧 v1.3 |
 
 ## Documentación
 
@@ -69,7 +70,9 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 - [frontend/README.md](frontend/README.md) — estructura UI
 - [docs/CONTRATOS-API.md](docs/CONTRATOS-API.md) — enums y contratos de campos
 - [PLAN-DE-TRABAJO.md](PLAN-DE-TRABAJO.md) — MVP cerrado (histórico Sprints 0–6)
-- [PLAN-1.2.md](PLAN-1.2.md) — plan activo v1.2 (categorías, recordatorios, moneda, confianza)
+- [PLAN-1.2.md](PLAN-1.2.md) — v1.2 cerrada (categorías, recordatorios, moneda, sesiones, CI)
+- [PLAN-1.3.md](PLAN-1.3.md) — plan activo v1.3 (Asesor IA de deudas)
+- [CHANGELOG.md](CHANGELOG.md) — historial de versiones
 
 ## Checklist de despliegue
 

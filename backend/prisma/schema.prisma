@@ -41,6 +41,7 @@ model User {
   transaccionesRecurrentes TransaccionRecurrente[]
   inversiones           Inversion[]
   deudas                Deuda[]
+  asesorPlanes          AsesorPlan[]
   
   // Gamificación
   puntosAcumulados      Int                     @default(0)
@@ -426,6 +427,25 @@ model AuditoriaAcceso {
   @@map("auditoria_acceso")
 }
 
+// ============= ASESOR IA (v1.3) =============
+
+model AsesorPlan {
+  id                  Int                 @id @default(autoincrement())
+  estrategia          EstrategiaAsesor
+  resumen             String              // Texto corto para listados
+  snapshotJson        Json                // Snapshot agregado usado como input
+  planJson            Json                // Plan validado: diagnóstico, tips, orden de pagos
+  generadoPorIA       Boolean             @default(true) // false = fallback sin proveedor
+
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int
+
+  createdAt           DateTime            @default(now())
+
+  @@index([userId, createdAt])
+  @@map("asesor_planes")
+}
+
 // ============= CONFIGURACIÓN DEL SISTEMA =============
 
 model ConfiguracionSistema {
@@ -562,4 +582,9 @@ enum TipoRecordatorio {
   INVERSION
   DEUDA
   GENERAL
+}
+
+enum EstrategiaAsesor {
+  AVALANCHE
+  SNOWBALL
 }

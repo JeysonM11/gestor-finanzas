@@ -1,6 +1,6 @@
 {
   "name": "gestor-finanzas",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "main": "app.js",
   "scripts": {
     "start": "prisma migrate deploy && node app.js",
@@ -30,6 +30,7 @@
   "license": "ISC",
   "description": "Backend para aplicación de gestión de finanzas personales con Node.js, Express y Prisma ORM",
   "dependencies": {
+    "@google/genai": "^2.12.0",
     "@prisma/client": "^6.6.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",

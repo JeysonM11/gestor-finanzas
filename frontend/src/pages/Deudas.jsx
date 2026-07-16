@@ -3,6 +3,7 @@ import { CreditCard, Plus, Edit, Trash2, DollarSign, Calendar, TrendingDown, Ale
 import { Button, Spinner, Card, EmptyState, Badge } from '../components/ui'
 import ModalDeuda from '../components/deudas/ModalDeuda'
 import ModalPago from '../components/deudas/ModalPago'
+import AsesorPanel from '../components/deudas/advisor/AsesorPanel'
 import ModalRecordatorio from '../components/recordatorios/ModalRecordatorio'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { deudaService } from '../services/deuda.service'
@@ -228,6 +229,9 @@ const Deudas = () => {
           </div>
         </Card>
       </div>
+
+      {/* Asesor IA de deudas */}
+      <AsesorPanel hayDeudas={deudas.length > 0} />
 
       {/* Lista de Deudas */}
       {deudas.length === 0 ? (
