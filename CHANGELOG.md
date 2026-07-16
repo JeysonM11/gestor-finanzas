@@ -33,7 +33,7 @@ Tema: estabilizar y unificar módulos existentes (sin módulos nuevos).
 - Auditoría persistida: login, logout, password, profile, delete account.
 
 ### Sprint 6 — Calidad
-- Tests ampliados + `coverageThreshold` progresivo.
+- Tests ampliados (89 unitarios) + `coverageThreshold` progresivo en Jest/CI.
 - `PLAN-1.4.md`, `docs/openapi.yaml`, README/contratos/env actualizados.
 
 ## v1.2.0 — 2026-07-16
