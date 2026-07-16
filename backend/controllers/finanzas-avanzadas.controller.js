@@ -76,6 +76,15 @@ exports.crearCuenta = async (req, res) => {
       });
     }
 
+    const usuario = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { monedaPrincipal: true },
+    });
+    const monedaCuenta =
+      (moneda && String(moneda).toUpperCase()) ||
+      usuario?.monedaPrincipal ||
+      'USD';
+
     const cuenta = await prisma.cuenta.create({
       data: {
         nombre,
@@ -84,7 +93,7 @@ exports.crearCuenta = async (req, res) => {
         numeroCuenta,
         saldoInicial: saldo,
         saldoActual: saldo,
-        moneda: moneda || 'USD',
+        moneda: monedaCuenta,
         color,
         icono,
         descripcion,
@@ -107,7 +116,7 @@ exports.actualizarSaldo = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
-    const { nuevoSaldo, saldoActual, motivo } = req.body;
+    const { nuevoSaldo, saldoActual, motivo, moneda } = req.body;
 
     const saldoFinal =
       nuevoSaldo != null
@@ -130,9 +139,14 @@ exports.actualizarSaldo = async (req, res) => {
       return res.status(404).json({ message: 'Cuenta no encontrada' });
     }
 
+    const dataUpdate = { saldoActual: saldoFinal };
+    if (moneda != null && String(moneda).trim() !== '') {
+      dataUpdate.moneda = String(moneda).toUpperCase();
+    }
+
     const cuentaActualizada = await prisma.cuenta.update({
       where: { id: parseInt(id) },
-      data: { saldoActual: saldoFinal },
+      data: dataUpdate,
     });
 
     if (motivo) {

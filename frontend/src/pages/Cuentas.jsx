@@ -3,10 +3,11 @@ import { Card, Button, Spinner, EmptyState } from '../components/ui'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import ModalCuenta from '../components/cuentas/ModalCuenta'
 import { cuentaService } from '../services/cuenta.service'
-import { formatMoney } from '../utils/currency'
+import { useCurrency } from '../hooks/useCurrency'
 import { Plus, Wallet, CreditCard, Edit, Trash2, TrendingUp } from 'lucide-react'
 
 const Cuentas = () => {
+  const { formatMoney } = useCurrency()
   const [cuentas, setCuentas] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalAbierto, setModalAbierto] = useState(false)

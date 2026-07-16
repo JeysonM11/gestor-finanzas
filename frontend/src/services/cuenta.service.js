@@ -16,10 +16,11 @@ export const cuentaService = {
     return response.data
   },
 
-  async updateSaldo(id, nuevoSaldo, motivo) {
+  async updateSaldo(id, nuevoSaldo, motivo, moneda) {
     const response = await api.put(`/finanzas/cuentas/${id}/saldo`, {
       nuevoSaldo,
       ...(motivo ? { motivo } : {}),
+      ...(moneda ? { moneda } : {}),
     })
     return response.data
   },

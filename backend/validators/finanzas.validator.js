@@ -34,6 +34,7 @@ const updateSaldoSchema = Joi.object({
   nuevoSaldo: Joi.number().optional(),
   saldoActual: Joi.number().optional(),
   motivo: Joi.string().trim().max(200).allow('', null).optional(),
+  moneda: Joi.string().length(3).uppercase().optional(),
 }).or('nuevoSaldo', 'saldoActual');
 
 const createInversionSchema = Joi.object({

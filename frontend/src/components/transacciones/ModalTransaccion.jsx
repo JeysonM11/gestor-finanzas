@@ -6,7 +6,7 @@ import { transaccionService } from '../../services/transaccion.service'
 import { cuentaService } from '../../services/cuenta.service'
 import { deudaService } from '../../services/deuda.service'
 import { CATEGORIAS_DEFAULT, METODOS_PAGO, categoriasParaTipo } from '../../utils/constants'
-import { formatMoney } from '../../utils/currency'
+import { useCurrency } from '../../hooks/useCurrency'
 import { todayDateInput, toDateInputValue } from '../../utils/date'
 
 const initialForm = () => ({
@@ -71,6 +71,7 @@ const FieldReveal = ({ show, children }) => {
 
 const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
+  const { formatMoney } = useCurrency()
 
   const [formData, setFormData] = useState(initialForm)
   const [cuentas, setCuentas] = useState([])
@@ -379,6 +380,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
   }
 
   const etiquetaOpcionCuenta = (cuenta) => {
+    // En transacciones se usa la moneda principal del usuario (Preferencias).
     const saldo =
       cuenta.saldoActual != null ? ` (${formatMoney(cuenta.saldoActual)})` : ''
     const inactiva = cuenta.activa === false ? ' — inactiva' : ''

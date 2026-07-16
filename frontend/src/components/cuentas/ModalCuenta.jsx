@@ -71,7 +71,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
       const saldo = parseFloat(formData.saldoActual) || 0
 
       if (isEditing) {
-        await cuentaService.updateSaldo(cuenta.id, saldo)
+        await cuentaService.updateSaldo(cuenta.id, saldo, undefined, formData.moneda)
       } else {
         await cuentaService.create({
           nombre: formData.nombre,
@@ -168,7 +168,6 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
               onChange={handleChange}
               className="w-full input-field"
               required
-              disabled={isEditing}
             >
               {MONEDAS.map((m) => (
                 <option key={m.code} value={m.code}>
@@ -225,7 +224,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
             type="submit"
             disabled={loading}
           >
-            {loading ? (isEditing ? 'Actualizando...' : 'Creando...') : (isEditing ? 'Actualizar Saldo' : 'Crear Cuenta')}
+            {loading ? (isEditing ? 'Guardando...' : 'Creando...') : (isEditing ? 'Guardar' : 'Crear Cuenta')}
           </Button>
         </div>
       </form>
