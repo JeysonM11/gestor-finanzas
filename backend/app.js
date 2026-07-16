@@ -27,6 +27,10 @@ const { startRecordatoriosCron } = require('./jobs/recordatorios.cron');
 
 const app = express();
 
+// Detrás del proxy de Render/reverse proxies: confiar en el primer salto para
+// que express-rate-limit identifique la IP real del cliente (X-Forwarded-For).
+app.set('trust proxy', 1);
+
 // Middlewares
 app.use(helmet());
 const corsOptions =
