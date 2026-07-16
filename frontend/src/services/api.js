@@ -30,7 +30,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      // HashRouter: path real /login no existe en el static host (404 en Render)
+      window.location.href = '/#/login'
     }
     return Promise.reject(error)
   }

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../notifications/NotificationBell'
 import { useLayout } from './LayoutContext'
@@ -5,12 +6,13 @@ import { Button } from '../ui'
 import { LogOut, Menu, User } from 'lucide-react'
 
 const Header = () => {
+  const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { toggleMobile } = useLayout()
 
   const handleLogout = () => {
     logout()
-    window.location.href = '/login'
+    navigate('/login', { replace: true })
   }
 
   const displayName = user?.name || user?.email || 'Usuario'
