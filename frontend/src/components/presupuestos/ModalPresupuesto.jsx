@@ -3,10 +3,11 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { presupuestoService } from '../../services/presupuesto.service'
-import { CATEGORIAS_DEFAULT } from '../../utils/constants'
+import { useCategorias } from '../../hooks/useCategorias'
 
 const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes, anio }) => {
   const isEditing = !!presupuesto
+  const { categorias, categoriasParaTipo } = useCategorias({ enabled: isOpen })
   const [formData, setFormData] = useState({
     categoria: '',
     limite: '',
@@ -71,9 +72,7 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
     }
   }
 
-  const categoriasGasto = CATEGORIAS_DEFAULT.filter(
-    (c) => c.tipo === 'GASTO' || c.tipo === 'AMBOS'
-  )
+  const categoriasGasto = categoriasParaTipo('GASTO')
 
   return (
     <Modal
@@ -99,12 +98,12 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
           >
             <option value="">Seleccionar...</option>
             {categoriasGasto.map((c) => (
-              <option key={c.nombre} value={c.nombre}>
+              <option key={c.id || c.nombre} value={c.nombre}>
                 {c.nombre}
               </option>
             ))}
             {formData.categoria &&
-              !categoriasGasto.some((c) => c.nombre === formData.categoria) && (
+              !categorias.some((c) => c.nombre === formData.categoria) && (
                 <option value={formData.categoria}>{formData.categoria}</option>
               )}
           </select>

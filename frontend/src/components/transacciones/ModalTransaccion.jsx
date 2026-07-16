@@ -5,8 +5,9 @@ import Input from '../common/Input'
 import { transaccionService } from '../../services/transaccion.service'
 import { cuentaService } from '../../services/cuenta.service'
 import { deudaService } from '../../services/deuda.service'
-import { CATEGORIAS_DEFAULT, METODOS_PAGO, categoriasParaTipo } from '../../utils/constants'
+import { METODOS_PAGO } from '../../utils/constants'
 import { useCurrency } from '../../hooks/useCurrency'
+import { useCategorias } from '../../hooks/useCategorias'
 import { todayDateInput, toDateInputValue } from '../../utils/date'
 
 const initialForm = () => ({
@@ -72,6 +73,7 @@ const FieldReveal = ({ show, children }) => {
 const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
   const { formatMoney } = useCurrency()
+  const { categorias, categoriasParaTipo } = useCategorias({ enabled: isOpen })
 
   const [formData, setFormData] = useState(initialForm)
   const [cuentas, setCuentas] = useState([])
@@ -613,12 +615,12 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
               >
                 <option value="">Sin categoría</option>
                 {categoriasParaTipo(formData.tipo).map((c) => (
-                  <option key={c.nombre} value={c.nombre}>
+                  <option key={c.id || c.nombre} value={c.nombre}>
                     {c.nombre}
                   </option>
                 ))}
                 {formData.categoria &&
-                  !CATEGORIAS_DEFAULT.some((c) => c.nombre === formData.categoria) && (
+                  !categorias.some((c) => c.nombre === formData.categoria) && (
                     <option value={formData.categoria}>{formData.categoria}</option>
                   )}
               </select>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, Spinner, CardTitle } from '../components/ui'
 import { reporteService } from '../services/reporte.service'
 import { useCurrency } from '../hooks/useCurrency'
+import { useToast } from '../context/ToastContext'
 import { 
   BarChart, Bar, PieChart, Pie, LineChart, Line, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
@@ -11,6 +12,7 @@ import { BarChart3, PieChart as PieChartIcon, TrendingUp, Calendar } from 'lucid
 
 const Reportes = () => {
   const { formatMoney } = useCurrency()
+  const toast = useToast()
   const [gastosPorCategoria, setGastosPorCategoria] = useState([])
   const [evolucionMensual, setEvolucionMensual] = useState([])
   const [comparacionAnual, setComparacionAnual] = useState([])
@@ -34,7 +36,7 @@ const Reportes = () => {
       setEvolucionMensual(evolucion)
       setComparacionAnual(comparacion)
     } catch (error) {
-      console.error('Error al cargar reportes:', error)
+      toast.error(error.response?.data?.message || 'Error al cargar reportes')
     } finally {
       setLoading(false)
     }

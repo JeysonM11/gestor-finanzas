@@ -5,7 +5,8 @@ import { authService } from '../services/auth.service'
 import { reporteService } from '../services/reporte.service'
 import { Card, Button, Input, Alert, Badge } from '../components/ui'
 import { MONEDAS } from '../utils/currency'
-import { User, Lock, Bell, Download, Shield, Moon } from 'lucide-react'
+import { User, Lock, Bell, Download, Shield, Moon, Tags } from 'lucide-react'
+import CategoriasConfig from '../components/categorias/CategoriasConfig'
 
 const Configuracion = () => {
   const { user, setUser } = useAuth()
@@ -198,6 +199,7 @@ const Configuracion = () => {
     { id: 'perfil', label: 'Perfil', icon: User },
     { id: 'seguridad', label: 'Seguridad', icon: Lock },
     { id: 'notificaciones', label: 'Preferencias', icon: Bell },
+    { id: 'categorias', label: 'Categorías', icon: Tags },
     { id: 'datos', label: 'Datos', icon: Download }
   ]
 
@@ -474,6 +476,8 @@ const Configuracion = () => {
               </form>
             </Card>
           )}
+
+          {activeTab === 'categorias' && <CategoriasConfig />}
 
           {activeTab === 'datos' && (
             <Card>

@@ -5,6 +5,10 @@ export const CATEGORIAS_DEFAULT = [
   { nombre: 'Entretenimiento', tipo: 'GASTO' },
   { nombre: 'Salud', tipo: 'GASTO' },
   { nombre: 'Educación', tipo: 'GASTO' },
+  { nombre: 'Servicios', tipo: 'GASTO' },
+  { nombre: 'Compras', tipo: 'GASTO' },
+  { nombre: 'Viajes', tipo: 'GASTO' },
+  { nombre: 'Hogar', tipo: 'GASTO' },
   { nombre: 'Salario', tipo: 'INGRESO' },
   { nombre: 'Freelance', tipo: 'INGRESO' },
   { nombre: 'Inversiones', tipo: 'INGRESO' },
@@ -21,8 +25,11 @@ export const METODOS_PAGO = [
   'OTRO',
 ]
 
-export function categoriasParaTipo(tipo) {
-  return CATEGORIAS_DEFAULT.filter(
-    (c) => c.tipo === tipo || c.tipo === 'AMBOS'
+/** @param {string} tipo
+ *  @param {Array<{nombre: string, tipo?: string}>} [lista]
+ */
+export function categoriasParaTipo(tipo, lista = CATEGORIAS_DEFAULT) {
+  return lista.filter(
+    (c) => !c.tipo || c.tipo === tipo || c.tipo === 'AMBOS'
   )
 }

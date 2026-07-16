@@ -3,11 +3,12 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { transaccionRecurrenteService } from '../../services/transaccion-recurrente.service'
-import { CATEGORIAS_DEFAULT, categoriasParaTipo } from '../../utils/constants'
+import { useCategorias } from '../../hooks/useCategorias'
 import { todayDateInput, toDateInputValue } from '../../utils/date'
 
 const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
+  const { categorias, categoriasParaTipo } = useCategorias({ enabled: isOpen })
   
   const [formData, setFormData] = useState({
     nombre: '',
@@ -162,12 +163,12 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
             >
               <option value="">Sin categoría</option>
               {categoriasParaTipo(formData.tipo).map((c) => (
-                <option key={c.nombre} value={c.nombre}>
+                <option key={c.id || c.nombre} value={c.nombre}>
                   {c.nombre}
                 </option>
               ))}
               {formData.categoria &&
-                !CATEGORIAS_DEFAULT.some((c) => c.nombre === formData.categoria) && (
+                !categorias.some((c) => c.nombre === formData.categoria) && (
                   <option value={formData.categoria}>{formData.categoria}</option>
                 )}
             </select>
