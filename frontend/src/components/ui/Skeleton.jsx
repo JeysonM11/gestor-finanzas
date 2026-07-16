@@ -19,16 +19,27 @@ const Skeleton = ({ className = '' }) => {
 
 export const PageSkeleton = () => (
   <div className="page-shell animate-fade-in" role="status" aria-label="Cargando contenido">
-    <div className="space-y-2">
-      <Skeleton className="h-7 w-48" />
-      <Skeleton className="h-4 w-72 max-w-full" />
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-7 w-48" />
+        <Skeleton className="h-4 w-72 max-w-full" />
+      </div>
+      <Skeleton className="h-10 w-44 rounded-card" />
     </div>
     <div className="stat-grid">
       {[1, 2, 3, 4].map((i) => (
-        <Skeleton key={i} className="h-28 rounded-card" />
+        <Skeleton key={i} className="h-32 rounded-card" />
       ))}
     </div>
-    <Skeleton className="h-64 rounded-card" />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+      <Skeleton className="h-72 rounded-card" />
+      <Skeleton className="h-72 rounded-card" />
+    </div>
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-4">
+      <Skeleton className="h-64 rounded-card xl:col-span-2" />
+      <Skeleton className="h-64 rounded-card" />
+    </div>
   </div>
 )
 
