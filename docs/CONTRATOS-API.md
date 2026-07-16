@@ -9,18 +9,22 @@ Fuente de verdad de nombres de campos y enums: `backend/prisma/schema.prisma`.
 
 ## Convenciones generales
 
-| Tema | Contrato |
-|------|----------|
-| Prefijo API | `/api` |
-| Auth | Header `Authorization: Bearer <token>` |
-| IDs | Enteros (`Int`) |
-| Fechas | ISO 8601 en JSON; Prisma `DateTime` |
-| Montos | `Float` / número JSON (sin strings) |
-| Enums | Siempre **MAYÚSCULAS** como en Prisma (`INGRESO`, no `ingreso`) |
-| Errores | `{ success: false, message, code?, errors? }` |
+
+| Tema           | Contrato                                                         |
+| -------------- | ---------------------------------------------------------------- |
+| Prefijo API    | `/api`                                                           |
+| Auth           | Header `Authorization: Bearer <token>`                           |
+| IDs            | Enteros (`Int`)                                                  |
+| Fechas         | ISO 8601 en JSON; Prisma `DateTime`                              |
+| Montos         | `Float` / número JSON (sin strings)                              |
+| Enums          | Siempre **MAYÚSCULAS** como en Prisma (`INGRESO`, no `ingreso`)  |
+| Errores        | `{ success: false, message, code?, errors? }`                    |
 | Éxito listados | Preferir `{ recursoPlural, resumen? }` (ej. `cuentas`, `deudas`) |
 
+
 ---
+
+
 
 ## Moneda (Sprint C / v1.2)
 
@@ -38,20 +42,26 @@ Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`
 
 ---
 
+
+
 ## Auth — `/api/auth`
 
-| Método | Ruta | Estado |
-|--------|------|--------|
-| POST | `/register` | ✅ |
-| POST | `/login` | ✅ |
-| GET | `/me` | ✅ |
-| PUT | `/profile` | ✅ |
-| PUT | `/change-password` | ✅ |
-| PUT | `/preferences` | ✅ |
-| GET | `/sessions` | ✅ listar sesiones activas |
-| DELETE | `/sessions/:id` | ✅ cerrar sesión (ownership) |
+
+| Método | Ruta               | Estado                         |
+| ------ | ------------------ | ------------------------------ |
+| POST   | `/register`        | ✅                              |
+| POST   | `/login`           | ✅                              |
+| GET    | `/me`              | ✅                              |
+| PUT    | `/profile`         | ✅                              |
+| PUT    | `/change-password` | ✅                              |
+| PUT    | `/preferences`     | ✅                              |
+| GET    | `/sessions`        | ✅ listar sesiones activas      |
+| DELETE | `/sessions/:id`    | ✅ cerrar sesión (ownership)    |
 | DELETE | `/sessions/others` | ✅ cerrar todas menos la actual |
-| POST | `/logout` | ✅ cerrar sesión actual |
+| POST   | `/logout`          | ✅ cerrar sesión actual         |
+
+
+
 
 ### JWT y sesiones (Sprint D / v1.2 — eje D2)
 
@@ -61,20 +71,26 @@ Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`
 - Tokens **legacy** sin `sid` siguen válidos hasta re-login (compatibilidad).
 - TTL sesión: 7 días (alineado con JWT `expiresIn`).
 
-**DTO sesión (GET `/sessions`):** `id`, `dispositivo`, `ip`, `activa`, `createdAt`, `fechaExpiracion`, `actual` (boolean).
+**DTO sesión (GET** `/sessions`**):** `id`, `dispositivo`, `ip`, `activa`, `createdAt`, `fechaExpiracion`, `actual` (boolean).
 
 **User (respuesta pública):** `id`, `name`, `email`, `rol`, `telefono`, `ocupacion`, `salarioMensual`, `monedaPrincipal`, `puntosAcumulados`, `nivel`, …
 
 ---
 
+
+
 ## Transacciones — `/api/transacciones`
 
-| Campo Prisma | Usar en API / UI |
-|--------------|------------------|
-| `tipo` | `INGRESO` \| `GASTO` \| `TRANSFERENCIA` |
-| `monto` | number > 0 |
-| `metodoPago` | Ver enum abajo |
-| `cuentaOrigenId` / `cuentaDestinoId` | number \| null |
+
+| Campo Prisma                         | Usar en API / UI                      |
+| ------------------------------------ | ------------------------------------- |
+| `tipo`                               | `INGRESO` | `GASTO` | `TRANSFERENCIA` |
+| `monto`                              | number > 0                            |
+| `metodoPago`                         | Ver enum abajo                        |
+| `cuentaOrigenId` / `cuentaDestinoId` | number | null                         |
+
+
+
 
 ### MetodoPago (Prisma)
 
@@ -84,13 +100,19 @@ Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`
 
 ---
 
+
+
 ## Cuentas — `/api/finanzas/cuentas`
 
-| Campo Prisma | No usar |
-|--------------|---------|
-| `tipo` | ~~`tipoCuenta`~~ |
-| `saldoActual` | — |
-| `saldoInicial` | — |
+
+| Campo Prisma   | No usar      |
+| -------------- | ------------ |
+| `tipo`         | `tipoCuenta` |
+| `saldoActual`  | —            |
+| `saldoInicial` | —            |
+
+
+
 
 ### TipoCuenta (Prisma)
 
@@ -98,23 +120,33 @@ Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`
 
 > **Desalineado hoy:** UI envía `AHORRO`, `CORRIENTE`, `CREDITO`. Mapear en Sprint 1.
 
+
+
 ### Actualizar saldo
 
-| Contrato acordado (Sprint 1) | Body |
-|------------------------------|------|
-| `PUT /cuentas/:id/saldo` | `{ "nuevoSaldo": number, "motivo"?: string }` |
+
+| Contrato acordado (Sprint 1) | Body                                          |
+| ---------------------------- | --------------------------------------------- |
+| `PUT /cuentas/:id/saldo`     | `{ "nuevoSaldo": number, "motivo"?: string }` |
+
 
 > Frontend hoy envía `saldoActual` → alinear a `nuevoSaldo`.
 
 ---
 
+
+
 ## Inversiones — `/api/finanzas/inversiones`
 
-| Campo Prisma | No usar (UI actual) |
-|--------------|---------------------|
-| `montoInvertido` | ~~`montoInicial`~~ |
-| `valorActual` | ~~`montoActual`~~ |
-| `cantidad` | ~~`cantidadUnidades`~~ |
+
+| Campo Prisma     | No usar (UI actual) |
+| ---------------- | ------------------- |
+| `montoInvertido` | `montoInicial`      |
+| `valorActual`    | `montoActual`       |
+| `cantidad`       | `cantidadUnidades`  |
+
+
+
 
 ### TipoInversion (Prisma)
 
@@ -124,18 +156,23 @@ Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`
 
 ---
 
+
+
 ## Deudas — `/api/finanzas/deudas`
 
-| Campo Prisma | No usar (UI actual) |
-|--------------|---------------------|
-| `montoInicial` | ~~`montoTotal`~~ |
-| `montoActual` | ~~`montoPagado`~~ (pagado = totalConInteres − actual) |
-| `acreedor` | required en schema |
-| `plazoMeses` | opcional; plazo en meses |
-| `tasaInteres` / `tasa` | porcentaje (ej. 15 = 15%) |
-| `tipoTasa` | `MENSUAL` o `ANUAL` (default efectivo: MENSUAL) |
+
+| Campo Prisma           | No usar (UI actual)                               |
+| ---------------------- | ------------------------------------------------- |
+| `montoInicial`         | `montoTotal`                                      |
+| `montoActual`          | `montoPagado` (pagado = totalConInteres − actual) |
+| `acreedor`             | required en schema                                |
+| `plazoMeses`           | opcional; plazo en meses                          |
+| `tasaInteres` / `tasa` | porcentaje (ej. 15 = 15%)                         |
+| `tipoTasa`             | `MENSUAL` o `ANUAL` (default efectivo: MENSUAL)   |
+
 
 Interés simple:
+
 - **Mensual:** `capital × (1 + tasa% × meses)`
 - **Anual:** `capital × (1 + tasa% × meses/12)`
 
@@ -146,6 +183,8 @@ DTO: `montoTotal` (= capital), `montoConInteres`, `montoPagado`. Sin `plazoMeses
 `TARJETA_CREDITO` | `PRESTAMO_PERSONAL` | `HIPOTECA` | `PRESTAMO_AUTO` | `PRESTAMO_ESTUDIANTIL` | `LINEA_CREDITO` | `OTRO`
 
 > UI usa `PRESTAMO` / `OTROS` → mapear.
+
+
 
 ### Respuesta listado
 
@@ -158,11 +197,15 @@ DTO: `montoTotal` (= capital), `montoConInteres`, `montoPagado`. Sin `plazoMeses
 
 > Frontend debe usar `response.deudas`, no `response.data`.
 
+
+
 ### Pago
 
 `POST /deudas/:deudaId/pagos` → `{ monto, capital?, interes?, fecha?, notas? }`
 
 ---
+
+
 
 ## Recurrentes — `/api/sistema/recurrentes`
 
@@ -172,17 +215,21 @@ Campos: `nombre`, `descripcion`, `tipo`, `monto`, `categoria`, `frecuencia`, `di
 
 `DIARIA` | `SEMANAL` | `QUINCENAL` | `MENSUAL` | `BIMESTRAL` | `TRIMESTRAL` | `SEMESTRAL` | `ANUAL`
 
-| Ruta | Estado |
-|------|--------|
-| GET/POST `/` | ✅ |
-| PUT/DELETE `/:id` | ✅ |
-| PUT `/:id/toggle` | ✅ |
-| POST `/ejecutar` | ✅ (usuario: solo sus pendientes; UI = “Forzar ahora”) |
+
+| Ruta                     | Estado                                                      |
+| ------------------------ | ----------------------------------------------------------- |
+| GET/POST `/`             | ✅                                                           |
+| PUT/DELETE `/:id`        | ✅                                                           |
+| PUT `/:id/toggle`        | ✅                                                           |
+| POST `/ejecutar`         | ✅ (usuario: solo sus pendientes; UI = “Forzar ahora”)       |
 | POST `/ejecutar-interno` | ✅ (header `X-Cron-Secret`; global; también job `node-cron`) |
+
 
 > Cron: cada hora (`CRON_RECURRENTES_SCHEDULE`, default `0 * * * *`). Desactivar con `CRON_RECURRENTES=false`.
 
 ---
+
+
 
 ## Roles
 
@@ -190,12 +237,18 @@ El JWT incluye `rol` (`ADMIN` | `USUARIO`). `requireRole('ADMIN')` se usa en rut
 
 ---
 
+
+
 ## Notificaciones — `/api/sistema/notificaciones`
 
-| Campo Prisma | No usar |
-|--------------|---------|
-| `fechaEnvio` | ~~`createdAt`~~ |
-| `fechaLeida` | — |
+
+| Campo Prisma | No usar     |
+| ------------ | ----------- |
+| `fechaEnvio` | `createdAt` |
+| `fechaLeida` | —           |
+
+
+
 
 ### TipoNotificacion
 
@@ -208,6 +261,8 @@ El JWT incluye `rol` (`ADMIN` | `USUARIO`). `requireRole('ADMIN')` se usa en rut
 > Query: `?soloNoLeidas=true` | `?leida=true|false` | `limit` | `offset`
 
 ---
+
+
 
 ## Recordatorios — `/api/sistema/recordatorios`
 
@@ -225,17 +280,21 @@ Vínculos opcionales (v1.2 B.3): `deudaId` y `metaId` asocian el recordatorio a 
 
 ### Endpoints (JWT salvo interno)
 
-| Método | Ruta | Notas |
-|--------|------|--------|
-| GET | `/` | Query: `soloPendientes`, `fechaInicio`, `fechaFin`, `tipo`. Solo `activo: true` del usuario. |
-| GET | `/:id` | Ownership. |
-| POST | `/` | Body: `{ titulo, fechaRecordatorio, tipo?, descripcion?, repetir?, frecuencia?, activo? }`. |
-| PUT | `/:id` | Body parcial. Cambiar fecha resetea `notificacionEnviada`. |
-| PUT | `/:id/completar` | `completado: true`. |
-| PUT | `/:id/reactivar` | `completado: false`, `activo: true`, resetea notificación. |
-| DELETE | `/:id` | Soft-delete (`activo: false`). |
-| POST | `/ejecutar` | Fuerza notificación de vencidos del usuario. |
-| POST | `/ejecutar-interno` | Cron global; header `X-Cron-Secret`. |
+
+| Método | Ruta                | Notas                                                                                        |
+| ------ | ------------------- | -------------------------------------------------------------------------------------------- |
+| GET    | `/`                 | Query: `soloPendientes`, `fechaInicio`, `fechaFin`, `tipo`. Solo `activo: true` del usuario. |
+| GET    | `/:id`              | Ownership.                                                                                   |
+| POST   | `/`                 | Body: `{ titulo, fechaRecordatorio, tipo?, descripcion?, repetir?, frecuencia?, activo? }`.  |
+| PUT    | `/:id`              | Body parcial. Cambiar fecha resetea `notificacionEnviada`.                                   |
+| PUT    | `/:id/completar`    | `completado: true`.                                                                          |
+| PUT    | `/:id/reactivar`    | `completado: false`, `activo: true`, resetea notificación.                                   |
+| DELETE | `/:id`              | Soft-delete (`activo: false`).                                                               |
+| POST   | `/ejecutar`         | Fuerza notificación de vencidos del usuario.                                                 |
+| POST   | `/ejecutar-interno` | Cron global; header `X-Cron-Secret`.                                                         |
+
+
+
 
 ### Cron
 
@@ -245,7 +304,11 @@ Vínculos opcionales (v1.2 B.3): `deudaId` y `metaId` asocian el recordatorio a 
 
 ---
 
+
+
 ## Gamificación — `/api/finanzas/logros`
+
+
 
 ### Respuesta actual `GET /logros`
 
@@ -263,25 +326,33 @@ Vínculos opcionales (v1.2 B.3): `deudaId` y `metaId` asocian el recordatorio a 
 }
 ```
 
-| Ruta | Estado |
-|------|--------|
-| GET `/logros` | ✅ |
+
+| Ruta                     | Estado         |
+| ------------------------ | -------------- |
+| GET `/logros`            | ✅              |
 | POST `/logros/verificar` | ✅ (incompleto) |
-| GET `/logros/resumen` | ❌ Sprint 2 |
-| GET `/logros/historial` | ❌ Sprint 2 |
+| GET `/logros/resumen`    | ❌ Sprint 2     |
+| GET `/logros/historial`  | ❌ Sprint 2     |
+
 
 ---
 
+
+
 ## Reportes
 
-| Recurso | Estado |
-|---------|--------|
-| `/api/reportes` (mensual, agregados, export) | ✅ |
-| Frontend reportes | Usa `/reportes/agregados`; breakdown por categoría de transacciones (incluye personalizadas usadas) |
+
+| Recurso                                      | Estado                                                                                              |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `/api/reportes` (mensual, agregados, export) | ✅                                                                                                   |
+| Frontend reportes                            | Usa `/reportes/agregados`; breakdown por categoría de transacciones (incluye personalizadas usadas) |
+
 
 Enums en agregaciones: siempre `INGRESO` / `GASTO` (nunca minúsculas).
 
 ---
+
+
 
 ## Categorías — `/api/categorias`
 
@@ -295,39 +366,49 @@ Tipos: `INGRESO` | `GASTO` | `AMBOS` (solo predefinidas; personalizadas solo `IN
 
 ### Endpoints (todos con JWT)
 
-| Método | Ruta | Notas |
-|--------|------|--------|
-| GET | `/` | Catálogo: personalizadas activas + usadas en transacciones + predefinidas. Query `soloPersonalizadas=true` → solo CRUD del usuario. |
-| GET | `/estadisticas` | Query opcional `fechaInicio` + `fechaFin` (juntos). Agrega ingresos/gastos por categoría. |
-| POST | `/` | Body: `{ nombre, tipo, color?, icono?, descripcion? }`. 409 si nombre activo duplicado; reactiva si existía soft-deleted. |
-| PUT | `/:id` | Body parcial: `nombre?`, `tipo?`, `color?`, `icono?`, `descripcion?`, `activa?`. Ownership por `userId`. |
-| DELETE | `/:id` | **Soft-delete** (`activa: false`). Históricos por string no se modifican. |
+
+| Método | Ruta            | Notas                                                                                                                               |
+| ------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/`             | Catálogo: personalizadas activas + usadas en transacciones + predefinidas. Query `soloPersonalizadas=true` → solo CRUD del usuario. |
+| GET    | `/estadisticas` | Query opcional `fechaInicio` + `fechaFin` (juntos). Agrega ingresos/gastos por categoría.                                           |
+| POST   | `/`             | Body: `{ nombre, tipo, color?, icono?, descripcion? }`. 409 si nombre activo duplicado; reactiva si existía soft-deleted.           |
+| PUT    | `/:id`          | Body parcial: `nombre?`, `tipo?`, `color?`, `icono?`, `descripcion?`, `activa?`. Ownership por `userId`.                            |
+| DELETE | `/:id`          | **Soft-delete** (`activa: false`). Históricos por string no se modifican.                                                           |
+
 
 Ítem de catálogo (GET `/`):
 
-| Campo | Notas |
-|-------|--------|
-| `nombre` | string |
-| `origen` | `personalizada` \| `transaccion` \| `predefinida` |
-| `tipo` | presente en personalizada/predefinida |
-| `id`, `color`, `icono` | solo personalizada |
-| `count`, `total` | uso en transacciones del usuario |
+
+| Campo                  | Notas                                           |
+| ---------------------- | ----------------------------------------------- |
+| `nombre`               | string                                          |
+| `origen`               | `personalizada` | `transaccion` | `predefinida` |
+| `tipo`                 | presente en personalizada/predefinida           |
+| `id`, `color`, `icono` | solo personalizada                              |
+| `count`, `total`       | uso en transacciones del usuario                |
+
 
 Frontend: Configuración → pestaña Categorías (CRUD); modales de transacciones/presupuestos/recurrentes usan API con fallback a `CATEGORIAS_DEFAULT`.
 
 ---
 
+
+
 ## Metas — `/api/finanzas/metas`
 
 Campos: `titulo`, `descripcion`, `tipo` (`AHORRO|GASTO|INVERSION|DEUDA|EMERGENCIA`), `montoObjetivo`, `montoActual`, `fechaLimite`, `categoria`, `prioridad`, `progreso`, `completada`.
 
-| Ruta | Estado |
-|------|--------|
-| GET/POST `/` | ✅ |
-| GET/PUT/DELETE `/:id` | ✅ |
-| POST `/:id/aportar` | ✅ `{ monto }` |
+
+| Ruta                  | Estado        |
+| --------------------- | ------------- |
+| GET/POST `/`          | ✅             |
+| GET/PUT/DELETE `/:id` | ✅             |
+| POST `/:id/aportar`   | ✅ `{ monto }` |
+
 
 ---
+
+
 
 ## Presupuestos — `/api/finanzas/presupuestos`
 
@@ -337,16 +418,20 @@ DTO: `anio`, `montoReal`, `porcentajeUsado`, `restante`, `excedido` (gasto), `cu
 
 El resumen de GET incluye `ingresoEsperado`, `ingresosReales`, `egresosReales`, `saldoDisponible`, `saldoPlanificado`, además de los totales históricos de límites de gasto.
 
-| Ruta | Estado |
-|------|--------|
-| GET `?mes=&anio=` | ✅ |
-| POST `/` | ✅ |
-| PUT/DELETE `/:id` | ✅ |
-| POST `/sincronizar` | ✅ |
+
+| Ruta                | Estado |
+| ------------------- | ------ |
+| GET `?mes=&anio=`   | ✅      |
+| POST `/`            | ✅      |
+| PUT/DELETE `/:id`   | ✅      |
+| POST `/sincronizar` | ✅      |
+
 
 Al crear/editar/eliminar un `INGRESO` o `GASTO`, se sincroniza el monto real de su presupuesto. Solo los límites de gasto emiten notificación `ALERTA`.
 
 ---
+
+
 
 ## Asesor IA — `/api/finanzas/asesor` (v1.3)
 
@@ -358,20 +443,24 @@ Fuente de ingresos: con ingresos registrados en al menos dos meses, el snapshot 
 
 ### Endpoints (todos con JWT)
 
-| Método | Ruta | Notas |
-|--------|------|--------|
-| POST | `/generar` | Body: `{ estrategia?, presupuestoExtra? }`. Rate limit por usuario (`ASESOR_RATE_LIMIT_MAX`/hora). 400 `SIN_DEUDAS` si no hay deudas activas. |
-| GET | `/planes` | Historial: `{ planes: [{ id, estrategia, resumen, generadoPorIA, createdAt }] }`. |
-| GET | `/planes/:id` | Detalle con ownership (404 si no es del usuario). |
-| GET | `/ultimo` | `{ plan: PlanDto \| null, iaDisponible }`. |
+
+| Método | Ruta          | Notas                                                                                                                                         |
+| ------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/generar`    | Body: `{ estrategia?, presupuestoExtra? }`. Rate limit por usuario (`ASESOR_RATE_LIMIT_MAX`/hora). 400 `SIN_DEUDAS` si no hay deudas activas. |
+| GET    | `/planes`     | Historial: `{ planes: [{ id, estrategia, resumen, generadoPorIA, createdAt }] }`.                                                             |
+| GET    | `/planes/:id` | Detalle con ownership (404 si no es del usuario).                                                                                             |
+| GET    | `/ultimo`     | `{ plan: PlanDto | null, iaDisponible }`.                                                                                                     |
+
 
 PlanDto: `id`, `estrategia`, `resumen`, `generadoPorIA`, `snapshot`, `plan` (`diagnostico`, `tips`, `pasos`, `motivacion`, `pagos` = plan numérico, `presupuestoExtraUsado`), `createdAt`, `disclaimer`.
 
 Fallback: sin `GEMINI_API_KEY` o error del proveedor → plan numérico + tips de plantilla, `generadoPorIA: false` (nunca éxito simulado de IA).
 
-Env: `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-flash-latest`), `GEMINI_TIMEOUT_MS`, `ASESOR_RATE_LIMIT_MAX`.
+Env: `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-flash-latest`), `GEMINI_FALLBACK_MODEL` (default `gemini-flash-lite-latest`; se intenta si el modelo principal falla, p. ej. 503 por alta demanda), `GEMINI_TIMEOUT_MS`, `ASESOR_RATE_LIMIT_MAX`.
 
 ---
+
+
 
 ## Checklist de alineación (por sprint)
 
@@ -387,18 +476,23 @@ Env: `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-flash-latest`), `GEMINI_T
 
 ---
 
+
+
 ## Mapa rápido frontend → Prisma
 
-| Módulo | UI (incorrecto / actual) | Prisma (correcto) |
-|--------|--------------------------|-------------------|
-| Cuenta tipo | `AHORRO` | `BANCO_AHORROS` |
-| Cuenta tipo | `CORRIENTE` | `BANCO_CORRIENTE` |
-| Cuenta tipo | `CREDITO` | `TARJETA_CREDITO` |
-| Cuenta campo | `tipoCuenta` | `tipo` |
-| Saldo update | `saldoActual` | `nuevoSaldo` |
-| Inversión | `montoInicial` | `montoInvertido` |
-| Inversión | `montoActual` | `valorActual` |
-| Deuda | `montoTotal` | `montoInicial` |
-| Deuda | `montoPagado` | calcular o exponer en DTO |
-| Notificación fecha | `createdAt` | `fechaEnvio` |
-| Método pago | `DIGITAL` | `OTRO` o ampliar enum |
+
+| Módulo             | UI (incorrecto / actual) | Prisma (correcto)         |
+| ------------------ | ------------------------ | ------------------------- |
+| Cuenta tipo        | `AHORRO`                 | `BANCO_AHORROS`           |
+| Cuenta tipo        | `CORRIENTE`              | `BANCO_CORRIENTE`         |
+| Cuenta tipo        | `CREDITO`                | `TARJETA_CREDITO`         |
+| Cuenta campo       | `tipoCuenta`             | `tipo`                    |
+| Saldo update       | `saldoActual`            | `nuevoSaldo`              |
+| Inversión          | `montoInicial`           | `montoInvertido`          |
+| Inversión          | `montoActual`            | `valorActual`             |
+| Deuda              | `montoTotal`             | `montoInicial`            |
+| Deuda              | `montoPagado`            | calcular o exponer en DTO |
+| Notificación fecha | `createdAt`              | `fechaEnvio`              |
+| Método pago        | `DIGITAL`                | `OTRO` o ampliar enum     |
+
+

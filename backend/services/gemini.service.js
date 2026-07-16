@@ -14,6 +14,9 @@ const { logger } = require('../utils/logger');
 // versión fija (p. ej. gemini-2.5-flash) dejan de estar disponibles para
 // cuentas nuevas y devuelven 404.
 const DEFAULT_MODEL = 'gemini-flash-latest';
+// Google devuelve 503 UNAVAILABLE en picos de demanda; antes de rendirnos al
+// fallback sin IA, se intenta con un modelo alterno más liviano.
+const DEFAULT_FALLBACK_MODEL = 'gemini-flash-lite-latest';
 const DEFAULT_TIMEOUT_MS = 20000;
 
 function asesorDisponible() {
@@ -77,19 +80,10 @@ function construirPrompt(snapshot, plan) {
  * Genera diagnóstico y tips. Lanza error si el proveedor falla o excede el
  * timeout; el caller decide el fallback.
  */
-async function generarConsejo(snapshot, plan) {
-  if (!asesorDisponible()) {
-    throw new Error('GEMINI_API_KEY no configurada');
-  }
-
-  const { GoogleGenAI } = require('@google/genai');
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-  const timeoutMs = Number(process.env.GEMINI_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
-
+async function llamarModelo(ai, model, prompt, timeoutMs) {
   const llamada = ai.models.generateContent({
     model,
-    contents: construirPrompt(snapshot, plan),
+    contents: prompt,
     config: {
       responseMimeType: 'application/json',
       responseJsonSchema: RESPONSE_SCHEMA,
@@ -108,15 +102,43 @@ async function generarConsejo(snapshot, plan) {
   try {
     const response = await Promise.race([llamada, timeout]);
     return JSON.parse(response.text);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function generarConsejo(snapshot, plan) {
+  if (!asesorDisponible()) {
+    throw new Error('GEMINI_API_KEY no configurada');
+  }
+
+  const { GoogleGenAI } = require('@google/genai');
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+  const fallbackModel =
+    process.env.GEMINI_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL;
+  const timeoutMs = Number(process.env.GEMINI_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
+  const prompt = construirPrompt(snapshot, plan);
+
+  try {
+    return await llamarModelo(ai, model, prompt, timeoutMs);
   } catch (error) {
     // No loguear el prompt: contiene cifras del usuario.
     logger.warn('Fallo del proveedor de IA (asesor)', {
       model,
       error: error.message,
     });
+    if (fallbackModel && fallbackModel !== model) {
+      try {
+        return await llamarModelo(ai, fallbackModel, prompt, timeoutMs);
+      } catch (errorFallback) {
+        logger.warn('Fallo del modelo alterno de IA (asesor)', {
+          model: fallbackModel,
+          error: errorFallback.message,
+        });
+      }
+    }
     throw error;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
