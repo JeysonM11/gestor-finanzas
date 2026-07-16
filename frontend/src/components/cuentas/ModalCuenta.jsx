@@ -106,7 +106,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
     <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? "Editar Cuenta" : "Nueva Cuenta"}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-900 dark:text-red-200 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
@@ -124,7 +124,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-muted mb-2">
               Tipo de Cuenta *
             </label>
             <select
@@ -159,7 +159,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-muted mb-2">
               Moneda *
             </label>
             <select
@@ -192,7 +192,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
 
         {!isEditing && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-muted mb-2">
               Color
             </label>
             <div className="grid grid-cols-6 gap-2">
@@ -212,7 +212,7 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-line">
           <Button
             type="button"
             variant="secondary"

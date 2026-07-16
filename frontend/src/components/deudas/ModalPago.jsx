@@ -60,7 +60,7 @@ const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
     <Modal isOpen={isOpen} onClose={onClose} title="Registrar Pago">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-900 dark:text-red-200 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
@@ -105,7 +105,7 @@ const ModalPago = ({ isOpen, onClose, onSuccess, deuda }) => {
           required
         />
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-line">
           <Button
             type="button"
             variant="secondary"

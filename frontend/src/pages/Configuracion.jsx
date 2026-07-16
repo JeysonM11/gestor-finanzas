@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { authService } from '../services/auth.service'
 import { reporteService } from '../services/reporte.service'
 import { Card, Button, Input, Alert, Badge } from '../components/ui'
 import { MONEDAS } from '../utils/currency'
-import { User, Lock, Bell, Download, Shield } from 'lucide-react'
+import { User, Lock, Bell, Download, Shield, Moon } from 'lucide-react'
 
 const Configuracion = () => {
   const { user, setUser } = useAuth()
+  const { theme, setTheme } = useTheme()
   const [activeTab, setActiveTab] = useState('perfil')
   const [loading, setLoading] = useState(false)
   const [mensaje, setMensaje] = useState({ tipo: '', texto: '' })
@@ -33,7 +35,8 @@ const Configuracion = () => {
     notificacionesPush: user?.configuracion?.notificacionesPush ?? true,
     notificacionesTransacciones: user?.configuracion?.notificacionesTransacciones ?? true,
     notificacionesRecurrentes: user?.configuracion?.notificacionesRecurrentes ?? true,
-    monedaPrincipal: user?.monedaPrincipal || 'USD'
+    monedaPrincipal: user?.monedaPrincipal || 'USD',
+    tema: user?.configuracion?.tema || theme || 'system',
   })
 
   useEffect(() => {
@@ -50,9 +53,16 @@ const Configuracion = () => {
       notificacionesPush: user.configuracion?.notificacionesPush ?? true,
       notificacionesTransacciones: user.configuracion?.notificacionesTransacciones ?? true,
       notificacionesRecurrentes: user.configuracion?.notificacionesRecurrentes ?? true,
-      monedaPrincipal: user.monedaPrincipal || 'USD'
+      monedaPrincipal: user.monedaPrincipal || 'USD',
+      tema: user.configuracion?.tema || prev.tema || 'system',
     }))
   }, [user])
+
+  useEffect(() => {
+    setPreferencias((prev) =>
+      prev.tema === theme ? prev : { ...prev, tema: theme }
+    )
+  }, [theme])
 
   const handlePerfilChange = (e) => {
     setPerfilData({
@@ -70,10 +80,36 @@ const Configuracion = () => {
 
   const handlePreferenciasChange = (e) => {
     const { name, value, type, checked } = e.target
+    const nextValue = type === 'checkbox' ? checked : value
     setPreferencias({
       ...preferencias,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: nextValue,
     })
+    if (name === 'tema') {
+      setTheme(value)
+    }
+  }
+
+  const handleGuardarPreferencias = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setMensaje({ tipo: '', texto: '' })
+
+    try {
+      setTheme(preferencias.tema)
+      const response = await authService.updatePreferences(preferencias)
+      if (response.user) {
+        setUser(response.user)
+      }
+      setMensaje({ tipo: 'success', texto: response.message || 'Preferencias guardadas exitosamente' })
+    } catch (error) {
+      setMensaje({
+        tipo: 'error',
+        texto: error.response?.data?.message || 'Error al guardar preferencias'
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleGuardarPerfil = async (e) => {
@@ -134,27 +170,6 @@ const Configuracion = () => {
     }
   }
 
-  const handleGuardarPreferencias = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setMensaje({ tipo: '', texto: '' })
-
-    try {
-      const response = await authService.updatePreferences(preferencias)
-      if (response.user) {
-        setUser(response.user)
-      }
-      setMensaje({ tipo: 'success', texto: response.message || 'Preferencias guardadas exitosamente' })
-    } catch (error) {
-      setMensaje({
-        tipo: 'error',
-        texto: error.response?.data?.message || 'Error al guardar preferencias'
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleExportarDatos = async () => {
     setLoading(true)
     setMensaje({ tipo: '', texto: '' })
@@ -182,7 +197,7 @@ const Configuracion = () => {
   const tabs = [
     { id: 'perfil', label: 'Perfil', icon: User },
     { id: 'seguridad', label: 'Seguridad', icon: Lock },
-    { id: 'notificaciones', label: 'Notificaciones', icon: Bell },
+    { id: 'notificaciones', label: 'Preferencias', icon: Bell },
     { id: 'datos', label: 'Datos', icon: Download }
   ]
 
@@ -215,7 +230,7 @@ const Configuracion = () => {
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-primary-50 text-primary-700 font-medium'
+                      ? 'bg-primary-50 text-primary-700 font-medium dark:bg-primary-950/50 dark:text-primary-300'
                       : 'text-ink-muted hover:bg-surface-muted hover:text-ink'
                   }`}
                 >
@@ -347,9 +362,31 @@ const Configuracion = () => {
           {/* Pestaña Notificaciones */}
           {activeTab === 'notificaciones' && (
             <Card>
-              <h2 className="text-xl font-bold text-ink mb-6">Preferencias de Notificaciones</h2>
+              <h2 className="text-xl font-bold text-ink mb-6">Preferencias</h2>
               <form onSubmit={handleGuardarPreferencias} className="space-y-6">
                 <div className="space-y-4">
+                  <div className="flex items-start gap-3 p-4 rounded-lg border border-line bg-surface-muted/40">
+                    <Moon className="h-5 w-5 text-ink-muted mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <label className="block text-sm font-medium text-ink mb-1">
+                        Apariencia
+                      </label>
+                      <p className="text-sm text-ink-muted mb-3">
+                        Claro, oscuro o según el sistema
+                      </p>
+                      <select
+                        name="tema"
+                        value={preferencias.tema}
+                        onChange={handlePreferenciasChange}
+                        className="w-full input-field"
+                      >
+                        <option value="light">Claro</option>
+                        <option value="dark">Oscuro</option>
+                        <option value="system">Sistema</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                       <p className="font-medium text-ink">Notificaciones por email</p>
@@ -360,7 +397,7 @@ const Configuracion = () => {
                       name="notificacionesEmail"
                       checked={preferencias.notificacionesEmail}
                       onChange={handlePreferenciasChange}
-                      className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-line rounded"
                     />
                   </div>
 
@@ -374,7 +411,7 @@ const Configuracion = () => {
                       name="notificacionesPush"
                       checked={preferencias.notificacionesPush}
                       onChange={handlePreferenciasChange}
-                      className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-line rounded"
                     />
                   </div>
 
@@ -388,7 +425,7 @@ const Configuracion = () => {
                       name="notificacionesTransacciones"
                       checked={preferencias.notificacionesTransacciones}
                       onChange={handlePreferenciasChange}
-                      className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-line rounded"
                     />
                   </div>
 
@@ -402,7 +439,7 @@ const Configuracion = () => {
                       name="notificacionesRecurrentes"
                       checked={preferencias.notificacionesRecurrentes}
                       onChange={handlePreferenciasChange}
-                      className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-line rounded"
                     />
                   </div>
                 </div>

@@ -85,7 +85,7 @@ const ModalMeta = ({ isOpen, onClose, onSuccess, meta = null }) => {
     <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Editar Meta' : 'Nueva Meta'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-900 dark:text-red-200 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
@@ -99,7 +99,7 @@ const ModalMeta = ({ isOpen, onClose, onSuccess, meta = null }) => {
         />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+          <label className="block text-sm font-medium text-ink-muted mb-2">Descripción</label>
           <textarea
             name="descripcion"
             value={formData.descripcion}
@@ -111,7 +111,7 @@ const ModalMeta = ({ isOpen, onClose, onSuccess, meta = null }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+            <label className="block text-sm font-medium text-ink-muted mb-2">Tipo</label>
             <select
               name="tipo"
               value={formData.tipo}
@@ -126,7 +126,7 @@ const ModalMeta = ({ isOpen, onClose, onSuccess, meta = null }) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
+            <label className="block text-sm font-medium text-ink-muted mb-2">Prioridad</label>
             <select
               name="prioridad"
               value={formData.prioridad}

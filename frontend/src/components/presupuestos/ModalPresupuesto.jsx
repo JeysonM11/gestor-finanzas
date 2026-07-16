@@ -83,13 +83,13 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-900 dark:text-red-200 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
+          <label className="block text-sm font-medium text-ink-muted mb-2">Categoría *</label>
           <select
             name="categoria"
             value={formData.categoria}

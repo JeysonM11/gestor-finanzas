@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { Input, Button, Alert } from '../components/ui'
-import { Wallet } from 'lucide-react'
+import { Moon, Sun, Wallet } from 'lucide-react'
 
 const Login = () => {
   const navigate = useNavigate()
   const { login, isAuthenticated } = useAuth()
+  const { isDark, toggleTheme } = useTheme()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -48,6 +50,14 @@ const Login = () => {
 
   return (
     <div className="min-h-dvh flex items-center justify-center p-4 bg-surface-muted relative overflow-hidden">
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="absolute top-4 right-4 z-10 p-2 rounded-control text-ink-muted hover:bg-surface hover:text-ink border border-line bg-surface/80"
+        aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
+      >
+        {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </button>
       <div
         className="pointer-events-none absolute inset-0 opacity-70"
         style={{

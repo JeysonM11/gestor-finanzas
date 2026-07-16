@@ -170,9 +170,28 @@ exports.obtenerAgregados = async (req, res) => {
       gastosPorCategoria: Object.entries(gastosPorCategoria)
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value),
-      evolucionMensual: Object.values(evolucion).sort((a, b) =>
-        a.mesKey.localeCompare(b.mesKey)
-      ),
+      evolucionMensual: (() => {
+        const serie = [];
+        const cursor = new Date();
+        cursor.setDate(1);
+        cursor.setHours(0, 0, 0, 0);
+        for (let i = Math.max(meses, 1) - 1; i >= 0; i--) {
+          const d = new Date(cursor.getFullYear(), cursor.getMonth() - i, 1);
+          const mesKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          const mesLabel = d.toLocaleDateString('es-ES', {
+            month: 'short',
+            year: 'numeric',
+          });
+          const existente = evolucion[mesKey];
+          serie.push({
+            mesKey,
+            mes: mesLabel,
+            ingresos: existente?.ingresos || 0,
+            gastos: existente?.gastos || 0,
+          });
+        }
+        return serie;
+      })(),
       comparacionAnual: [
         { name: 'Ingresos', value: totalIngresos, fill: '#10B981' },
         { name: 'Gastos', value: totalGastos, fill: '#EF4444' },

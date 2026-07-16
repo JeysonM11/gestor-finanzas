@@ -152,6 +152,7 @@ const updatePreferencesSchema = Joi.object({
   monedaPrincipal: Joi.string()
     .valid('USD', 'EUR', 'COP', 'MXN', 'ARS', 'PEN', 'CLP', 'BOB')
     .optional(),
+  tema: Joi.string().valid('light', 'dark', 'system').optional(),
   notificacionesEmail: Joi.boolean().optional(),
   notificacionesPush: Joi.boolean().optional(),
   notificacionesTransacciones: Joi.boolean().optional(),

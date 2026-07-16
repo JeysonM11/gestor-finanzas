@@ -3,6 +3,7 @@ import {
   AreaChart,
   CartesianGrid,
   Cell,
+  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -13,9 +14,20 @@ import {
 import { BarChart3, PieChart as PieChartIcon } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui'
 import { cn } from '../../utils/cn'
+import { useTheme } from '../../context/ThemeContext'
 import { EXAMPLE_CATEGORIAS, EXAMPLE_EVOLUCION } from './chartPlaceholders'
 
 const CHART_COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#0ea5e9', '#14b8a6']
+
+const formatAxisTick = (value) => {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return ''
+  return new Intl.NumberFormat('es', {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: 1,
+  }).format(n)
+}
 
 const ChartTooltip = ({ active, payload, label, formatMoney }) => {
   if (!active || !payload?.length) return null
@@ -24,7 +36,10 @@ const ChartTooltip = ({ active, payload, label, formatMoney }) => {
       {label && <p className="mb-1 font-medium text-ink">{label}</p>}
       {payload.map((entry) => (
         <p key={entry.dataKey || entry.name} className="text-ink-muted">
-          <span className="inline-block h-2 w-2 rounded-full mr-1.5" style={{ background: entry.color }} />
+          <span
+            className="inline-block h-2 w-2 rounded-full mr-1.5"
+            style={{ background: entry.color }}
+          />
           {entry.name}:{' '}
           <span className="font-semibold text-ink tabular-nums">
             {formatMoney ? formatMoney(entry.value) : entry.value}
@@ -45,14 +60,19 @@ const DashboardCharts = ({
   formatMoney,
   className = '',
 }) => {
-  const hasEvolucion = evolucionMensual.length > 0
+  const { isDark } = useTheme()
+  const hasEvolucion = evolucionMensual.some(
+    (m) => Number(m.ingresos) > 0 || Number(m.gastos) > 0
+  )
   const hasCategorias = gastosPorCategoria.length > 0
   const evolucion = hasEvolucion ? evolucionMensual : EXAMPLE_EVOLUCION
   const categorias = hasCategorias ? gastosPorCategoria : EXAMPLE_CATEGORIAS
+  const axisColor = isDark ? '#94a3b8' : '#64748b'
+  const gridColor = isDark ? '#334155' : '#e2e8f0'
 
   return (
     <div className={cn('grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4', className)}>
-      <Card className="min-w-0">
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <div className="flex items-start gap-2 min-w-0">
             <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
@@ -70,9 +90,12 @@ const DashboardCharts = ({
           </div>
         </CardHeader>
 
-        <div className="w-full min-w-0 h-64 sm:h-72">
+        <div className="w-full min-w-0 h-64 sm:h-72 -mx-1">
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-            <AreaChart data={evolucion} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <AreaChart
+              data={evolucion}
+              margin={{ top: 12, right: 12, left: 4, bottom: 4 }}
+            >
               <defs>
                 <linearGradient id="dashIngresos" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
@@ -83,20 +106,32 @@ const DashboardCharts = ({
                   <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
               <XAxis
                 dataKey="mes"
-                tick={{ fontSize: 12, fill: '#64748b' }}
+                tick={{ fontSize: 11, fill: axisColor }}
                 axisLine={false}
                 tickLine={false}
+                interval="preserveStartEnd"
+                minTickGap={8}
               />
               <YAxis
-                tick={{ fontSize: 12, fill: '#64748b' }}
+                tick={{ fontSize: 11, fill: axisColor }}
                 axisLine={false}
                 tickLine={false}
-                width={48}
+                width={52}
+                tickFormatter={formatAxisTick}
+                domain={[0, 'auto']}
+                allowDecimals={false}
               />
               <Tooltip content={<ChartTooltip formatMoney={formatMoney} />} />
+              <Legend
+                verticalAlign="top"
+                align="right"
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: 12, paddingBottom: 4, color: axisColor }}
+              />
               <Area
                 type="monotone"
                 dataKey="ingresos"
@@ -104,6 +139,9 @@ const DashboardCharts = ({
                 stroke="#10b981"
                 strokeWidth={2}
                 fill="url(#dashIngresos)"
+                dot={{ r: 3, strokeWidth: 2, fill: '#fff' }}
+                activeDot={{ r: 5 }}
+                connectNulls
               />
               <Area
                 type="monotone"
@@ -112,6 +150,9 @@ const DashboardCharts = ({
                 stroke="#ef4444"
                 strokeWidth={2}
                 fill="url(#dashGastos)"
+                dot={{ r: 3, strokeWidth: 2, fill: '#fff' }}
+                activeDot={{ r: 5 }}
+                connectNulls
               />
             </AreaChart>
           </ResponsiveContainer>

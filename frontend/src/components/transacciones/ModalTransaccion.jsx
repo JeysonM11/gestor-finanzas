@@ -247,14 +247,14 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-900 dark:text-red-200 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-muted mb-2">
               Tipo *
             </label>
             <select
@@ -295,7 +295,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-muted mb-2">
               {etiquetaCuentaAfectada()}
             </label>
             <select
@@ -319,7 +319,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
 
           {esTransferencia ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink-muted mb-2">
                 Cuenta destino *
               </label>
               <select
@@ -344,7 +344,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink-muted mb-2">
                 Método de Pago
               </label>
               <select
@@ -364,14 +364,14 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         </div>
 
         {errorCuentas && !loadingCuentas && (
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900 rounded-lg px-3 py-2">
             No se pudieron cargar las cuentas. Cierra y vuelve a abrir el
             formulario.
           </p>
         )}
 
         {!esTransferencia && !errorCuentas && cuentas.length === 0 && !loadingCuentas && (
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900 rounded-lg px-3 py-2">
             No tienes cuentas activas. Crea una en Cuentas para que el saldo se
             actualice.
           </p>
@@ -379,7 +379,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-muted mb-2">
               Categoría
             </label>
             <select
@@ -412,7 +412,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-ink-muted mb-2">
             Notas (opcional)
           </label>
           <textarea
@@ -425,7 +425,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
           />
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-line">
           <Button
             type="button"
             variant="secondary"

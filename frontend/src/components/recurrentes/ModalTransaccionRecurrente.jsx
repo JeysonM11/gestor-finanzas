@@ -95,7 +95,7 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
     <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? "Editar Transacción Recurrente" : "Nueva Transacción Recurrente"}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-900 dark:text-red-200 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
@@ -121,7 +121,7 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-muted mb-2">
               Tipo *
             </label>
             <select
@@ -151,7 +151,7 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-muted mb-2">
               Categoría
             </label>
             <select
@@ -174,7 +174,7 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-muted mb-2">
               Frecuencia *
             </label>
             <select
@@ -231,14 +231,14 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
             name="activa"
             checked={formData.activa}
             onChange={handleChange}
-            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-line rounded"
           />
-          <label className="ml-2 block text-sm text-gray-900">
+          <label className="ml-2 block text-sm text-ink">
             Transacción activa
           </label>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-line">
           <Button
             type="button"
             variant="secondary"

@@ -1,5 +1,7 @@
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
+import ThemeUserSync from './context/ThemeUserSync'
 import { ToastProvider } from './context/ToastContext'
 import Layout from './components/layout/Layout'
 import Login from './pages/Login'
@@ -20,34 +22,37 @@ import NotFound from './pages/NotFound'
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <ThemeUserSync />
+        <ToastProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="transacciones" element={<Transacciones />} />
-              <Route path="recurrentes" element={<TransaccionesRecurrentes />} />
-              <Route path="cuentas" element={<Cuentas />} />
-              <Route path="inversiones" element={<Inversiones />} />
-              <Route path="deudas" element={<Deudas />} />
-              <Route path="metas" element={<Metas />} />
-              <Route path="presupuestos" element={<Presupuestos />} />
-              <Route path="notificaciones" element={<Notificaciones />} />
-              <Route path="reportes" element={<Reportes />} />
-              <Route path="gamificacion" element={<Gamificacion />} />
-              <Route path="configuracion" element={<Configuracion />} />
-            </Route>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="transacciones" element={<Transacciones />} />
+                <Route path="recurrentes" element={<TransaccionesRecurrentes />} />
+                <Route path="cuentas" element={<Cuentas />} />
+                <Route path="inversiones" element={<Inversiones />} />
+                <Route path="deudas" element={<Deudas />} />
+                <Route path="metas" element={<Metas />} />
+                <Route path="presupuestos" element={<Presupuestos />} />
+                <Route path="notificaciones" element={<Notificaciones />} />
+                <Route path="reportes" element={<Reportes />} />
+                <Route path="gamificacion" element={<Gamificacion />} />
+                <Route path="configuracion" element={<Configuracion />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-      </ToastProvider>
-    </AuthProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Router>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

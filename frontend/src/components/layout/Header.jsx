@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/ThemeContext'
 import NotificationBell from '../notifications/NotificationBell'
 import { useLayout } from './LayoutContext'
 import { Button } from '../ui'
-import { LogOut, Menu, User } from 'lucide-react'
+import { LogOut, Menu, Moon, Sun, User } from 'lucide-react'
 
 const Header = () => {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const { isDark, toggleTheme } = useTheme()
   const { toggleMobile } = useLayout()
 
   const handleLogout = () => {
@@ -47,6 +49,18 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
+            title={isDark ? 'Modo claro' : 'Modo oscuro'}
+            className="text-ink-muted"
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+
           <NotificationBell />
 
           <div className="hidden sm:flex items-center gap-2 rounded-full border border-line bg-surface-muted/60 pl-1 pr-3 py-1">
