@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Calendar } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Landmark, Calendar } from 'lucide-react'
 import {
   Badge,
   Card,
@@ -33,7 +33,18 @@ const tipoMeta = {
     amount: 'text-primary-700',
     iconWrap: 'bg-primary-50 text-primary-600',
   },
+  PAGO_DEUDA: {
+    badge: 'yellow',
+    Icon: Landmark,
+    sign: '-',
+    amount: 'text-amber-700',
+    iconWrap: 'bg-amber-50 text-amber-700',
+    label: 'Pagar deuda',
+  },
 }
+
+const etiquetaTipo = (tipo, meta) => meta.label || tipo
+
 
 /**
  * Lista de movimientos recientes (datos ya cargados por el contenedor).
@@ -108,7 +119,7 @@ const RecentActivity = ({
                               {tx.descripcion || 'Sin descripción'}
                             </p>
                             <Badge variant={meta.badge} className="mt-0.5">
-                              {tx.tipo}
+                              {etiquetaTipo(tx.tipo, meta)}
                             </Badge>
                           </div>
                         </div>

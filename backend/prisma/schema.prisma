@@ -103,6 +103,9 @@ model Transaccion {
   cuentaOrigenId      Int?
   cuentaDestino       Cuenta?             @relation("CuentaDestino", fields: [cuentaDestinoId], references: [id])
   cuentaDestinoId     Int?
+  deuda               Deuda?              @relation(fields: [deudaId], references: [id], onDelete: SetNull)
+  deudaId             Int?
+  pagoDeuda           PagoDeuda?
   transaccionRecurrente TransaccionRecurrente? @relation(fields: [transaccionRecurrenteId], references: [id])
   transaccionRecurrenteId Int?
   
@@ -112,6 +115,7 @@ model Transaccion {
   @@index([userId, fecha])
   @@index([categoria])
   @@index([tipo])
+  @@index([deudaId])
   @@map("transacciones")
 }
 
@@ -269,6 +273,7 @@ model Deuda {
   user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId              Int
   pagos               PagoDeuda[]
+  transacciones       Transaccion[]
   
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -286,6 +291,8 @@ model PagoDeuda {
   
   deuda               Deuda               @relation(fields: [deudaId], references: [id], onDelete: Cascade)
   deudaId             Int
+  transaccion         Transaccion?        @relation(fields: [transaccionId], references: [id], onDelete: SetNull)
+  transaccionId       Int?                @unique
   
   createdAt           DateTime            @default(now())
   
@@ -445,6 +452,7 @@ enum TipoTransaccion {
   INGRESO
   GASTO
   TRANSFERENCIA
+  PAGO_DEUDA
 }
 
 enum MetodoPago {

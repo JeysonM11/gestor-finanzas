@@ -4,9 +4,65 @@ const { AppError, NotFoundError } = require('../utils/errors');
 const {
   aplicarEfectoSaldo,
   validarCuentasTransaccion,
+  validarDeudaParaPago,
+  aplicarEfectoDeuda,
 } = require('../utils/saldo');
 const { sincronizarPorTransaccion } = require('../utils/presupuesto');
 const { parseDateOnly, startOfDayUTC, endOfDayUTC } = require('../utils/date');
+
+const TRANSACCION_FIELDS = [
+  'tipo',
+  'monto',
+  'descripcion',
+  'categoria',
+  'subcategoria',
+  'fecha',
+  'ubicacion',
+  'notas',
+  'etiquetas',
+  'montoOriginal',
+  'monedaOriginal',
+  'tasaCambio',
+  'comprobante',
+  'metodoPago',
+  'cuentaOrigenId',
+  'cuentaDestinoId',
+  'deudaId',
+  'transaccionRecurrenteId',
+  'verificada',
+];
+
+function pickTransaccionData(body = {}) {
+  const data = {};
+  for (const key of TRANSACCION_FIELDS) {
+    if (body[key] !== undefined) data[key] = body[key];
+  }
+  return data;
+}
+
+function normalizarPayloadPorTipo(data) {
+  const next = { ...data };
+
+  if (next.tipo === 'TRANSFERENCIA') {
+    next.metodoPago = next.metodoPago || 'TRANSFERENCIA';
+    next.categoria = null;
+    next.deudaId = null;
+    if (!next.descripcion) next.descripcion = 'Transferencia entre cuentas';
+  } else if (next.tipo === 'PAGO_DEUDA') {
+    next.metodoPago = null;
+    next.categoria = null;
+    next.cuentaDestinoId = null;
+    if (!next.descripcion) next.descripcion = 'Pago de deuda';
+  } else if (next.tipo === 'INGRESO') {
+    next.cuentaDestinoId = null;
+    next.deudaId = null;
+  } else if (next.tipo === 'GASTO') {
+    next.cuentaDestinoId = null;
+    next.deudaId = null;
+  }
+
+  return next;
+}
 
 async function calcularResumen(where) {
   const [ingresos, gastos] = await Promise.all([
@@ -16,7 +72,7 @@ async function calcularResumen(where) {
       _count: true,
     }),
     prisma.transaccion.aggregate({
-      where: { ...where, tipo: 'GASTO' },
+      where: { ...where, tipo: { in: ['GASTO', 'PAGO_DEUDA'] } },
       _sum: { monto: true },
       _count: true,
     }),
@@ -66,13 +122,54 @@ function toAppError(error) {
   return error;
 }
 
+async function sincronizarPagoDeuda(tx, transaccion, { crear = true } = {}) {
+  if (transaccion.tipo !== 'PAGO_DEUDA' || !transaccion.deudaId) return;
+
+  const existente = await tx.pagoDeuda.findFirst({
+    where: { transaccionId: transaccion.id },
+  });
+
+  if (!crear) {
+    if (existente) {
+      await tx.pagoDeuda.delete({ where: { id: existente.id } });
+    }
+    return;
+  }
+
+  const payload = {
+    monto: Number(transaccion.monto),
+    capital: Number(transaccion.monto),
+    interes: 0,
+    fecha: transaccion.fecha,
+    notas: transaccion.notas || null,
+    deudaId: Number(transaccion.deudaId),
+    transaccionId: transaccion.id,
+  };
+
+  if (existente) {
+    await tx.pagoDeuda.update({
+      where: { id: existente.id },
+      data: payload,
+    });
+  } else {
+    await tx.pagoDeuda.create({ data: payload });
+  }
+}
+
 exports.crearTransaccion = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  const body = { ...req.body };
+  const body = normalizarPayloadPorTipo(pickTransaccionData(req.body));
 
   try {
     const transaccion = await prisma.$transaction(async (tx) => {
       await validarCuentasTransaccion(tx, userId, body);
+
+      if (body.tipo === 'PAGO_DEUDA') {
+        const deuda = await validarDeudaParaPago(tx, userId, body.deudaId, body.monto);
+        if (!body.descripcion || body.descripcion === 'Pago de deuda') {
+          body.descripcion = `Pago de deuda: ${deuda.nombre}`;
+        }
+      }
 
       const creada = await tx.transaccion.create({
         data: {
@@ -84,6 +181,12 @@ exports.crearTransaccion = catchAsync(async (req, res) => {
       });
 
       await aplicarEfectoSaldo(tx, creada, 1);
+
+      if (creada.tipo === 'PAGO_DEUDA') {
+        await aplicarEfectoDeuda(tx, creada.deudaId, creada.monto, 1);
+        await sincronizarPagoDeuda(tx, creada, { crear: true });
+      }
+
       return creada;
     });
 
@@ -127,8 +230,10 @@ exports.obtenerTransacciones = catchAsync(async (req, res) => {
         etiquetas: true,
         cuentaOrigenId: true,
         cuentaDestinoId: true,
+        deudaId: true,
         cuentaOrigen: { select: { id: true, nombre: true } },
         cuentaDestino: { select: { id: true, nombre: true } },
+        deuda: { select: { id: true, nombre: true, acreedor: true } },
       },
     }),
     calcularResumen(where),
@@ -157,6 +262,20 @@ exports.obtenerTransaccionPorId = catchAsync(async (req, res) => {
 
   const transaccion = await prisma.transaccion.findFirst({
     where: { id: parseInt(id), userId },
+    include: {
+      deuda: {
+        select: {
+          id: true,
+          nombre: true,
+          acreedor: true,
+          montoInicial: true,
+          montoActual: true,
+          pagada: true,
+        },
+      },
+      cuentaOrigen: { select: { id: true, nombre: true, saldoActual: true, activa: true } },
+      cuentaDestino: { select: { id: true, nombre: true, saldoActual: true, activa: true } },
+    },
   });
 
   if (!transaccion) {
@@ -169,7 +288,7 @@ exports.obtenerTransaccionPorId = catchAsync(async (req, res) => {
 exports.actualizarTransaccion = catchAsync(async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
-  const data = req.body;
+  const data = normalizarPayloadPorTipo(pickTransaccionData(req.body));
 
   try {
     const transaccion = await prisma.$transaction(async (tx) => {
@@ -180,35 +299,62 @@ exports.actualizarTransaccion = catchAsync(async (req, res) => {
         throw new NotFoundError('Transaccion');
       }
 
-      const { userId: _u, id: _i, ...safeData } = data;
       const merged = {
         ...existente,
-        ...safeData,
-        tipo: safeData.tipo || existente.tipo,
-        monto: safeData.monto != null ? safeData.monto : existente.monto,
+        ...data,
+        tipo: data.tipo || existente.tipo,
+        monto: data.monto != null ? data.monto : existente.monto,
         cuentaOrigenId:
-          safeData.cuentaOrigenId !== undefined
-            ? safeData.cuentaOrigenId
+          data.cuentaOrigenId !== undefined
+            ? data.cuentaOrigenId
             : existente.cuentaOrigenId,
         cuentaDestinoId:
-          safeData.cuentaDestinoId !== undefined
-            ? safeData.cuentaDestinoId
+          data.cuentaDestinoId !== undefined
+            ? data.cuentaDestinoId
             : existente.cuentaDestinoId,
+        deudaId: data.deudaId !== undefined ? data.deudaId : existente.deudaId,
       };
 
       await validarCuentasTransaccion(tx, userId, merged);
+
+      if (merged.tipo === 'PAGO_DEUDA') {
+        const saldoExtra =
+          existente.tipo === 'PAGO_DEUDA' &&
+          Number(existente.deudaId) === Number(merged.deudaId)
+            ? Number(existente.monto)
+            : 0;
+        await validarDeudaParaPago(
+          tx,
+          userId,
+          merged.deudaId,
+          merged.monto,
+          saldoExtra
+        );
+      }
+
+      // Revertir efectos previos
       await aplicarEfectoSaldo(tx, existente, -1);
+      if (existente.tipo === 'PAGO_DEUDA' && existente.deudaId) {
+        await aplicarEfectoDeuda(tx, existente.deudaId, existente.monto, -1);
+        await sincronizarPagoDeuda(tx, existente, { crear: false });
+      }
 
       const actualizada = await tx.transaccion.update({
         where: { id: parseInt(id) },
         data: {
-          ...safeData,
-          ...(safeData.fecha ? { fecha: parseDateOnly(safeData.fecha) } : {}),
+          ...data,
+          ...(data.fecha ? { fecha: parseDateOnly(data.fecha) } : {}),
           esTransferencia: merged.tipo === 'TRANSFERENCIA',
         },
       });
 
       await aplicarEfectoSaldo(tx, actualizada, 1);
+
+      if (actualizada.tipo === 'PAGO_DEUDA') {
+        await aplicarEfectoDeuda(tx, actualizada.deudaId, actualizada.monto, 1);
+        await sincronizarPagoDeuda(tx, actualizada, { crear: true });
+      }
+
       return { existente, actualizada };
     });
 
@@ -235,6 +381,12 @@ exports.eliminarTransaccion = catchAsync(async (req, res) => {
       }
 
       await aplicarEfectoSaldo(tx, existente, -1);
+
+      if (existente.tipo === 'PAGO_DEUDA' && existente.deudaId) {
+        await aplicarEfectoDeuda(tx, existente.deudaId, existente.monto, -1);
+        await sincronizarPagoDeuda(tx, existente, { crear: false });
+      }
+
       await tx.transaccion.delete({ where: { id: parseInt(id) } });
       return existente;
     });

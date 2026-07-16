@@ -3,10 +3,10 @@ const Joi = require('joi');
 // Esquema para crear transacción
 const createTransaccionSchema = Joi.object({
   tipo: Joi.string()
-    .valid('INGRESO', 'GASTO', 'TRANSFERENCIA')
+    .valid('INGRESO', 'GASTO', 'TRANSFERENCIA', 'PAGO_DEUDA')
     .required()
     .messages({
-      'any.only': 'El tipo debe ser INGRESO, GASTO o TRANSFERENCIA',
+      'any.only': 'El tipo debe ser INGRESO, GASTO, TRANSFERENCIA o PAGO_DEUDA',
       'any.required': 'El tipo de transacción es requerido'
     }),
 
@@ -32,6 +32,7 @@ const createTransaccionSchema = Joi.object({
     .trim()
     .max(100)
     .optional()
+    .allow(null, '')
     .messages({
       'string.max': 'La categoría no puede exceder 100 caracteres'
     }),
@@ -80,6 +81,7 @@ const createTransaccionSchema = Joi.object({
   metodoPago: Joi.string()
     .valid('EFECTIVO', 'TARJETA_DEBITO', 'TARJETA_CREDITO', 'TRANSFERENCIA', 'CHEQUE', 'CRYPTO', 'OTRO')
     .optional()
+    .allow(null)
     .messages({
       'any.only': 'Método de pago no válido'
     }),
@@ -100,6 +102,15 @@ const createTransaccionSchema = Joi.object({
     .allow(null)
     .messages({
       'number.positive': 'El ID de cuenta destino debe ser positivo'
+    }),
+
+  deudaId: Joi.number()
+    .integer()
+    .positive()
+    .optional()
+    .allow(null)
+    .messages({
+      'number.positive': 'El ID de deuda debe ser positivo'
     }),
 
   montoOriginal: Joi.number()
@@ -149,7 +160,7 @@ const getTransaccionesSchema = Joi.object({
     .optional(),
 
   tipo: Joi.string()
-    .valid('INGRESO', 'GASTO', 'TRANSFERENCIA')
+    .valid('INGRESO', 'GASTO', 'TRANSFERENCIA', 'PAGO_DEUDA')
     .empty('')
     .optional(),
 

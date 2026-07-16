@@ -94,7 +94,13 @@ const Transacciones = () => {
   const tipoBadge = (tipo) => {
     if (tipo === 'INGRESO') return 'green'
     if (tipo === 'TRANSFERENCIA') return 'blue'
+    if (tipo === 'PAGO_DEUDA') return 'yellow'
     return 'red'
+  }
+
+  const etiquetaTipo = (tipo) => {
+    if (tipo === 'PAGO_DEUDA') return 'Pagar deuda'
+    return tipo
   }
 
   const etiquetaCuenta = (transaccion) => {
@@ -104,11 +110,29 @@ const Transacciones = () => {
       if (origen && destino) return `${origen} → ${destino}`
       return origen || destino || null
     }
+    if (transaccion.tipo === 'PAGO_DEUDA' && transaccion.deuda?.nombre) {
+      const cuenta = transaccion.cuentaOrigen?.nombre
+      return cuenta
+        ? `${cuenta} → ${transaccion.deuda.nombre}`
+        : transaccion.deuda.nombre
+    }
     return (
       transaccion.cuentaOrigen?.nombre ||
       transaccion.cuentaDestino?.nombre ||
       null
     )
+  }
+
+  const signoMonto = (tipo) => {
+    if (tipo === 'INGRESO') return '+'
+    if (tipo === 'TRANSFERENCIA') return ''
+    return '-'
+  }
+
+  const colorMonto = (tipo) => {
+    if (tipo === 'INGRESO') return 'text-emerald-600'
+    if (tipo === 'TRANSFERENCIA') return 'text-primary-700'
+    return 'text-red-600'
   }
 
   if (loading && transacciones.length === 0) {
@@ -166,6 +190,7 @@ const Transacciones = () => {
             <option value="INGRESO">Ingresos</option>
             <option value="GASTO">Gastos</option>
             <option value="TRANSFERENCIA">Transferencias</option>
+            <option value="PAGO_DEUDA">Pagos de deuda</option>
           </Select>
 
           <Input
@@ -217,16 +242,16 @@ const Transacciones = () => {
                     {cuentaLabel ? ` · ${cuentaLabel}` : ''}
                   </p>
                   <div className="mt-2">
-                    <Badge variant={tipoBadge(transaccion.tipo)}>{transaccion.tipo}</Badge>
+                    <Badge variant={tipoBadge(transaccion.tipo)}>
+                      {etiquetaTipo(transaccion.tipo)}
+                    </Badge>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
                   <p
-                    className={`font-semibold tabular-nums ${
-                      transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
-                    }`}
+                    className={`font-semibold tabular-nums ${colorMonto(transaccion.tipo)}`}
                   >
-                    {transaccion.tipo === 'INGRESO' ? '+' : '-'}
+                    {signoMonto(transaccion.tipo)}
                     {formatMoney(transaccion.monto)}
                   </p>
                   <div className="flex justify-end gap-1 mt-2">
@@ -289,14 +314,14 @@ const Transacciones = () => {
                       {etiquetaCuenta(transaccion) || '-'}
                     </td>
                     <td>
-                      <Badge variant={tipoBadge(transaccion.tipo)}>{transaccion.tipo}</Badge>
+                      <Badge variant={tipoBadge(transaccion.tipo)}>
+                        {etiquetaTipo(transaccion.tipo)}
+                      </Badge>
                     </td>
                     <td
-                      className={`text-right font-medium tabular-nums ${
-                        transaccion.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'
-                      }`}
+                      className={`text-right font-medium tabular-nums ${colorMonto(transaccion.tipo)}`}
                     >
-                      {transaccion.tipo === 'INGRESO' ? '+' : '-'}
+                      {signoMonto(transaccion.tipo)}
                       {formatMoney(transaccion.monto)}
                     </td>
                     <td>

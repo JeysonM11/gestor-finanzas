@@ -4,7 +4,9 @@ import Button from '../common/Button'
 import Input from '../common/Input'
 import { transaccionService } from '../../services/transaccion.service'
 import { cuentaService } from '../../services/cuenta.service'
+import { deudaService } from '../../services/deuda.service'
 import { CATEGORIAS_DEFAULT, METODOS_PAGO, categoriasParaTipo } from '../../utils/constants'
+import { formatMoney } from '../../utils/currency'
 import { todayDateInput, toDateInputValue } from '../../utils/date'
 
 const initialForm = () => ({
@@ -17,6 +19,7 @@ const initialForm = () => ({
   notas: '',
   cuentaOrigenId: '',
   cuentaDestinoId: '',
+  deudaId: '',
 })
 
 const idCuentaAfectada = (transaccion) => {
@@ -25,15 +28,72 @@ const idCuentaAfectada = (transaccion) => {
   return id ? String(id) : ''
 }
 
+/** Campos visibles por tipo — un solo formulario reactivo */
+const CAMPOS_POR_TIPO = {
+  GASTO: {
+    descripcion: true,
+    cuentaOrigen: true,
+    cuentaDestino: false,
+    metodoPago: true,
+    categoria: true,
+    deuda: false,
+  },
+  INGRESO: {
+    descripcion: true,
+    cuentaOrigen: true,
+    cuentaDestino: false,
+    metodoPago: false,
+    categoria: true,
+    deuda: false,
+  },
+  TRANSFERENCIA: {
+    descripcion: false,
+    cuentaOrigen: true,
+    cuentaDestino: true,
+    metodoPago: false,
+    categoria: false,
+    deuda: false,
+  },
+  PAGO_DEUDA: {
+    descripcion: false,
+    cuentaOrigen: true,
+    cuentaDestino: false,
+    metodoPago: false,
+    categoria: false,
+    deuda: true,
+  },
+}
+
+const FieldReveal = ({ show, children }) => {
+  if (!show) return null
+  return <div className="animate-fade-in">{children}</div>
+}
+
 const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
 
   const [formData, setFormData] = useState(initialForm)
   const [cuentas, setCuentas] = useState([])
+  const [deudas, setDeudas] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingCuentas, setLoadingCuentas] = useState(false)
+  const [loadingDeudas, setLoadingDeudas] = useState(false)
   const [errorCuentas, setErrorCuentas] = useState(false)
   const [error, setError] = useState('')
+
+  const campos = CAMPOS_POR_TIPO[formData.tipo] || CAMPOS_POR_TIPO.GASTO
+  const deudaSeleccionada = deudas.find((d) => String(d.id) === String(formData.deudaId))
+  const saldoPendienteVisible = (() => {
+    if (!deudaSeleccionada) return 0
+    const actual = Number(deudaSeleccionada.montoActual) || 0
+    if (
+      isEditing &&
+      Number(transaccion?.deudaId) === Number(deudaSeleccionada.id)
+    ) {
+      return actual + (Number(transaccion.monto) || 0)
+    }
+    return actual
+  })()
 
   useEffect(() => {
     if (!isOpen) return
@@ -45,7 +105,6 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         const data = await cuentaService.getAll()
         const activas = data.cuentas || data || []
 
-        // Incluir cuentas vinculadas a la edición aunque estén inactivas
         const extras = []
         if (transaccion?.cuentaOrigen && !activas.some((c) => c.id === transaccion.cuentaOrigen.id)) {
           extras.push({
@@ -66,7 +125,6 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
           })
         }
 
-        // Fallback por IDs si la API no trajo el objeto cuenta
         const idsActivas = new Set(activas.map((c) => c.id))
         const idsExtras = new Set(extras.map((c) => c.id))
         if (transaccion?.cuentaOrigenId && !idsActivas.has(transaccion.cuentaOrigenId) && !idsExtras.has(transaccion.cuentaOrigenId)) {
@@ -102,6 +160,43 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
   }, [isOpen, transaccion])
 
   useEffect(() => {
+    if (!isOpen) return
+
+    const cargarDeudas = async () => {
+      try {
+        setLoadingDeudas(true)
+        const data = await deudaService.getAll()
+        const lista = data.deudas || data || []
+        const pagables = lista.filter(
+          (d) => !d.pagada && Number(d.montoActual) > 0
+        )
+
+        // Al editar, incluir la deuda vinculada aunque ya esté pagada
+        if (
+          transaccion?.deudaId &&
+          !pagables.some((d) => d.id === transaccion.deudaId)
+        ) {
+          const vinculada =
+            lista.find((d) => d.id === transaccion.deudaId) ||
+            (transaccion.deuda
+              ? { ...transaccion.deuda, montoActual: Number(transaccion.monto) || 0 }
+              : null)
+          if (vinculada) pagables.push(vinculada)
+        }
+
+        setDeudas(pagables)
+      } catch (err) {
+        console.error('Error al cargar deudas:', err)
+        setDeudas([])
+      } finally {
+        setLoadingDeudas(false)
+      }
+    }
+
+    cargarDeudas()
+  }, [isOpen, transaccion])
+
+  useEffect(() => {
     if (transaccion && isOpen) {
       const origenId =
         transaccion.tipo === 'INGRESO'
@@ -122,6 +217,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         cuentaDestinoId: transaccion.cuentaDestinoId
           ? String(transaccion.cuentaDestinoId)
           : '',
+        deudaId: transaccion.deudaId ? String(transaccion.deudaId) : '',
       })
     } else if (!isOpen) {
       setFormData(initialForm())
@@ -136,33 +232,54 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
       const next = { ...prev, [name]: value }
 
       if (name === 'tipo') {
+        next.categoria = ''
+        next.deudaId = ''
+        next.cuentaDestinoId = ''
+
         if (value === 'TRANSFERENCIA') {
           next.metodoPago = 'TRANSFERENCIA'
-        } else if (prev.tipo === 'TRANSFERENCIA') {
-          next.cuentaDestinoId = ''
+          next.descripcion = ''
+        } else if (value === 'PAGO_DEUDA') {
+          next.metodoPago = 'EFECTIVO'
+          next.descripcion = ''
+        } else if (prev.tipo === 'TRANSFERENCIA' || prev.tipo === 'PAGO_DEUDA') {
           next.metodoPago = 'EFECTIVO'
         }
       }
 
       return next
     })
+    setError('')
   }
 
   const etiquetaCuentaAfectada = () => {
-    if (formData.tipo === 'INGRESO') return 'Cuenta que recibe *'
+    if (formData.tipo === 'INGRESO') return 'Cuenta destino *'
+    if (formData.tipo === 'PAGO_DEUDA') return 'Cuenta desde donde se paga *'
     if (formData.tipo === 'GASTO') return 'Cuenta de origen *'
     return 'Cuenta origen *'
+  }
+
+  const etiquetaMonto = () => {
+    if (formData.tipo === 'PAGO_DEUDA') return 'Monto a pagar *'
+    return 'Monto *'
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
+    if (campos.deuda && !formData.deudaId) {
+      setError('Selecciona la deuda a pagar')
+      return
+    }
+
     if (!formData.cuentaOrigenId) {
       setError(
         formData.tipo === 'INGRESO'
-          ? 'Selecciona la cuenta donde entra el dinero'
-          : 'Selecciona la cuenta de origen'
+          ? 'Selecciona la cuenta destino'
+          : formData.tipo === 'PAGO_DEUDA'
+            ? 'Selecciona la cuenta desde donde se paga'
+            : 'Selecciona la cuenta de origen'
       )
       return
     }
@@ -176,6 +293,21 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         setError('Origen y destino deben ser cuentas distintas')
         return
       }
+    }
+
+    if (formData.tipo === 'PAGO_DEUDA' && deudaSeleccionada) {
+      const montoPago = parseFloat(formData.monto)
+      if (montoPago > saldoPendienteVisible + 0.001) {
+        setError(
+          `No puedes pagar más del saldo pendiente (${formatMoney(saldoPendienteVisible)})`
+        )
+        return
+      }
+    }
+
+    if (campos.descripcion && !formData.descripcion?.trim()) {
+      setError('La descripción es obligatoria')
+      return
     }
 
     if (errorCuentas) {
@@ -194,21 +326,37 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
       const dataToSend = {
         tipo: formData.tipo,
         monto: parseFloat(formData.monto),
-        descripcion: formData.descripcion,
         fecha: formData.fecha,
         cuentaOrigenId: Number(formData.cuentaOrigenId),
       }
 
-      if (formData.categoria) dataToSend.categoria = formData.categoria
       if (formData.notas) dataToSend.notas = formData.notas
 
       if (formData.tipo === 'TRANSFERENCIA') {
         dataToSend.cuentaDestinoId = Number(formData.cuentaDestinoId)
         dataToSend.metodoPago = 'TRANSFERENCIA'
+        dataToSend.descripcion =
+          formData.descripcion?.trim() || 'Transferencia entre cuentas'
+        dataToSend.categoria = null
+        dataToSend.deudaId = null
+      } else if (formData.tipo === 'PAGO_DEUDA') {
+        dataToSend.deudaId = Number(formData.deudaId)
+        dataToSend.descripcion =
+          formData.descripcion?.trim() ||
+          (deudaSeleccionada
+            ? `Pago de deuda: ${deudaSeleccionada.nombre}`
+            : 'Pago de deuda')
+        dataToSend.categoria = null
+        dataToSend.metodoPago = null
+        dataToSend.cuentaDestinoId = null
       } else {
-        dataToSend.metodoPago = formData.metodoPago
-        // Al editar, limpiar destino si ya no es transferencia entre cuentas
-        if (isEditing) dataToSend.cuentaDestinoId = null
+        dataToSend.descripcion = formData.descripcion
+        if (formData.categoria) dataToSend.categoria = formData.categoria
+        if (formData.tipo === 'GASTO') dataToSend.metodoPago = formData.metodoPago
+        if (isEditing) {
+          dataToSend.cuentaDestinoId = null
+          dataToSend.deudaId = null
+        }
       }
 
       if (isEditing) {
@@ -230,13 +378,16 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
     }
   }
 
-  const esTransferencia = formData.tipo === 'TRANSFERENCIA'
-
   const etiquetaOpcionCuenta = (cuenta) => {
     const saldo =
-      cuenta.saldoActual != null ? ` ($${Number(cuenta.saldoActual).toFixed(2)})` : ''
+      cuenta.saldoActual != null ? ` (${formatMoney(cuenta.saldoActual)})` : ''
     const inactiva = cuenta.activa === false ? ' — inactiva' : ''
     return `${cuenta.nombre}${saldo}${inactiva}`
+  }
+
+  const etiquetaOpcionDeuda = (deuda) => {
+    const pendiente = formatMoney(deuda.montoActual)
+    return `${deuda.nombre} — pendiente ${pendiente}`
   }
 
   return (
@@ -267,57 +418,120 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
               <option value="INGRESO">Ingreso</option>
               <option value="GASTO">Gasto</option>
               <option value="TRANSFERENCIA">Transferencia</option>
+              <option value="PAGO_DEUDA">Pagar deuda</option>
             </select>
           </div>
 
           <Input
-            label="Monto *"
+            label={etiquetaMonto()}
             type="number"
             name="monto"
             value={formData.monto}
             onChange={handleChange}
             placeholder="0.00"
             step="0.01"
-            min="0"
+            min="0.01"
             required
           />
         </div>
 
-        <Input
-          label="Descripción *"
-          type="text"
-          name="descripcion"
-          value={formData.descripcion}
-          onChange={handleChange}
-          placeholder="Ej: Compra de supermercado"
-          required
-        />
+        <FieldReveal show={campos.descripcion}>
+          <Input
+            label="Descripción *"
+            type="text"
+            name="descripcion"
+            value={formData.descripcion}
+            onChange={handleChange}
+            placeholder="Ej: Compra de supermercado"
+            required={campos.descripcion}
+          />
+        </FieldReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-ink-muted mb-2">
-              {etiquetaCuentaAfectada()}
-            </label>
-            <select
-              name="cuentaOrigenId"
-              value={formData.cuentaOrigenId}
-              onChange={handleChange}
-              className="w-full input-field"
-              required
-              disabled={loadingCuentas}
-            >
-              <option value="">
-                {loadingCuentas ? 'Cargando cuentas...' : 'Seleccionar cuenta'}
-              </option>
-              {cuentas.map((cuenta) => (
-                <option key={cuenta.id} value={cuenta.id}>
-                  {etiquetaOpcionCuenta(cuenta)}
+        <FieldReveal show={campos.deuda}>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-ink-muted mb-2">
+                Deuda *
+              </label>
+              <select
+                name="deudaId"
+                value={formData.deudaId}
+                onChange={handleChange}
+                className="w-full input-field"
+                required={campos.deuda}
+                disabled={loadingDeudas}
+              >
+                <option value="">
+                  {loadingDeudas ? 'Cargando deudas...' : 'Seleccionar deuda'}
                 </option>
-              ))}
-            </select>
-          </div>
+                {deudas.map((deuda) => (
+                  <option key={deuda.id} value={deuda.id}>
+                    {etiquetaOpcionDeuda(deuda)}
+                  </option>
+                ))}
+              </select>
+              {!loadingDeudas && deudas.length === 0 && (
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900 rounded-lg px-3 py-2 mt-2">
+                  No hay deudas activas con saldo pendiente.
+                </p>
+              )}
+            </div>
 
-          {esTransferencia ? (
+            {deudaSeleccionada && (
+              <div className="rounded-lg border border-line bg-surface-muted/60 px-3 py-3 text-sm space-y-1.5 transition-opacity duration-300">
+                <p className="text-ink">
+                  <span className="text-ink-muted">Acreedor:</span>{' '}
+                  {deudaSeleccionada.acreedor || '—'}
+                </p>
+                <p className="text-ink">
+                  <span className="text-ink-muted">Valor total:</span>{' '}
+                  {formatMoney(
+                    deudaSeleccionada.montoConInteres ??
+                      deudaSeleccionada.montoInicial
+                  )}
+                </p>
+                <p className="text-ink font-medium">
+                  <span className="text-ink-muted font-normal">Saldo pendiente:</span>{' '}
+                  {formatMoney(saldoPendienteVisible)}
+                </p>
+              </div>
+            )}
+          </div>
+        </FieldReveal>
+
+        <div
+          className={`grid grid-cols-1 gap-4 transition-all duration-300 ${
+            campos.cuentaDestino || campos.metodoPago
+              ? 'md:grid-cols-2'
+              : 'md:grid-cols-1'
+          }`}
+        >
+          <FieldReveal show={campos.cuentaOrigen}>
+            <div>
+              <label className="block text-sm font-medium text-ink-muted mb-2">
+                {etiquetaCuentaAfectada()}
+              </label>
+              <select
+                name="cuentaOrigenId"
+                value={formData.cuentaOrigenId}
+                onChange={handleChange}
+                className="w-full input-field"
+                required={campos.cuentaOrigen}
+                disabled={loadingCuentas}
+              >
+                <option value="">
+                  {loadingCuentas ? 'Cargando cuentas...' : 'Seleccionar cuenta'}
+                </option>
+                {cuentas.map((cuenta) => (
+                  <option key={cuenta.id} value={cuenta.id}>
+                    {etiquetaOpcionCuenta(cuenta)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </FieldReveal>
+
+          <FieldReveal show={campos.cuentaDestino}>
             <div>
               <label className="block text-sm font-medium text-ink-muted mb-2">
                 Cuenta destino *
@@ -327,7 +541,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
                 value={formData.cuentaDestinoId}
                 onChange={handleChange}
                 className="w-full input-field"
-                required
+                required={campos.cuentaDestino}
                 disabled={loadingCuentas}
               >
                 <option value="">
@@ -342,7 +556,9 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
                   ))}
               </select>
             </div>
-          ) : (
+          </FieldReveal>
+
+          <FieldReveal show={campos.metodoPago}>
             <div>
               <label className="block text-sm font-medium text-ink-muted mb-2">
                 Método de Pago
@@ -360,7 +576,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
                 ))}
               </select>
             </div>
-          )}
+          </FieldReveal>
         </div>
 
         {errorCuentas && !loadingCuentas && (
@@ -370,36 +586,42 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
           </p>
         )}
 
-        {!esTransferencia && !errorCuentas && cuentas.length === 0 && !loadingCuentas && (
+        {!errorCuentas && cuentas.length === 0 && !loadingCuentas && (
           <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900 rounded-lg px-3 py-2">
             No tienes cuentas activas. Crea una en Cuentas para que el saldo se
             actualice.
           </p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-ink-muted mb-2">
-              Categoría
-            </label>
-            <select
-              name="categoria"
-              value={formData.categoria}
-              onChange={handleChange}
-              className="w-full input-field"
-            >
-              <option value="">Sin categoría</option>
-              {categoriasParaTipo(formData.tipo).map((c) => (
-                <option key={c.nombre} value={c.nombre}>
-                  {c.nombre}
-                </option>
-              ))}
-              {formData.categoria &&
-                !CATEGORIAS_DEFAULT.some((c) => c.nombre === formData.categoria) && (
-                  <option value={formData.categoria}>{formData.categoria}</option>
-                )}
-            </select>
-          </div>
+        <div
+          className={`grid grid-cols-1 gap-4 transition-all duration-300 ${
+            campos.categoria ? 'md:grid-cols-2' : 'md:grid-cols-1'
+          }`}
+        >
+          <FieldReveal show={campos.categoria}>
+            <div>
+              <label className="block text-sm font-medium text-ink-muted mb-2">
+                Categoría
+              </label>
+              <select
+                name="categoria"
+                value={formData.categoria}
+                onChange={handleChange}
+                className="w-full input-field"
+              >
+                <option value="">Sin categoría</option>
+                {categoriasParaTipo(formData.tipo).map((c) => (
+                  <option key={c.nombre} value={c.nombre}>
+                    {c.nombre}
+                  </option>
+                ))}
+                {formData.categoria &&
+                  !CATEGORIAS_DEFAULT.some((c) => c.nombre === formData.categoria) && (
+                    <option value={formData.categoria}>{formData.categoria}</option>
+                  )}
+              </select>
+            </div>
+          </FieldReveal>
 
           <Input
             label="Fecha *"

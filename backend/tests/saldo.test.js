@@ -13,4 +13,8 @@ describe('saldo utils Sprint 3', () => {
     expect(deltaSaldoPorTipo('TRANSFERENCIA', 20, 'origen')).toBe(-20);
     expect(deltaSaldoPorTipo('TRANSFERENCIA', 20, 'destino')).toBe(20);
   });
+
+  test('PAGO_DEUDA resta en origen como un gasto', () => {
+    expect(deltaSaldoPorTipo('PAGO_DEUDA', 75, 'origen')).toBe(-75);
+  });
 });
