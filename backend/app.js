@@ -23,6 +23,7 @@ const { globalErrorHandler, notFoundHandler } = require('./middlewares/error.mid
 const { apiLimiter } = require('./middlewares/rateLimit.middleware');
 const { logger, morganStream } = require('./utils/logger');
 const { startRecurrentesCron } = require('./jobs/recurrentes.cron');
+const { startRecordatoriosCron } = require('./jobs/recordatorios.cron');
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.get('/', (req, res) => {
       presupuestos: '/api/finanzas/presupuestos',
       gamificacion: '/api/finanzas/logros',
       recurrentes: '/api/sistema/recurrentes',
+      recordatorios: '/api/sistema/recordatorios',
       notificaciones: '/api/sistema/notificaciones',
       reportes: '/api/reportes',
       categorias: '/api/categorias'
@@ -95,6 +97,7 @@ if (process.env.NODE_ENV !== 'test') {
     });
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
     startRecurrentesCron();
+    startRecordatoriosCron();
   });
 
   process.on('uncaughtException', (err) => {

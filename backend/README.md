@@ -1,4 +1,4 @@
-# Backend ó Gestor de Finanzas
+# Backend ù Gestor de Finanzas
 
 API REST con Node.js, Express 5, Prisma y PostgreSQL.
 
@@ -7,9 +7,9 @@ API REST con Node.js, Express 5, Prisma y PostgreSQL.
 - Express + Helmet + CORS + rate-limit (auth)
 - Prisma ORM + PostgreSQL
 - JWT (`authMiddleware`, `requireRole`)
-- Joi (validaciÛn)
+- Joi (validaciùn)
 - Winston + Morgan
-- node-cron (recurrentes cada hora)
+- node-cron (recurrentes y recordatorios)
 - Jest
 
 ## Setup
@@ -28,15 +28,17 @@ Servidor: `http://localhost:5000`
 
 ## Variables de entorno
 
-| Variable | Requerida | DescripciÛn |
+| Variable | Requerida | Descripciùn |
 |----------|-----------|-------------|
-| `DATABASE_URL` | sÌ | Connection string PostgreSQL |
-| `JWT_SECRET` | sÌ | Firma JWT (fail-fast si falta) |
+| `DATABASE_URL` | sù | Connection string PostgreSQL |
+| `JWT_SECRET` | sù | Firma JWT (fail-fast si falta) |
 | `PORT` | no | Default `5000` |
 | `NODE_ENV` | no | `development` / `production` / `test` |
 | `CORS_ORIGIN` | prod | Origen permitido del frontend |
 | `CRON_RECURRENTES` | no | `false` desactiva el job |
 | `CRON_RECURRENTES_SCHEDULE` | no | Default `0 * * * *` |
+| `CRON_RECORDATORIOS` | no | `false` desactiva el job |
+| `CRON_RECORDATORIOS_SCHEDULE` | no | Default `5 * * * *` |
 | `CRON_SECRET` | para interno | Header `X-Cron-Secret` en ejecutar-interno |
 | `AUTH_RATE_LIMIT_MAX` | no | Default 20 / 15 min |
 | `API_RATE_LIMIT_MAX` | no | Default 300 / 15 min |
@@ -55,9 +57,10 @@ Servidor: `http://localhost:5000`
 | `/api/finanzas/presupuestos` | CRUD + sincronizar + alertas |
 | `/api/finanzas/logros` | listado, resumen, historial, verificar |
 | `/api/sistema/recurrentes` | CRUD, toggle, ejecutar (usuario), ejecutar-interno (cron) |
-| `/api/sistema/notificaciones` | listado, CRUD, marcar leÌdas |
+| `/api/sistema/recordatorios` | CRUD, completar/reactivar, ejecutar (usuario/cron) |
+| `/api/sistema/notificaciones` | listado, CRUD, marcar leùdas |
 | `/api/reportes` | mensual, agregados, export CSV |
-| `/api/categorias` | listado, CRUD personalizadas, estadÌsticas |
+| `/api/categorias` | listado, CRUD personalizadas, estadùsticas |
 | `/api/sistema/admin/health` | solo `ADMIN` |
 
 Contratos de campos/enums: [docs/CONTRATOS-API.md](../docs/CONTRATOS-API.md).
@@ -66,7 +69,7 @@ Contratos de campos/enums: [docs/CONTRATOS-API.md](../docs/CONTRATOS-API.md).
 
 ```bash
 npm run dev
-npm start                 # aplica migraciones pendientes y arranca (producciÛn)
+npm start                 # aplica migraciones pendientes y arranca (producciùn)
 npm test
 npm run prisma:migrate    # solo desarrollo
 npm run prisma:deploy     # solo aplicar migraciones (sin arrancar)
@@ -75,9 +78,9 @@ npm run prisma:studio
 npm run prisma:seed
 ```
 
-### Migraciones en producciÛn
+### Migraciones en producciùn
 
-`npm start` ejecuta `prisma migrate deploy` antes de levantar el API. La migraciÛn `plazoMeses` es **aditiva y nullable**: no borra datos ni cambia prÈstamos existentes hasta que se asigne un plazo.
+`npm start` ejecuta `prisma migrate deploy` antes de levantar el API. La migraciùn `plazoMeses` es **aditiva y nullable**: no borra datos ni cambia prùstamos existentes hasta que se asigne un plazo.
 
 ## Estructura
 
@@ -88,7 +91,7 @@ backend/
 ??? routes/
 ??? middlewares/
 ??? validators/
-??? services/          # lÛgica compartida (recurrentes)
+??? services/          # lùgica compartida (recurrentes)
 ??? jobs/              # cron
 ??? utils/             # errors, logger, mappers, saldo
 ??? lib/prisma.js
@@ -101,7 +104,7 @@ backend/
 - JWT obligatorio en rutas privadas; ownership por `userId`
 - Helmet + rate limit en login/register
 - Cron interno con `CRON_SECRET`
-- Rol `ADMIN` solo en rutas admin explÌcitas; el resto es multi-tenant por usuario
+- Rol `ADMIN` solo en rutas admin explùcitas; el resto es multi-tenant por usuario
 
 ## Notas
 

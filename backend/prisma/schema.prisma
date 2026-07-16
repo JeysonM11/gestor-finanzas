@@ -353,22 +353,25 @@ model Notificacion {
 }
 
 model Recordatorio {
-  id                  Int                 @id @default(autoincrement())
-  titulo              String
-  descripcion         String?
-  tipo                TipoRecordatorio
-  fechaRecordatorio   DateTime
-  repetir             Boolean             @default(false)
-  frecuencia          String?             // 'diario', 'semanal', 'mensual'
-  completado          Boolean             @default(false)
-  activo              Boolean             @default(true)
-  
-  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId              Int
-  
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  
+  id                    Int                 @id @default(autoincrement())
+  titulo                String
+  descripcion           String?
+  tipo                  TipoRecordatorio
+  fechaRecordatorio     DateTime
+  repetir               Boolean             @default(false)
+  frecuencia            String?             // DIARIA | SEMANAL | MENSUAL
+  completado            Boolean             @default(false)
+  activo                Boolean             @default(true)
+  notificacionEnviada   Boolean             @default(false)
+
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                Int
+
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([userId, activo, completado])
+  @@index([fechaRecordatorio, notificacionEnviada])
   @@map("recordatorios")
 }
 

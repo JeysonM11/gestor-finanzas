@@ -179,6 +179,40 @@ El JWT incluye `rol` (`ADMIN` | `USUARIO`). `requireRole('ADMIN')` se usa en rut
 
 ---
 
+## Recordatorios — `/api/sistema/recordatorios`
+
+Modelo Prisma: `Recordatorio` (`titulo`, `descripcion?`, `tipo`, `fechaRecordatorio`, `repetir`, `frecuencia?`, `completado`, `activo`, `notificacionEnviada`, `userId`).
+
+### TipoRecordatorio
+
+`PAGO` | `META` | `PRESUPUESTO` | `INVERSION` | `DEUDA` | `GENERAL`
+
+### Frecuencia (si `repetir`)
+
+`DIARIA` | `SEMANAL` | `MENSUAL`
+
+### Endpoints (JWT salvo interno)
+
+| Método | Ruta | Notas |
+|--------|------|--------|
+| GET | `/` | Query: `soloPendientes`, `fechaInicio`, `fechaFin`, `tipo`. Solo `activo: true` del usuario. |
+| GET | `/:id` | Ownership. |
+| POST | `/` | Body: `{ titulo, fechaRecordatorio, tipo?, descripcion?, repetir?, frecuencia?, activo? }`. |
+| PUT | `/:id` | Body parcial. Cambiar fecha resetea `notificacionEnviada`. |
+| PUT | `/:id/completar` | `completado: true`. |
+| PUT | `/:id/reactivar` | `completado: false`, `activo: true`, resetea notificación. |
+| DELETE | `/:id` | Soft-delete (`activo: false`). |
+| POST | `/ejecutar` | Fuerza notificación de vencidos del usuario. |
+| POST | `/ejecutar-interno` | Cron global; header `X-Cron-Secret`. |
+
+### Cron
+
+- Env: `CRON_RECORDATORIOS`, `CRON_RECORDATORIOS_SCHEDULE` (default `5 * * * *`).
+- Al vencer: crea `Notificacion` tipo `RECORDATORIO` con `datos.recordatorioId`.
+- Idempotencia: flag `notificacionEnviada`. Si `repetir`, avanza `fechaRecordatorio` y deja el flag en `false`.
+
+---
+
 ## Gamificación — `/api/finanzas/logros`
 
 ### Respuesta actual `GET /logros`

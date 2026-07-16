@@ -59,7 +59,8 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 | Gamificación (logros/resumen/historial) | ✅ básica |
 | Metas de ahorro | ✅ |
 | Presupuestos + alertas | ✅ |
-| Recordatorios / Sesiones / Email verify | ❌ backlog |
+| Recordatorios (API + cron) | ✅ (UI pendiente Sprint B.2) |
+| Sesiones / Email verify | ❌ backlog |
 
 ## Documentación
 

@@ -18,7 +18,8 @@ Objetivo: hacer el producto **más útil día a día y más confiable**, sin abr
 | Metas, presupuestos + alertas | ✅ |
 | Gamificación básica | ✅ |
 | Categorías API | ✅ (UI Config + modales; fallback defaults) |
-| Recordatorios / Sesiones / Email verify | ❌ schema listo, sin producto |
+| Recordatorios | ✅ API + cron; UI → Sprint B.2 |
+| Sesiones / Email verify | ❌ schema listo, sin producto |
 | Moneda principal | ✅ operativa en UI (trabajo reciente) |
 
 ---
@@ -97,12 +98,12 @@ Modelo de referencia (`Recordatorio`):
 | `completado`, `activo` | estado |
 | `userId` | ownership obligatorio |
 
-- [ ] CRUD `/api/sistema/recordatorios` (o `/api/finanzas/recordatorios` — elegir un prefijo y documentarlo).
-- [ ] `PATCH` marcar completado / reactivar.
-- [ ] Filtros: `soloPendientes`, rango de fechas.
-- [ ] Validación Joi + ownership en get/update/delete.
-- [ ] Job/cron (o reutilizar patrón de recurrentes): al vencer, crear `Notificacion` in-app.
-- [ ] Tests: ownership + “no notificar dos veces el mismo recordatorio vencido”.
+- [x] CRUD `/api/sistema/recordatorios` (prefijo sistema, documentado).
+- [x] `PUT .../completar` y `PUT .../reactivar` (convención PUT del API).
+- [x] Filtros: `soloPendientes`, rango de fechas.
+- [x] Validación Joi + ownership en get/update/delete.
+- [x] Job/cron (o reutilizar patrón de recurrentes): al vencer, crear `Notificacion` in-app.
+- [x] Tests: ownership + “no notificar dos veces el mismo recordatorio vencido”.
 
 ### B.2 UI
 
