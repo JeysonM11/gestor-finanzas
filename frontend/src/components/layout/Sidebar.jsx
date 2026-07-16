@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -11,6 +12,7 @@ import {
   Settings,
   Wallet,
   Bell,
+  BellRing,
   Target,
   PieChart,
   PanelLeftClose,
@@ -19,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useLayout } from './LayoutContext'
 import { cn } from '../../utils/cn'
+import { recordatorioService } from '../../services/recordatorio.service'
 
 const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -31,11 +34,12 @@ const menuItems = [
   { path: '/presupuestos', label: 'Presupuestos', icon: PieChart },
   { path: '/reportes', label: 'Reportes', icon: BarChart3 },
   { path: '/gamificacion', label: 'Gamificación', icon: Trophy },
+  { path: '/recordatorios', label: 'Recordatorios', icon: BellRing, badgeKey: 'recordatorios' },
   { path: '/notificaciones', label: 'Notificaciones', icon: Bell },
   { path: '/configuracion', label: 'Configuración', icon: Settings },
 ]
 
-const SidebarPanel = ({ collapsed, showCollapseToggle, onCloseMobile }) => (
+const SidebarPanel = ({ collapsed, showCollapseToggle, onCloseMobile, badges = {} }) => (
   <>
     <div
       className={cn(
@@ -65,36 +69,63 @@ const SidebarPanel = ({ collapsed, showCollapseToggle, onCloseMobile }) => (
     </div>
 
     <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-0.5" aria-label="Principal">
-      {menuItems.map((item) => (
-        <NavLink
-          key={item.path}
-          to={item.path}
-          onClick={onCloseMobile}
-          title={collapsed ? item.label : undefined}
-          className={({ isActive }) =>
-            cn(
-              'group flex items-center gap-3 rounded-control text-sm font-medium transition-colors duration-150',
-              collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
-              isActive
-                ? 'bg-primary-50 text-primary-700 dark:bg-primary-950/50 dark:text-primary-300'
-                : 'text-ink-muted hover:bg-surface-muted hover:text-ink'
-            )
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <item.icon
-                className={cn(
-                  'h-[18px] w-[18px] shrink-0 transition-colors',
-                  isActive ? 'text-primary-600' : 'text-ink-subtle group-hover:text-ink-muted'
+      {menuItems.map((item) => {
+        const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0
+        return (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            onClick={onCloseMobile}
+            title={
+              collapsed
+                ? badgeCount > 0
+                  ? `${item.label} (${badgeCount})`
+                  : item.label
+                : undefined
+            }
+            className={({ isActive }) =>
+              cn(
+                'group flex items-center gap-3 rounded-control text-sm font-medium transition-colors duration-150',
+                collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
+                isActive
+                  ? 'bg-primary-50 text-primary-700 dark:bg-primary-950/50 dark:text-primary-300'
+                  : 'text-ink-muted hover:bg-surface-muted hover:text-ink'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <span className="relative shrink-0">
+                  <item.icon
+                    className={cn(
+                      'h-[18px] w-[18px] transition-colors',
+                      isActive
+                        ? 'text-primary-600'
+                        : 'text-ink-subtle group-hover:text-ink-muted'
+                    )}
+                    aria-hidden="true"
+                  />
+                  {collapsed && badgeCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-0.5 text-[10px] font-semibold text-white">
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </span>
+                  )}
+                </span>
+                {!collapsed && (
+                  <>
+                    <span className="truncate flex-1">{item.label}</span>
+                    {badgeCount > 0 && (
+                      <span className="ml-auto shrink-0 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200 px-2 py-0.5 text-[11px] font-semibold">
+                        {badgeCount > 99 ? '99+' : badgeCount}
+                      </span>
+                    )}
+                  </>
                 )}
-                aria-hidden="true"
-              />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </>
-          )}
-        </NavLink>
-      ))}
+              </>
+            )}
+          </NavLink>
+        )
+      })}
     </nav>
 
     {showCollapseToggle && (
@@ -131,6 +162,31 @@ const CollapseButton = ({ collapsed }) => {
 
 const Sidebar = () => {
   const { mobileOpen, closeMobile, collapsed } = useLayout()
+  const [pendientesRecordatorios, setPendientesRecordatorios] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const cargarBadge = async () => {
+      try {
+        const data = await recordatorioService.getAll({ soloPendientes: true })
+        if (!cancelled) {
+          setPendientesRecordatorios(data.resumen?.pendientes ?? data.recordatorios?.length ?? 0)
+        }
+      } catch {
+        if (!cancelled) setPendientesRecordatorios(0)
+      }
+    }
+
+    cargarBadge()
+    const interval = setInterval(cargarBadge, 60_000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [])
+
+  const badges = { recordatorios: pendientesRecordatorios }
 
   return (
     <>
@@ -150,7 +206,11 @@ const Sidebar = () => {
         )}
         aria-label="Navegación móvil"
       >
-        <SidebarPanel collapsed={false} onCloseMobile={closeMobile} />
+        <SidebarPanel
+          collapsed={false}
+          onCloseMobile={closeMobile}
+          badges={badges}
+        />
       </aside>
 
       <aside
@@ -160,7 +220,11 @@ const Sidebar = () => {
         )}
         aria-label="Navegación"
       >
-        <SidebarPanel collapsed={collapsed} showCollapseToggle />
+        <SidebarPanel
+          collapsed={collapsed}
+          showCollapseToggle
+          badges={badges}
+        />
       </aside>
     </>
   )

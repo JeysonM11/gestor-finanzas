@@ -18,7 +18,7 @@ Objetivo: hacer el producto **más útil día a día y más confiable**, sin abr
 | Metas, presupuestos + alertas | ✅ |
 | Gamificación básica | ✅ |
 | Categorías API | ✅ (UI Config + modales; fallback defaults) |
-| Recordatorios | ✅ API + cron; UI → Sprint B.2 |
+| Recordatorios | ✅ API + cron + UI |
 | Sesiones / Email verify | ❌ schema listo, sin producto |
 | Moneda principal | ✅ operativa en UI (trabajo reciente) |
 
@@ -107,9 +107,9 @@ Modelo de referencia (`Recordatorio`):
 
 ### B.2 UI
 
-- [ ] Página `/recordatorios` + enlace en Sidebar.
-- [ ] Modal crear/editar; acciones completar / desactivar.
-- [ ] (Opcional) chips o contador de pendientes junto a Notificaciones.
+- [x] Página `/recordatorios` + enlace en Sidebar.
+- [x] Modal crear/editar; acciones completar / desactivar.
+- [x] (Opcional) chips o contador de pendientes junto a Notificaciones.
 
 ### B.3 Integraciones ligeras (si da tiempo en el mismo sprint)
 

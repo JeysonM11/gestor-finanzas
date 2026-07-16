@@ -18,6 +18,7 @@ import Gamificacion from './pages/Gamificacion'
 import Configuracion from './pages/Configuracion'
 import Metas from './pages/Metas'
 import Presupuestos from './pages/Presupuestos'
+import Recordatorios from './pages/Recordatorios'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
                 <Route path="deudas" element={<Deudas />} />
                 <Route path="metas" element={<Metas />} />
                 <Route path="presupuestos" element={<Presupuestos />} />
+                <Route path="recordatorios" element={<Recordatorios />} />
                 <Route path="notificaciones" element={<Notificaciones />} />
                 <Route path="reportes" element={<Reportes />} />
                 <Route path="gamificacion" element={<Gamificacion />} />
