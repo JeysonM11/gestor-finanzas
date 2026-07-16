@@ -97,6 +97,20 @@ const Transacciones = () => {
     return 'red'
   }
 
+  const etiquetaCuenta = (transaccion) => {
+    if (transaccion.tipo === 'TRANSFERENCIA') {
+      const origen = transaccion.cuentaOrigen?.nombre
+      const destino = transaccion.cuentaDestino?.nombre
+      if (origen && destino) return `${origen} → ${destino}`
+      return origen || destino || null
+    }
+    return (
+      transaccion.cuentaOrigen?.nombre ||
+      transaccion.cuentaDestino?.nombre ||
+      null
+    )
+  }
+
   if (loading && transacciones.length === 0) {
     return <Spinner fullPage />
   }
@@ -190,7 +204,9 @@ const Transacciones = () => {
       {/* Mobile cards */}
       <div className="space-y-2 md:hidden">
         {transacciones.length > 0 ? (
-          transacciones.map((transaccion) => (
+          transacciones.map((transaccion) => {
+            const cuentaLabel = etiquetaCuenta(transaccion)
+            return (
             <Card key={transaccion.id} className="!p-3.5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -198,6 +214,7 @@ const Transacciones = () => {
                   <p className="text-xs text-ink-muted mt-0.5">
                     {formatDate(transaccion.fecha)} ·{' '}
                     {transaccion.categoria || '-'}
+                    {cuentaLabel ? ` · ${cuentaLabel}` : ''}
                   </p>
                   <div className="mt-2">
                     <Badge variant={tipoBadge(transaccion.tipo)}>{transaccion.tipo}</Badge>
@@ -233,7 +250,8 @@ const Transacciones = () => {
                 </div>
               </div>
             </Card>
-          ))
+            )
+          })
         ) : (
           <Card>
             <p className="text-center text-ink-muted py-8 text-sm">
@@ -252,6 +270,7 @@ const Transacciones = () => {
                 <th>Fecha</th>
                 <th>Descripción</th>
                 <th>Categoría</th>
+                <th>Cuenta</th>
                 <th>Tipo</th>
                 <th className="text-right">Monto</th>
                 <th className="text-center">Acciones</th>
@@ -266,6 +285,9 @@ const Transacciones = () => {
                     </td>
                     <td className="max-w-[14rem] truncate">{transaccion.descripcion}</td>
                     <td className="text-ink-muted">{transaccion.categoria || '-'}</td>
+                    <td className="text-ink-muted max-w-[10rem] truncate">
+                      {etiquetaCuenta(transaccion) || '-'}
+                    </td>
                     <td>
                       <Badge variant={tipoBadge(transaccion.tipo)}>{transaccion.tipo}</Badge>
                     </td>
@@ -301,7 +323,7 @@ const Transacciones = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="!text-center text-ink-muted py-10">
+                  <td colSpan="7" className="!text-center text-ink-muted py-10">
                     No se encontraron transacciones
                   </td>
                 </tr>

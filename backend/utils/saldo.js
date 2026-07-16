@@ -8,7 +8,7 @@
 async function assertCuentaDelUsuario(tx, cuentaId, userId) {
   if (!cuentaId) return null;
   const cuenta = await tx.cuenta.findFirst({
-    where: { id: cuentaId, userId, activa: true },
+    where: { id: cuentaId, userId },
   });
   if (!cuenta) {
     const err = new Error('Cuenta no encontrada o no pertenece al usuario');

@@ -88,6 +88,7 @@ const createTransaccionSchema = Joi.object({
     .integer()
     .positive()
     .optional()
+    .allow(null)
     .messages({
       'number.positive': 'El ID de cuenta origen debe ser positivo'
     }),
@@ -96,6 +97,7 @@ const createTransaccionSchema = Joi.object({
     .integer()
     .positive()
     .optional()
+    .allow(null)
     .messages({
       'number.positive': 'El ID de cuenta destino debe ser positivo'
     }),
