@@ -1,9 +1,9 @@
 const prisma = require('../lib/prisma');
 const { logger } = require('./logger');
+const { mesAnioUTC } = require('./date');
 
 function mesAnioDeFecha(fecha) {
-  const d = fecha ? new Date(fecha) : new Date();
-  return { mes: d.getMonth() + 1, anio: d.getFullYear() };
+  return mesAnioUTC(fecha);
 }
 
 /**
@@ -13,8 +13,8 @@ function mesAnioDeFecha(fecha) {
 async function sincronizarPresupuesto(userId, categoria, mes, anio) {
   if (!categoria) return null;
 
-  const inicio = new Date(anio, mes - 1, 1);
-  const fin = new Date(anio, mes, 0, 23, 59, 59, 999);
+  const inicio = new Date(Date.UTC(anio, mes - 1, 1, 0, 0, 0, 0));
+  const fin = new Date(Date.UTC(anio, mes, 0, 23, 59, 59, 999));
 
   const agg = await prisma.transaccion.aggregate({
     where: {

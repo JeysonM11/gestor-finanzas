@@ -6,6 +6,7 @@ const {
   validarCuentasTransaccion,
 } = require('../utils/saldo');
 const { sincronizarPorTransaccion } = require('../utils/presupuesto');
+const { parseDateOnly, startOfDayUTC, endOfDayUTC } = require('../utils/date');
 
 async function calcularResumen(where) {
   const [ingresos, gastos] = await Promise.all([
@@ -43,8 +44,8 @@ function buildWhere(userId, query = {}) {
 
   if (fechaInicio || fechaFin) {
     where.fecha = {};
-    if (fechaInicio) where.fecha.gte = new Date(fechaInicio);
-    if (fechaFin) where.fecha.lte = new Date(fechaFin);
+    if (fechaInicio) where.fecha.gte = startOfDayUTC(fechaInicio);
+    if (fechaFin) where.fecha.lte = endOfDayUTC(fechaFin);
   }
 
   if (search) {
@@ -77,7 +78,7 @@ exports.crearTransaccion = catchAsync(async (req, res) => {
         data: {
           ...body,
           userId,
-          fecha: body.fecha ? new Date(body.fecha) : undefined,
+          fecha: body.fecha ? parseDateOnly(body.fecha) : undefined,
           esTransferencia: body.tipo === 'TRANSFERENCIA',
         },
       });
@@ -200,7 +201,7 @@ exports.actualizarTransaccion = catchAsync(async (req, res) => {
         where: { id: parseInt(id) },
         data: {
           ...safeData,
-          ...(safeData.fecha ? { fecha: new Date(safeData.fecha) } : {}),
+          ...(safeData.fecha ? { fecha: parseDateOnly(safeData.fecha) } : {}),
           esTransferencia: merged.tipo === 'TRANSFERENCIA',
         },
       });

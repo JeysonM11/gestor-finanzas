@@ -7,6 +7,7 @@ const {
   toDeudaDto,
   toInversionDto,
 } = require('../utils/mappers');
+const { parseDateOnly } = require('../utils/date');
 
 // ============= CONTROLADOR DE CUENTAS =============
 
@@ -87,7 +88,7 @@ exports.crearCuenta = async (req, res) => {
         color,
         icono,
         descripcion,
-        fechaApertura: fechaApertura ? new Date(fechaApertura) : new Date(),
+        fechaApertura: fechaApertura ? parseDateOnly(fechaApertura) : new Date(),
         userId,
       },
     });
@@ -251,7 +252,7 @@ exports.crearInversion = async (req, res) => {
         montoInvertido: data.montoInvertido,
         valorActual: data.valorActual ?? data.montoInvertido,
         cantidad: data.cantidad,
-        fechaCompra: new Date(data.fechaCompra),
+        fechaCompra: parseDateOnly(data.fechaCompra),
         broker: data.broker,
         comisiones: data.comisiones || 0,
         notas: data.notas,
@@ -297,7 +298,7 @@ exports.actualizarInversion = async (req, res) => {
     if (data.montoInvertido != null) updateData.montoInvertido = data.montoInvertido;
     if (data.valorActual != null) updateData.valorActual = data.valorActual;
     if (data.cantidad != null) updateData.cantidad = data.cantidad;
-    if (data.fechaCompra) updateData.fechaCompra = new Date(data.fechaCompra);
+    if (data.fechaCompra) updateData.fechaCompra = parseDateOnly(data.fechaCompra);
     if (data.broker !== undefined) updateData.broker = data.broker;
     if (data.comisiones != null) updateData.comisiones = data.comisiones;
     if (req.body.notas !== undefined) updateData.notas = data.notas;
@@ -418,9 +419,9 @@ exports.crearDeuda = async (req, res) => {
         tasaInteres: data.tasaInteres,
         tipoTasa: data.tipoTasa,
         plazoMeses: data.plazoMeses,
-        fechaInicio: new Date(data.fechaInicio),
+        fechaInicio: parseDateOnly(data.fechaInicio),
         fechaVencimiento: data.fechaVencimiento
-          ? new Date(data.fechaVencimiento)
+          ? parseDateOnly(data.fechaVencimiento)
           : null,
         pagoMinimo: data.pagoMinimo,
         acreedor: data.acreedor,
@@ -465,10 +466,10 @@ exports.actualizarDeuda = async (req, res) => {
     if (req.body.plazoMeses !== undefined) {
       updateData.plazoMeses = data.plazoMeses;
     }
-    if (data.fechaInicio) updateData.fechaInicio = new Date(data.fechaInicio);
+    if (data.fechaInicio) updateData.fechaInicio = parseDateOnly(data.fechaInicio);
     if (req.body.fechaVencimiento !== undefined) {
       updateData.fechaVencimiento = data.fechaVencimiento
-        ? new Date(data.fechaVencimiento)
+        ? parseDateOnly(data.fechaVencimiento)
         : null;
     }
     if (data.pagoMinimo != null) updateData.pagoMinimo = data.pagoMinimo;
@@ -577,7 +578,7 @@ exports.registrarPagoDeuda = async (req, res) => {
         monto,
         capital: capital || monto,
         interes: interes || 0,
-        fecha: new Date(fecha || Date.now()),
+        fecha: fecha ? parseDateOnly(fecha) : new Date(),
         notas,
         deudaId: parseInt(deudaId),
       },

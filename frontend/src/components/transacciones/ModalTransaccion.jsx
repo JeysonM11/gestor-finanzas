@@ -4,6 +4,7 @@ import Button from '../common/Button'
 import Input from '../common/Input'
 import { transaccionService } from '../../services/transaccion.service'
 import { CATEGORIAS_DEFAULT, METODOS_PAGO, categoriasParaTipo } from '../../utils/constants'
+import { todayDateInput, toDateInputValue } from '../../utils/date'
 
 const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
@@ -13,7 +14,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
     monto: '',
     descripcion: '',
     categoria: '',
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: todayDateInput(),
     metodoPago: 'EFECTIVO',
     notas: ''
   })
@@ -28,7 +29,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         monto: transaccion.monto || '',
         descripcion: transaccion.descripcion || '',
         categoria: transaccion.categoria || '',
-        fecha: transaccion.fecha ? new Date(transaccion.fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        fecha: transaccion.fecha ? toDateInputValue(transaccion.fecha) : todayDateInput(),
         metodoPago: transaccion.metodoPago || 'EFECTIVO',
         notas: transaccion.notas || ''
       })
@@ -39,7 +40,7 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
         monto: '',
         descripcion: '',
         categoria: '',
-        fecha: new Date().toISOString().split('T')[0],
+        fecha: todayDateInput(),
         metodoPago: 'EFECTIVO',
         notas: ''
       })

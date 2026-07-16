@@ -4,7 +4,7 @@ import { transaccionService } from '../services/transaccion.service'
 import { useAuth } from '../context/AuthContext'
 import { useCurrency } from '../hooks/useCurrency'
 import { TrendingUp, TrendingDown, Wallet, Calendar, Shield } from 'lucide-react'
-import dayjs from 'dayjs'
+import { formatDate } from '../utils/date'
 
 const Dashboard = () => {
   const { isAdmin } = useAuth()
@@ -125,7 +125,7 @@ const Dashboard = () => {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-ink truncate">{transaccion.descripcion}</p>
                   <p className="text-xs text-ink-muted mt-0.5">
-                    {dayjs(transaccion.fecha).format('DD/MM/YYYY')} ·{' '}
+                    {formatDate(transaccion.fecha)} ·{' '}
                     {transaccion.categoria || 'Sin categoría'}
                   </p>
                 </div>

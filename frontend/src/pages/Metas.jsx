@@ -6,7 +6,7 @@ import { metaService } from '../services/meta.service'
 import { useToast } from '../context/ToastContext'
 import { useCurrency } from '../hooks/useCurrency'
 import { Plus, Target, Edit, Trash2, DollarSign } from 'lucide-react'
-import dayjs from 'dayjs'
+import { formatDate } from '../utils/date'
 
 const Metas = () => {
   const toast = useToast()
@@ -192,7 +192,7 @@ const Metas = () => {
                 </div>
 
                 <p className="text-xs text-ink-subtle">
-                  Límite: {dayjs(meta.fechaLimite).format('DD/MM/YYYY')} · Prioridad:{' '}
+                  Límite: {formatDate(meta.fechaLimite)} · Prioridad:{' '}
                   {meta.prioridad}
                 </p>
 

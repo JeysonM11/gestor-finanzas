@@ -7,6 +7,7 @@ const {
   ejecutarPendientes,
 } = require('../services/recurrentes.service');
 const { logger } = require('../utils/logger');
+const { parseDateOnly } = require('../utils/date');
 
 // ============= CONTROLADOR DE TRANSACCIONES RECURRENTES =============
 
@@ -77,8 +78,8 @@ exports.crearTransaccionRecurrente = catchAsync(async (req, res) => {
       frecuencia,
       diaEjecucion,
       diaSemana,
-      fechaInicio: new Date(fechaInicio),
-      fechaFin: fechaFin ? new Date(fechaFin) : null,
+      fechaInicio: parseDateOnly(fechaInicio),
+      fechaFin: fechaFin ? parseDateOnly(fechaFin) : null,
       proximaEjecucion,
       activa: activa !== undefined ? Boolean(activa) : true,
       userId,
@@ -130,9 +131,9 @@ exports.actualizarTransaccionRecurrente = catchAsync(async (req, res) => {
   if (diaSemana !== undefined) {
     updateData.diaSemana = diaSemana != null ? Number(diaSemana) : null;
   }
-  if (fechaInicio) updateData.fechaInicio = new Date(fechaInicio);
+  if (fechaInicio) updateData.fechaInicio = parseDateOnly(fechaInicio);
   if (fechaFin !== undefined) {
-    updateData.fechaFin = fechaFin ? new Date(fechaFin) : null;
+    updateData.fechaFin = fechaFin ? parseDateOnly(fechaFin) : null;
   }
   if (activa !== undefined) updateData.activa = Boolean(activa);
 

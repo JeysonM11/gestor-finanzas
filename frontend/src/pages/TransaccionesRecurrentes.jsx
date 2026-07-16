@@ -6,7 +6,7 @@ import { transaccionRecurrenteService } from '../services/transaccion-recurrente
 import { useToast } from '../context/ToastContext'
 import { useCurrency } from '../hooks/useCurrency'
 import { Plus, Play, Edit, Trash2, Calendar, ToggleLeft, ToggleRight, Clock } from 'lucide-react'
-import dayjs from 'dayjs'
+import { formatDate } from '../utils/date'
 
 const TransaccionesRecurrentes = () => {
   const toast = useToast()
@@ -230,7 +230,7 @@ const TransaccionesRecurrentes = () => {
                     Próxima ejecución:{' '}
                     <span className="font-medium text-ink">
                       {transaccion.proximaEjecucion
-                        ? dayjs(transaccion.proximaEjecucion).format('DD/MM/YYYY')
+                        ? formatDate(transaccion.proximaEjecucion)
                         : 'No programada'}
                     </span>
                   </span>
@@ -243,7 +243,7 @@ const TransaccionesRecurrentes = () => {
                       {transaccion.transacciones.slice(0, 3).map((t, idx) => (
                         <div key={idx} className="text-xs text-ink-muted flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
-                          {dayjs(t.fecha).format('DD/MM/YYYY')} - {formatMoney(t.monto)}
+                          {formatDate(t.fecha)} - {formatMoney(t.monto)}
                         </div>
                       ))}
                     </div>
