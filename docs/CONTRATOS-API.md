@@ -22,6 +22,22 @@ Fuente de verdad de nombres de campos y enums: `backend/prisma/schema.prisma`.
 
 ---
 
+## Moneda (Sprint C / v1.2)
+
+Reglas de producto:
+
+1. La UI formatea montos con `user.monedaPrincipal` por defecto (`useCurrency` → `formatMoney` en `frontend/src/utils/currency.js`).
+2. Si una **cuenta** tiene `moneda` distinta, se muestra el código de esa moneda en esa fila/opción (sin conversión automática).
+3. Export CSV (`GET /api/reportes/export`) incluye columna `Moneda` y cabecera `# moneda_preferencia=XXX`. Por fila: `monedaOriginal` si existe y difiere; si no, `monedaPrincipal`.
+4. v1.2 **no** incluye tasas de cambio en vivo.
+
+**Fallback:** código vacío o inválido → `USD` (`resolveCurrencyCode` / `MONEDA_DEFAULT`).  
+**Display:** `Intl` con `currencyDisplay: 'code'` (ej. `COP 10.000`) para no confundir símbolos `$`.
+
+Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`.
+
+---
+
 ## Auth — `/api/auth`
 
 | Método | Ruta | Estado |

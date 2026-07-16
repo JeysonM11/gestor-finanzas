@@ -72,7 +72,7 @@ const FieldReveal = ({ show, children }) => {
 
 const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
-  const { formatMoney } = useCurrency()
+  const { formatMoney, currency } = useCurrency()
   const { categorias, categoriasParaTipo } = useCategorias({ enabled: isOpen })
 
   const [formData, setFormData] = useState(initialForm)
@@ -382,11 +382,20 @@ const ModalTransaccion = ({ isOpen, onClose, onSuccess, transaccion = null }) =>
   }
 
   const etiquetaOpcionCuenta = (cuenta) => {
-    // En transacciones se usa la moneda principal del usuario (Preferencias).
+    // Regla C.1: saldo con moneda de la cuenta; si difiere de la preferencia, mostrar código.
+    const monedaCuenta = cuenta.moneda || currency
     const saldo =
-      cuenta.saldoActual != null ? ` (${formatMoney(cuenta.saldoActual)})` : ''
+      cuenta.saldoActual != null
+        ? ` (${formatMoney(cuenta.saldoActual, monedaCuenta)})`
+        : ''
+    const otraMoneda =
+      monedaCuenta &&
+      monedaCuenta.toUpperCase() !== currency.toUpperCase() &&
+      cuenta.saldoActual == null
+        ? ` [${monedaCuenta}]`
+        : ''
     const inactiva = cuenta.activa === false ? ' — inactiva' : ''
-    return `${cuenta.nombre}${saldo}${inactiva}`
+    return `${cuenta.nombre}${saldo}${otraMoneda}${inactiva}`
   }
 
   const etiquetaOpcionDeuda = (deuda) => {

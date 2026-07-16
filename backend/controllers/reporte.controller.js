@@ -216,23 +216,44 @@ exports.exportarCSV = async (req, res) => {
       if (fechaFin) filtros.fecha.lte = endOfDayUTC(fechaFin);
     }
 
-    const transacciones = await prisma.transaccion.findMany({
-      where: filtros,
-      orderBy: { fecha: 'desc' },
-    });
+    const [user, transacciones] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { monedaPrincipal: true },
+      }),
+      prisma.transaccion.findMany({
+        where: filtros,
+        orderBy: { fecha: 'desc' },
+      }),
+    ]);
 
-    const headers = ['Fecha', 'Tipo', 'Descripcion', 'Categoria', 'Monto'];
+    const monedaPrincipal = user?.monedaPrincipal || 'USD';
+
+    // Moneda: preferencia del usuario; si la fila tiene monedaOriginal distinta, se indica.
+    const headers = [
+      'Fecha',
+      'Tipo',
+      'Descripcion',
+      'Categoria',
+      'Monto',
+      'Moneda',
+    ];
     const csvData = [
       headers.join(','),
-      ...transacciones.map((t) =>
-        [
+      ...transacciones.map((t) => {
+        const monedaFila =
+          t.monedaOriginal && t.monedaOriginal !== monedaPrincipal
+            ? t.monedaOriginal
+            : monedaPrincipal;
+        return [
           new Date(t.fecha).toISOString().split('T')[0],
           t.tipo,
           `"${(t.descripcion || '').replace(/"/g, '""')}"`,
           t.categoria || '',
           t.monto,
-        ].join(',')
-      ),
+          monedaFila,
+        ].join(',');
+      }),
     ].join('\n');
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -240,7 +261,10 @@ exports.exportarCSV = async (req, res) => {
       'Content-Disposition',
       'attachment; filename=transacciones.csv'
     );
-    res.send(csvData);
+    // Comentario de cabecera legible: moneda por defecto del export
+    const bom = '\uFEFF';
+    const meta = `# moneda_preferencia=${monedaPrincipal}\n`;
+    res.send(bom + meta + csvData);
   } catch (error) {
     console.error('Error al exportar CSV:', error);
     res.status(500).json({ message: 'Error interno del servidor' });

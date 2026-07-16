@@ -134,17 +134,17 @@ Modelo de referencia (`Recordatorio`):
 
 Documentar en contratos:
 
-1. La UI formatea montos con `user.monedaPrincipal` por defecto.
-2. Si una cuenta tiene `moneda` distinta, mostrar código de moneda en esa fila (no convertir en silencio).
-3. CSV export indica moneda usada.
-4. v1.2 **no** incluye proveedor de tasas en vivo (queda backlog 1.3).
+1. La UI formatea montos con `user.monedaPrincipal` por defecto. ✅
+2. Si una cuenta tiene `moneda` distinta, mostrar código de moneda en esa fila (no convertir en silencio). ✅
+3. CSV export indica moneda usada. ✅
+4. v1.2 **no** incluye proveedor de tasas en vivo (queda backlog 1.3). ✅
 
 ### C.2 Implementación
 
-- [ ] Utilidad única de formato (`formatMoney(monto, codigo)`) usada en Dashboard, transacciones, deudas, inversiones, metas, presupuestos, reportes.
-- [ ] Revisar export CSV / reportes para incluir moneda.
-- [ ] Tests unitarios del formateador (locales / códigos comunes: USD, EUR, PEN, MXN, COP…).
-- [ ] Casos borde: `monedaPrincipal` inválida → fallback documentado (ej. USD).
+- [x] Utilidad única de formato (`formatMoney(monto, codigo)` en `currency.js` + `useCurrency`) usada en Dashboard, transacciones, deudas, inversiones, metas, presupuestos, reportes.
+- [x] Revisar export CSV / reportes para incluir moneda.
+- [x] Tests unitarios del formateador (locales / códigos comunes: USD, EUR, PEN, MXN, COP…).
+- [x] Casos borde: `monedaPrincipal` inválida → fallback documentado (ej. USD).
 
 **Criterio de salida:** no quedan montos “crudos” o con símbolo fijo distinto a la preferencia del usuario en pantallas principales.
 

@@ -10,7 +10,10 @@ export const MONEDAS = [
   { code: 'BOB', label: 'BOB - Boliviano' },
 ]
 
+/** Fallback documentado cuando falta o es inválida la preferencia. */
 export const MONEDA_DEFAULT = 'USD'
+
+const CODIGOS_SOPORTADOS = new Set(MONEDAS.map((m) => m.code))
 
 const LOCALE_BY_CURRENCY = {
   USD: 'en-US',
@@ -24,13 +27,30 @@ const LOCALE_BY_CURRENCY = {
 }
 
 /**
+ * Normaliza un código ISO de moneda.
+ * Códigos vacíos o no soportados → MONEDA_DEFAULT (USD).
+ * @param {string|null|undefined} currency
+ * @returns {string}
+ */
+export function resolveCurrencyCode(currency) {
+  if (currency == null || currency === '') return MONEDA_DEFAULT
+  const code = String(currency).trim().toUpperCase()
+  if (!/^[A-Z]{3}$/.test(code)) return MONEDA_DEFAULT
+  // Preferir lista de la app; códigos ISO válidos fuera de la lista se intentan con Intl
+  if (CODIGOS_SOPORTADOS.has(code)) return code
+  // ISO-like pero no en catálogo: aún intentar Intl; si falla, formatMoney usará fallback
+  return code
+}
+
+/**
  * Formatea un monto según el código ISO de moneda.
+ * Usa currencyDisplay: 'code' para no confundir monedas con el mismo símbolo "$".
  * @param {number|string|null|undefined} amount
  * @param {string} [currency=MONEDA_DEFAULT]
  * @param {{ signed?: boolean, maximumFractionDigits?: number, minimumFractionDigits?: number }} [options]
  */
 export function formatMoney(amount, currency = MONEDA_DEFAULT, options = {}) {
-  const code = (currency || MONEDA_DEFAULT).toUpperCase()
+  const code = resolveCurrencyCode(currency)
   const locale = LOCALE_BY_CURRENCY[code] || 'en-US'
   const value = Number(amount)
   const safe = Number.isFinite(value) ? value : 0
@@ -38,8 +58,6 @@ export function formatMoney(amount, currency = MONEDA_DEFAULT, options = {}) {
   const formatOptions = {
     style: 'currency',
     currency: code,
-    // Mostrar el código (COP, USD…) para que el cambio de preferencia sea evidente
-    // y no se confundan monedas que comparten el símbolo "$".
     currencyDisplay: 'code',
     ...(options.minimumFractionDigits != null && {
       minimumFractionDigits: options.minimumFractionDigits,
@@ -58,10 +76,14 @@ export function formatMoney(amount, currency = MONEDA_DEFAULT, options = {}) {
     if (safe < 0) return `-${formatted}`
     return formatted
   } catch {
+    // Código inválido para Intl → fallback USD documentado
+    if (code !== MONEDA_DEFAULT) {
+      return formatMoney(safe, MONEDA_DEFAULT, options)
+    }
     const fallback = safe.toFixed(2)
-    if (!options.signed) return `${code} ${fallback}`
-    if (safe > 0) return `+${code} ${fallback}`
-    if (safe < 0) return `-${code} ${Math.abs(safe).toFixed(2)}`
-    return `${code} ${fallback}`
+    if (!options.signed) return `${MONEDA_DEFAULT} ${fallback}`
+    if (safe > 0) return `+${MONEDA_DEFAULT} ${fallback}`
+    if (safe < 0) return `-${MONEDA_DEFAULT} ${Math.abs(safe).toFixed(2)}`
+    return `${MONEDA_DEFAULT} ${fallback}`
   }
 }
