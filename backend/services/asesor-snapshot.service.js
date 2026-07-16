@@ -15,6 +15,45 @@ const PERIODO_DIAS = 90;
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
+function resolverIngresosMensuales(transacciones, ingresoEsperado) {
+  const ingresos = transacciones.filter((t) => t.tipo === 'INGRESO');
+  const mesesConIngresos = new Set(
+    ingresos.map((t) => {
+      const fecha = new Date(t.fecha);
+      return `${fecha.getUTCFullYear()}-${fecha.getUTCMonth() + 1}`;
+    })
+  ).size;
+  const totalReal = ingresos.reduce(
+    (total, transaccion) => total + transaccion.monto,
+    0
+  );
+  const promedioReal = round2(
+    mesesConIngresos > 0 ? totalReal / mesesConIngresos : 0
+  );
+  const historialSuficiente = mesesConIngresos >= 2;
+  const esperado = round2(ingresoEsperado);
+
+  if (!historialSuficiente && esperado > 0) {
+    return {
+      ingresos: esperado,
+      ingresosRealesPromedio: promedioReal,
+      ingresosEsperados: esperado,
+      fuenteIngresos: 'ESPERADO',
+      historialIngresosSuficiente: false,
+      mesesConIngresos,
+    };
+  }
+
+  return {
+    ingresos: promedioReal,
+    ingresosRealesPromedio: promedioReal,
+    ingresosEsperados: esperado || null,
+    fuenteIngresos: historialSuficiente ? 'REAL' : 'REAL_PARCIAL',
+    historialIngresosSuficiente: historialSuficiente,
+    mesesConIngresos,
+  };
+}
+
 function mesesHasta(fecha) {
   if (!fecha) return null;
   const diff = new Date(fecha).getTime() - Date.now();
@@ -29,6 +68,7 @@ function mesesHasta(fecha) {
  */
 async function construirSnapshot(userId) {
   const desde = new Date(Date.now() - PERIODO_DIAS * 24 * 60 * 60 * 1000);
+  const ahora = new Date();
 
   const [usuario, deudas, transacciones, cuentas, presupuestos, metas] =
     await Promise.all([
@@ -53,7 +93,7 @@ async function construirSnapshot(userId) {
       }),
       prisma.transaccion.findMany({
         where: { userId, fecha: { gte: desde } },
-        select: { tipo: true, monto: true },
+        select: { tipo: true, monto: true, fecha: true },
       }),
       prisma.cuenta.findMany({
         where: { userId, activa: true, incluirEnBalance: true },
@@ -63,10 +103,10 @@ async function construirSnapshot(userId) {
         where: {
           userId,
           activo: true,
-          mes: new Date().getMonth() + 1,
-          año: new Date().getFullYear(),
+          mes: ahora.getUTCMonth() + 1,
+          año: ahora.getUTCFullYear(),
         },
-        select: { limite: true, gastado: true },
+        select: { tipo: true, limite: true, gastado: true },
       }),
       prisma.meta.findMany({
         where: { userId, completada: false },
@@ -80,11 +120,16 @@ async function construirSnapshot(userId) {
       .filter((t) => t.tipo === tipo)
       .reduce((sum, t) => sum + t.monto, 0);
 
-  const ingresosMensuales = round2(sumaPorTipo('INGRESO') / meses);
+  const ingresoEsperado = presupuestos
+    .filter((p) => p.tipo === 'INGRESO')
+    .reduce((total, p) => total + p.limite, 0);
+  const flujoIngresos = resolverIngresosMensuales(
+    transacciones,
+    ingresoEsperado
+  );
   const gastosMensuales = round2(sumaPorTipo('GASTO') / meses);
   const pagosDeudaMensuales = round2(sumaPorTipo('PAGO_DEUDA') / meses);
 
-  const ahora = new Date();
   const deudasInternas = deudas.map((deuda, i) => {
     const dto = toDeudaDto(deuda);
     return {
@@ -115,11 +160,11 @@ async function construirSnapshot(userId) {
 
   // Regla documentada (PLAN-1.3): estimación editable, no dato inventado.
   const capacidadExtraEstimada = round2(
-    Math.max(0, ingresosMensuales - gastosMensuales - pagoMinimoTotal)
+    Math.max(0, flujoIngresos.ingresos - gastosMensuales - pagoMinimoTotal)
   );
 
   const presupuestosExcedidos = presupuestos.filter(
-    (p) => p.gastado > p.limite
+    (p) => p.tipo === 'GASTO' && p.gastado > p.limite
   ).length;
   const progresoMetas =
     metas.length > 0
@@ -135,11 +180,11 @@ async function construirSnapshot(userId) {
       : null;
 
   const snapshot = {
-    version: 1,
+    version: 2,
     moneda: usuario?.monedaPrincipal || 'USD',
     periodoDias: PERIODO_DIAS,
     flujoMensual: {
-      ingresos: ingresosMensuales,
+      ...flujoIngresos,
       gastos: gastosMensuales,
       pagosDeuda: pagosDeudaMensuales,
     },
@@ -156,6 +201,7 @@ async function construirSnapshot(userId) {
     presupuestos: {
       activos: presupuestos.length,
       excedidos: presupuestosExcedidos,
+      ingresoEsperado: round2(ingresoEsperado),
     },
     metas: { activas: metas.length, progresoPromedio: progresoMetas },
     capacidadExtraEstimada,
@@ -164,4 +210,8 @@ async function construirSnapshot(userId) {
   return { snapshot, deudasInternas };
 }
 
-module.exports = { construirSnapshot, PERIODO_DIAS };
+module.exports = {
+  construirSnapshot,
+  resolverIngresosMensuales,
+  PERIODO_DIAS,
+};

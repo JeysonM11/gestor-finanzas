@@ -42,7 +42,7 @@ const Presupuestos = () => {
   const handleSincronizar = async () => {
     try {
       await presupuestoService.sincronizar({ mes, anio })
-      toast.success('Presupuestos sincronizados con gastos')
+      toast.success('Presupuestos sincronizados con ingresos y gastos')
       cargar()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al sincronizar')
@@ -65,7 +65,9 @@ const Presupuestos = () => {
       <div className="page-header">
         <div className="min-w-0">
           <h1 className="page-title">Presupuestos</h1>
-          <p className="page-subtitle">Límites mensuales por categoría</p>
+          <p className="page-subtitle">
+            Ingresos esperados, gastos planificados y saldo disponible
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
           <select
@@ -127,13 +129,37 @@ const Presupuestos = () => {
       {resumen && (
         <div className="stat-grid">
           <Card>
-            <p className="text-sm text-ink-muted">Límite total</p>
-            <p className="text-2xl font-bold text-ink">{formatMoney(resumen.totalLimite || 0)}</p>
+            <p className="text-sm text-ink-muted">Ingreso esperado</p>
+            <p className="text-2xl font-bold text-ink">
+              {formatMoney(resumen.ingresoEsperado || 0)}
+            </p>
           </Card>
           <Card>
-            <p className="text-sm text-ink-muted">Gastado</p>
+            <p className="text-sm text-ink-muted">Ingreso recibido</p>
+            <p className="text-2xl font-bold text-emerald-600">
+              {formatMoney(resumen.ingresosReales || 0)}
+            </p>
+          </Card>
+          <Card>
+            <p className="text-sm text-ink-muted">Egresos reales</p>
             <p className="text-2xl font-bold text-orange-600">
-              {formatMoney(resumen.totalGastado || 0)}
+              {formatMoney(resumen.egresosReales || 0)}
+            </p>
+          </Card>
+          <Card>
+            <p className="text-sm text-ink-muted">Saldo disponible</p>
+            <p
+              className={`text-2xl font-bold ${
+                resumen.saldoDisponible < 0 ? 'text-red-600' : 'text-primary-600'
+              }`}
+            >
+              {formatMoney(resumen.saldoDisponible || 0)}
+            </p>
+          </Card>
+          <Card>
+            <p className="text-sm text-ink-muted">Límites de gasto</p>
+            <p className="text-2xl font-bold text-ink">
+              {formatMoney(resumen.totalLimite || 0)}
             </p>
           </Card>
           <Card>
@@ -157,8 +183,14 @@ const Presupuestos = () => {
                     <h3 className="font-bold text-lg text-ink">{p.categoria}</h3>
                     <p className="text-sm text-ink-muted">
                       {p.mes}/{p.anio || p.año}
+                      <span className="ml-2 font-medium">
+                        {p.tipo === 'INGRESO' ? 'Ingreso esperado' : 'Límite de gasto'}
+                      </span>
                       {p.excedido && (
                         <span className="ml-2 text-red-600 font-medium">Excedido</span>
+                      )}
+                      {p.cumplido && (
+                        <span className="ml-2 text-emerald-600 font-medium">Recibido</span>
                       )}
                     </p>
                   </div>
@@ -190,7 +222,7 @@ const Presupuestos = () => {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-ink-muted">
-                    {formatMoney(p.gastado)} / {formatMoney(p.limite)}
+                    {formatMoney(p.montoReal ?? p.gastado)} / {formatMoney(p.limite)}
                   </span>
                   <span
                     className={
@@ -205,6 +237,8 @@ const Presupuestos = () => {
                     className={`h-full rounded-full ${
                       p.excedido
                         ? 'bg-red-500'
+                        : p.tipo === 'INGRESO'
+                          ? 'bg-emerald-500'
                         : p.porcentajeUsado >= (p.alertaEn || 80)
                           ? 'bg-yellow-500'
                           : 'bg-primary-600'
@@ -213,8 +247,11 @@ const Presupuestos = () => {
                   />
                 </div>
                 <p className="text-xs text-ink-subtle">
-                  Restante: {formatMoney(p.restante || 0)}
-                  {p.alertaEn != null && ` · Alerta al ${p.alertaEn}%`}
+                  {p.tipo === 'INGRESO' ? 'Por recibir' : 'Restante'}:{' '}
+                  {formatMoney(p.restante || 0)}
+                  {p.tipo === 'GASTO' &&
+                    p.alertaEn != null &&
+                    ` · Alerta al ${p.alertaEn}%`}
                 </p>
               </div>
             </Card>
@@ -225,7 +262,7 @@ const Presupuestos = () => {
           <EmptyState
             icon={<PieChart className="h-16 w-16" />}
             title="Sin presupuestos"
-            description={`Define un límite por categoría para ${mes}/${anio}`}
+            description={`Registra ingresos esperados y límites de gasto para ${mes}/${anio}`}
             action={
               <Button onClick={() => setModalAbierto(true)}>
                 <Plus className="h-5 w-5 mr-2" />

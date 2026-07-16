@@ -59,6 +59,7 @@ function construirPrompt(snapshot, plan) {
     '- NO inventes ni recalcules cifras: usa exactamente las del snapshot y el plan.',
     '- Las deudas se identifican como D1, D2, ... (no inventes nombres).',
     `- Todos los montos están en ${snapshot.moneda}.`,
+    '- Si flujoMensual.fuenteIngresos es ESPERADO, aclara que el ingreso es el presupuesto mensual esperado y no un promedio histórico confirmado.',
     '- Tono claro y motivador, sin prometer resultados garantizados.',
     '- Es orientación educativa, no asesoría financiera profesional.',
     '',

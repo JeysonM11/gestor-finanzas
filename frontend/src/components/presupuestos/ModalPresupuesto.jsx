@@ -9,6 +9,7 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
   const isEditing = !!presupuesto
   const { categorias, categoriasParaTipo } = useCategorias({ enabled: isOpen })
   const [formData, setFormData] = useState({
+    tipo: 'GASTO',
     categoria: '',
     limite: '',
     alertaEn: '80',
@@ -21,6 +22,7 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
   useEffect(() => {
     if (presupuesto && isOpen) {
       setFormData({
+        tipo: presupuesto.tipo || 'GASTO',
         categoria: presupuesto.categoria || '',
         limite: presupuesto.limite ?? '',
         alertaEn: presupuesto.alertaEn ?? 80,
@@ -29,6 +31,7 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
       })
     } else if (!isOpen) {
       setFormData({
+        tipo: 'GASTO',
         categoria: '',
         limite: '',
         alertaEn: '80',
@@ -43,7 +46,11 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'tipo' ? { categoria: '' } : {}),
+    }))
   }
 
   const handleSubmit = async (e) => {
@@ -52,6 +59,7 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
     setError('')
     try {
       const payload = {
+        tipo: formData.tipo,
         categoria: formData.categoria,
         limite: parseFloat(formData.limite),
         alertaEn: parseFloat(formData.alertaEn) || 80,
@@ -72,7 +80,7 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
     }
   }
 
-  const categoriasGasto = categoriasParaTipo('GASTO')
+  const categoriasDisponibles = categoriasParaTipo(formData.tipo)
 
   return (
     <Modal
@@ -88,6 +96,27 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
         )}
 
         <div>
+          <label className="block text-sm font-medium text-ink-muted mb-2">
+            Tipo de presupuesto *
+          </label>
+          <select
+            name="tipo"
+            value={formData.tipo}
+            onChange={handleChange}
+            className="w-full input-field"
+            required
+          >
+            <option value="INGRESO">Ingreso esperado</option>
+            <option value="GASTO">Límite de gasto</option>
+          </select>
+          <p className="mt-1 text-xs text-ink-subtle">
+            {formData.tipo === 'INGRESO'
+              ? 'Las transacciones de ingreso confirmarán cuánto recibiste.'
+              : 'Los gastos de esta categoría consumirán el límite.'}
+          </p>
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-ink-muted mb-2">Categoría *</label>
           <select
             name="categoria"
@@ -97,7 +126,7 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
             required
           >
             <option value="">Seleccionar...</option>
-            {categoriasGasto.map((c) => (
+            {categoriasDisponibles.map((c) => (
               <option key={c.id || c.nombre} value={c.nombre}>
                 {c.nombre}
               </option>
@@ -111,7 +140,7 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
-            label="Límite *"
+            label={formData.tipo === 'INGRESO' ? 'Ingreso esperado *' : 'Límite *'}
             type="number"
             name="limite"
             value={formData.limite}
@@ -120,15 +149,17 @@ const ModalPresupuesto = ({ isOpen, onClose, onSuccess, presupuesto = null, mes,
             step="0.01"
             required
           />
-          <Input
-            label="Alerta en (%)"
-            type="number"
-            name="alertaEn"
-            value={formData.alertaEn}
-            onChange={handleChange}
-            min="1"
-            max="100"
-          />
+          {formData.tipo === 'GASTO' && (
+            <Input
+              label="Alerta en (%)"
+              type="number"
+              name="alertaEn"
+              value={formData.alertaEn}
+              onChange={handleChange}
+              min="1"
+              max="100"
+            />
+          )}
           <Input
             label="Mes"
             type="number"

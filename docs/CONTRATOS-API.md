@@ -331,9 +331,11 @@ Campos: `titulo`, `descripcion`, `tipo` (`AHORRO|GASTO|INVERSION|DEUDA|EMERGENCI
 
 ## Presupuestos — `/api/finanzas/presupuestos`
 
-Campos: `categoria`, `limite`, `gastado` (calculado), `mes`, `año` (API también acepta `anio`), `alertaEn`, `activo`.
+Campos: `categoria`, `tipo` (`INGRESO|GASTO`, default `GASTO`), `limite`, `gastado` (monto real sincronizado), `mes`, `año` (API también acepta `anio`), `alertaEn`, `activo`.
 
-DTO: `anio`, `porcentajeUsado`, `restante`, `excedido`.
+DTO: `anio`, `montoReal`, `porcentajeUsado`, `restante`, `excedido` (gasto), `cumplido` (ingreso).
+
+El resumen de GET incluye `ingresoEsperado`, `ingresosReales`, `egresosReales`, `saldoDisponible`, `saldoPlanificado`, además de los totales históricos de límites de gasto.
 
 | Ruta | Estado |
 |------|--------|
@@ -342,7 +344,7 @@ DTO: `anio`, `porcentajeUsado`, `restante`, `excedido`.
 | PUT/DELETE `/:id` | ✅ |
 | POST `/sincronizar` | ✅ |
 
-Al crear/editar/eliminar un `GASTO`, se recalcula `gastado` y puede emitir notificación `ALERTA`.
+Al crear/editar/eliminar un `INGRESO` o `GASTO`, se sincroniza el monto real de su presupuesto. Solo los límites de gasto emiten notificación `ALERTA`.
 
 ---
 
@@ -351,6 +353,8 @@ Al crear/editar/eliminar un `GASTO`, se recalcula `gastado` y puede emitir notif
 Modelo Prisma: `AsesorPlan` (`estrategia` `AVALANCHE|SNOWBALL`, `resumen`, `snapshotJson`, `planJson`, `generadoPorIA`, `userId`).
 
 Principio: **el backend calcula los números** (motor en `backend/services/asesor-deudas.service.js`); Gemini solo redacta diagnóstico/tips sobre un snapshot **agregado y anonimizado** (deudas como `D1..Dn`; sin PII, acreedores, notas ni transacciones crudas).
+
+Fuente de ingresos: con ingresos registrados en al menos dos meses, el snapshot usa el promedio real; con historial insuficiente, usa la suma de presupuestos `INGRESO` del mes como respaldo y expone `fuenteIngresos` para que el cálculo sea auditable.
 
 ### Endpoints (todos con JWT)
 

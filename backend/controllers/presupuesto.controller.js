@@ -6,6 +6,7 @@ const {
   sincronizarPresupuesto,
   sincronizarTodos,
   toPresupuestoDto,
+  calcularResumenMensual,
 } = require('../utils/presupuesto');
 
 function resolverMesAnio(body = {}) {
@@ -33,20 +34,30 @@ exports.obtenerPresupuestos = catchAsync(async (req, res) => {
   if (activo === 'true') where.activo = true;
   if (activo === 'false') where.activo = false;
 
-  const presupuestos = await prisma.presupuesto.findMany({
-    where,
-    orderBy: { categoria: 'asc' },
-  });
+  const inicio = new Date(Date.UTC(where.año, where.mes - 1, 1));
+  const fin = new Date(Date.UTC(where.año, where.mes, 1));
+  const [presupuestos, transacciones] = await Promise.all([
+    prisma.presupuesto.findMany({
+      where,
+      orderBy: [{ tipo: 'asc' }, { categoria: 'asc' }],
+    }),
+    prisma.transaccion.findMany({
+      where: {
+        userId,
+        fecha: { gte: inicio, lt: fin },
+        tipo: { in: ['INGRESO', 'GASTO', 'PAGO_DEUDA'] },
+      },
+      select: { tipo: true, monto: true },
+    }),
+  ]);
 
   const dtos = presupuestos.map(toPresupuestoDto);
-  const resumen = {
-    mes: where.mes,
-    anio: where.año,
-    totalLimite: dtos.reduce((s, p) => s + p.limite, 0),
-    totalGastado: dtos.reduce((s, p) => s + p.gastado, 0),
-    excedidos: dtos.filter((p) => p.excedido).length,
-    cantidad: dtos.length,
-  };
+  const resumen = calcularResumenMensual(
+    dtos,
+    transacciones,
+    where.mes,
+    where.año
+  );
 
   res.status(200).json({
     success: true,
@@ -57,7 +68,7 @@ exports.obtenerPresupuestos = catchAsync(async (req, res) => {
 
 exports.crearPresupuesto = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  const { categoria, limite, alertaEn, activo } = req.body;
+  const { categoria, limite, alertaEn, activo, tipo = 'GASTO' } = req.body;
   const { mes, anio } = resolverMesAnio(req.body);
 
   if (!categoria || limite == null) {
@@ -70,6 +81,7 @@ exports.crearPresupuesto = catchAsync(async (req, res) => {
   const creado = await prisma.presupuesto.create({
     data: {
       categoria,
+      tipo,
       limite: Number(limite),
       mes,
       año: anio,
@@ -83,7 +95,8 @@ exports.crearPresupuesto = catchAsync(async (req, res) => {
     userId,
     categoria,
     mes,
-    anio
+    anio,
+    tipo
   );
 
   res.status(201).json({
@@ -102,9 +115,11 @@ exports.actualizarPresupuesto = catchAsync(async (req, res) => {
   });
   if (!existente) throw new NotFoundError('Presupuesto');
 
-  const { categoria, limite, alertaEn, activo, mes, anio, año } = req.body;
+  const { categoria, tipo, limite, alertaEn, activo, mes, anio, año } =
+    req.body;
   const updateData = {};
   if (categoria != null) updateData.categoria = categoria;
+  if (tipo != null) updateData.tipo = tipo;
   if (limite != null) updateData.limite = Number(limite);
   if (alertaEn !== undefined) {
     updateData.alertaEn = alertaEn != null ? Number(alertaEn) : null;
@@ -125,7 +140,8 @@ exports.actualizarPresupuesto = catchAsync(async (req, res) => {
     userId,
     updateData.categoria || existente.categoria,
     updateData.mes || existente.mes,
-    updateData.año || existente.año
+    updateData.año || existente.año,
+    updateData.tipo || existente.tipo
   );
 
   res.json({

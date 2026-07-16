@@ -133,6 +133,7 @@ const aporteMetaSchema = Joi.object({
 
 const createPresupuestoSchema = Joi.object({
   categoria: Joi.string().trim().min(1).max(100).required(),
+  tipo: Joi.string().valid('INGRESO', 'GASTO').default('GASTO'),
   limite: Joi.number().positive().required(),
   mes: Joi.number().integer().min(1).max(12).optional(),
   anio: Joi.number().integer().min(2000).max(2100).optional(),

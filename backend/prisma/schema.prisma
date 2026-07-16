@@ -177,6 +177,7 @@ model Meta {
 model Presupuesto {
   id                  Int                 @id @default(autoincrement())
   categoria           String
+  tipo                TipoPresupuesto     @default(GASTO)
   limite              Float
   gastado             Float               @default(0)
   mes                 Int                 // 1-12
@@ -191,7 +192,7 @@ model Presupuesto {
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   
-  @@unique([userId, categoria, mes, año])
+  @@unique([userId, categoria, tipo, mes, año])
   @@map("presupuestos")
 }
 
@@ -484,6 +485,11 @@ enum TipoTransaccion {
   GASTO
   TRANSFERENCIA
   PAGO_DEUDA
+}
+
+enum TipoPresupuesto {
+  INGRESO
+  GASTO
 }
 
 enum MetodoPago {

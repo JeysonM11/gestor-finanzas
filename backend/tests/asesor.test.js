@@ -3,6 +3,9 @@ const {
   ordenarDeudas,
   proyectarPlan,
 } = require('../services/asesor-deudas.service');
+const {
+  resolverIngresosMensuales,
+} = require('../services/asesor-snapshot.service');
 const { generarPlanSchema, respuestaIASchema } = require('../validators/asesor.validator');
 const { consejoFallback } = require('../services/gemini.service');
 
@@ -87,6 +90,47 @@ describe('asesor v1.3 — validadores', () => {
       motivacion: 'vamos',
     });
     expect(error).toBeUndefined();
+  });
+});
+
+describe('asesor v1.3 — fuente de ingresos', () => {
+  test('usa ingreso esperado cuando el historial es insuficiente', () => {
+    const flujo = resolverIngresosMensuales(
+      [
+        {
+          tipo: 'INGRESO',
+          monto: 900000,
+          fecha: new Date('2026-07-05T12:00:00Z'),
+        },
+      ],
+      3200000
+    );
+
+    expect(flujo.ingresos).toBe(3200000);
+    expect(flujo.ingresosRealesPromedio).toBe(900000);
+    expect(flujo.fuenteIngresos).toBe('ESPERADO');
+  });
+
+  test('prefiere promedio real con ingresos en al menos dos meses', () => {
+    const flujo = resolverIngresosMensuales(
+      [
+        {
+          tipo: 'INGRESO',
+          monto: 3000000,
+          fecha: new Date('2026-06-05T12:00:00Z'),
+        },
+        {
+          tipo: 'INGRESO',
+          monto: 3200000,
+          fecha: new Date('2026-07-05T12:00:00Z'),
+        },
+      ],
+      3500000
+    );
+
+    expect(flujo.ingresos).toBe(3100000);
+    expect(flujo.fuenteIngresos).toBe('REAL');
+    expect(flujo.historialIngresosSuficiente).toBe(true);
   });
 });
 

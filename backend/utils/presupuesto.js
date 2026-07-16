@@ -7,10 +7,18 @@ function mesAnioDeFecha(fecha) {
 }
 
 /**
- * Recalcula `gastado` de un presupuesto a partir de transacciones GASTO del mes.
+ * Recalcula el monto real de un presupuesto a partir de transacciones del mes.
+ * Para mantener compatibilidad con el esquema histórico, el valor se persiste
+ * en `gastado`: GASTO = consumido e INGRESO = recibido.
  * Emite notificación si se cruza el umbral de alerta.
  */
-async function sincronizarPresupuesto(userId, categoria, mes, anio) {
+async function sincronizarPresupuesto(
+  userId,
+  categoria,
+  mes,
+  anio,
+  tipo = 'GASTO'
+) {
   if (!categoria) return null;
 
   const inicio = new Date(Date.UTC(anio, mes - 1, 1, 0, 0, 0, 0));
@@ -19,7 +27,7 @@ async function sincronizarPresupuesto(userId, categoria, mes, anio) {
   const agg = await prisma.transaccion.aggregate({
     where: {
       userId,
-      tipo: 'GASTO',
+      tipo,
       categoria,
       fecha: { gte: inicio, lte: fin },
     },
@@ -32,6 +40,7 @@ async function sincronizarPresupuesto(userId, categoria, mes, anio) {
     where: {
       userId,
       categoria,
+      tipo,
       mes,
       año: anio,
       activo: true,
@@ -50,6 +59,7 @@ async function sincronizarPresupuesto(userId, categoria, mes, anio) {
 }
 
 async function evaluarAlertaPresupuesto(presupuesto) {
+  if (presupuesto.tipo === 'INGRESO') return;
   if (!presupuesto.alertaEn || presupuesto.notificacionEnviada) return;
   if (!presupuesto.limite || presupuesto.limite <= 0) return;
 
@@ -84,14 +94,24 @@ async function evaluarAlertaPresupuesto(presupuesto) {
 }
 
 /**
- * Tras crear/editar/eliminar un gasto, sincroniza el presupuesto de esa categoría/mes.
+ * Tras crear/editar/eliminar un ingreso o gasto, sincroniza su presupuesto.
  */
 async function sincronizarPorTransaccion(userId, transaccion) {
-  if (!transaccion || transaccion.tipo !== 'GASTO' || !transaccion.categoria) {
+  if (
+    !transaccion ||
+    !['INGRESO', 'GASTO'].includes(transaccion.tipo) ||
+    !transaccion.categoria
+  ) {
     return null;
   }
   const { mes, anio } = mesAnioDeFecha(transaccion.fecha);
-  return sincronizarPresupuesto(userId, transaccion.categoria, mes, anio);
+  return sincronizarPresupuesto(
+    userId,
+    transaccion.categoria,
+    mes,
+    anio,
+    transaccion.tipo
+  );
 }
 
 /**
@@ -110,7 +130,8 @@ async function sincronizarTodos(userId, mes, anio) {
       userId,
       p.categoria,
       p.mes,
-      p.año
+      p.año,
+      p.tipo
     );
     if (actualizado) resultados.push(actualizado);
   }
@@ -125,9 +146,42 @@ function toPresupuestoDto(p) {
   return {
     ...p,
     anio: p.año,
+    montoReal: p.gastado,
     porcentajeUsado: Number(porcentaje.toFixed(1)),
     restante: Math.max(0, p.limite - p.gastado),
-    excedido: p.gastado > p.limite,
+    excedido: p.tipo !== 'INGRESO' && p.gastado > p.limite,
+    cumplido: p.tipo === 'INGRESO' && p.gastado >= p.limite,
+  };
+}
+
+function calcularResumenMensual(presupuestos, transacciones, mes, anio) {
+  const ingresos = presupuestos.filter((p) => p.tipo === 'INGRESO');
+  const gastos = presupuestos.filter((p) => p.tipo !== 'INGRESO');
+  const sumar = (items, campo) =>
+    items.reduce((total, item) => total + (Number(item[campo]) || 0), 0);
+  const sumarTransacciones = (tipos) =>
+    transacciones
+      .filter((t) => tipos.includes(t.tipo))
+      .reduce((total, t) => total + (Number(t.monto) || 0), 0);
+
+  const ingresoEsperado = sumar(ingresos, 'limite');
+  const ingresosReales = sumarTransacciones(['INGRESO']);
+  const egresosReales = sumarTransacciones(['GASTO', 'PAGO_DEUDA']);
+  const totalLimite = sumar(gastos, 'limite');
+
+  return {
+    mes,
+    anio,
+    totalLimite,
+    totalGastado: sumar(gastos, 'gastado'),
+    excedidos: gastos.filter((p) => p.excedido).length,
+    cantidad: presupuestos.length,
+    ingresoEsperado,
+    ingresosReales,
+    diferenciaIngresos: ingresosReales - ingresoEsperado,
+    egresosReales,
+    saldoDisponible: ingresosReales - egresosReales,
+    saldoPlanificado: ingresoEsperado - totalLimite,
   };
 }
 
@@ -138,4 +192,5 @@ module.exports = {
   sincronizarTodos,
   evaluarAlertaPresupuesto,
   toPresupuestoDto,
+  calcularResumenMensual,
 };
