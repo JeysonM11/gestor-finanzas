@@ -1,27 +1,43 @@
 const prisma = require('../lib/prisma');
+const { catchAsync } = require('../middlewares/error.middleware');
+const {
+  NotFoundError,
+  ConflictError,
+  ValidationError,
+} = require('../utils/errors');
 const { startOfDayUTC, endOfDayUTC } = require('../utils/date');
+const { buildCatalogoCategorias } = require('../utils/categorias');
 
-const CATEGORIAS_PREDEFINIDAS = [
-  'Alimentacion',
-  'Transporte',
-  'Entretenimiento',
-  'Salud',
-  'Educacion',
-  'Servicios',
-  'Compras',
-  'Viajes',
-  'Hogar',
-  'Trabajo',
-  'Inversion',
-  'Otros',
-];
+/** Catálogo para selects: personalizadas activas + uso en transacciones + predefinidas */
+exports.obtenerCategorias = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const soloPersonalizadas =
+    req.query.soloPersonalizadas === 'true' || req.query.soloPersonalizadas === '1';
 
-// Obtener categorias del usuario (usadas + predefinidas)
-exports.obtenerCategorias = async (req, res) => {
-  try {
-    const userId = req.user.id;
+  if (soloPersonalizadas) {
+    const personalizadas = await prisma.categoriaPersonalizada.findMany({
+      where: { userId, activa: true },
+      orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
+    });
 
-    const categorias = await prisma.transaccion.groupBy({
+    return res.status(200).json({
+      success: true,
+      categorias: personalizadas.map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        tipo: c.tipo,
+        color: c.color,
+        icono: c.icono,
+        descripcion: c.descripcion,
+        activa: c.activa,
+        origen: 'personalizada',
+      })),
+      total: personalizadas.length,
+    });
+  }
+
+  const [usoTransacciones, personalizadas] = await Promise.all([
+    prisma.transaccion.groupBy({
       by: ['categoria'],
       where: {
         userId,
@@ -29,110 +45,98 @@ exports.obtenerCategorias = async (req, res) => {
       },
       _count: { categoria: true },
       _sum: { monto: true },
-    });
-
-    const personalizadas = await prisma.categoriaPersonalizada.findMany({
+    }),
+    prisma.categoriaPersonalizada.findMany({
       where: { userId, activa: true },
-      orderBy: { orden: 'asc' },
-    });
+      orderBy: [{ orden: 'asc' }, { nombre: 'asc' }],
+    }),
+  ]);
 
-    const categoriasExistentes = new Set(
-      categorias.map((c) => c.categoria).filter(Boolean)
-    );
-    personalizadas.forEach((c) => categoriasExistentes.add(c.nombre));
+  const categorias = buildCatalogoCategorias({
+    personalizadas,
+    usoTransacciones,
+  });
 
-    const categoriasCompletas = [
-      ...categorias
-        .filter((c) => c.categoria)
-        .map((c) => ({
-          nombre: c.categoria,
-          count: c._count.categoria,
-          total: c._sum.monto || 0,
-          origen: 'transaccion',
-        })),
-      ...personalizadas
-        .filter((c) => !categorias.some((x) => x.categoria === c.nombre))
-        .map((c) => ({
-          nombre: c.nombre,
-          count: 0,
-          total: 0,
-          origen: 'personalizada',
-          id: c.id,
-          tipo: c.tipo,
-          color: c.color,
-          icono: c.icono,
-        })),
-      ...CATEGORIAS_PREDEFINIDAS.filter((cat) => !categoriasExistentes.has(cat)).map(
-        (cat) => ({
-          nombre: cat,
-          count: 0,
-          total: 0,
-          origen: 'predefinida',
-        })
-      ),
-    ];
+  res.status(200).json({
+    success: true,
+    categorias,
+    total: categorias.length,
+  });
+});
 
-    res.status(200).json({
-      categorias: categoriasCompletas,
-      total: categoriasCompletas.length,
-    });
-  } catch (error) {
-    console.error('Error al obtener categorias:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+exports.crearCategoria = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const { nombre, tipo, color, icono, descripcion } = req.body;
+  const nombreNorm = nombre.trim();
+
+  const existente = await prisma.categoriaPersonalizada.findFirst({
+    where: { userId, nombre: nombreNorm },
+  });
+
+  if (existente?.activa) {
+    throw new ConflictError('Ya existe una categoría con ese nombre');
   }
-};
 
-exports.crearCategoria = async (req, res) => {
+  if (existente && !existente.activa) {
+    const reactivada = await prisma.categoriaPersonalizada.update({
+      where: { id: existente.id },
+      data: {
+        tipo,
+        color: color || existente.color || '#6B7280',
+        icono: icono !== undefined ? icono : existente.icono,
+        descripcion: descripcion !== undefined ? descripcion : existente.descripcion,
+        activa: true,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Categoría reactivada exitosamente',
+      categoria: reactivada,
+    });
+  }
+
   try {
-    const userId = req.user.id;
-    const { nombre, tipo, color, icono, descripcion } = req.body;
-
-    if (!nombre || !tipo) {
-      return res.status(400).json({
-        message: 'Nombre y tipo son obligatorios',
-      });
-    }
-
     const categoria = await prisma.categoriaPersonalizada.create({
       data: {
-        nombre: nombre.trim(),
+        nombre: nombreNorm,
         tipo,
         color: color || '#6B7280',
-        icono,
-        descripcion,
+        icono: icono || null,
+        descripcion: descripcion || null,
         userId,
       },
     });
 
     res.status(201).json({
-      message: 'Categoria creada exitosamente',
+      success: true,
+      message: 'Categoría creada exitosamente',
       categoria,
     });
   } catch (error) {
     if (error.code === 'P2002') {
-      return res.status(409).json({ message: 'Ya existe una categoria con ese nombre' });
+      throw new ConflictError('Ya existe una categoría con ese nombre');
     }
-    console.error('Error al crear categoria:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    throw error;
   }
-};
+});
 
-exports.actualizarCategoria = async (req, res) => {
+exports.actualizarCategoria = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const { id } = req.params;
+  const { nombre, tipo, color, icono, descripcion, activa } = req.body;
+
+  const existente = await prisma.categoriaPersonalizada.findFirst({
+    where: { id: parseInt(id, 10), userId },
+  });
+
+  if (!existente) {
+    throw new NotFoundError('Categoría');
+  }
+
   try {
-    const userId = req.user.id;
-    const { id } = req.params;
-    const { nombre, tipo, color, icono, descripcion, activa } = req.body;
-
-    const existente = await prisma.categoriaPersonalizada.findFirst({
-      where: { id: parseInt(id), userId },
-    });
-
-    if (!existente) {
-      return res.status(404).json({ message: 'Categoria no encontrada' });
-    }
-
     const categoria = await prisma.categoriaPersonalizada.update({
-      where: { id: parseInt(id) },
+      where: { id: existente.id },
       data: {
         ...(nombre != null && { nombre: nombre.trim() }),
         ...(tipo != null && { tipo }),
@@ -144,91 +148,98 @@ exports.actualizarCategoria = async (req, res) => {
     });
 
     res.status(200).json({
-      message: 'Categoria actualizada exitosamente',
+      success: true,
+      message: 'Categoría actualizada exitosamente',
       categoria,
     });
   } catch (error) {
-    console.error('Error al actualizar categoria:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-};
-
-exports.eliminarCategoria = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { id } = req.params;
-
-    const resultado = await prisma.categoriaPersonalizada.deleteMany({
-      where: { id: parseInt(id), userId },
-    });
-
-    if (resultado.count === 0) {
-      return res.status(404).json({ message: 'Categoria no encontrada' });
+    if (error.code === 'P2002') {
+      throw new ConflictError('Ya existe una categoría con ese nombre');
     }
-
-    res.status(200).json({ message: 'Categoria eliminada exitosamente' });
-  } catch (error) {
-    console.error('Error al eliminar categoria:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    throw error;
   }
-};
+});
 
-exports.obtenerEstadisticasPorCategoria = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { fechaInicio, fechaFin } = req.query;
+/** Soft-delete: marca activa=false (conserva históricos por string) */
+exports.eliminarCategoria = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const { id } = req.params;
 
-    const filtroFecha = {};
-    if (fechaInicio && fechaFin) {
-      filtroFecha.fecha = {
-        gte: startOfDayUTC(fechaInicio),
-        lte: endOfDayUTC(fechaFin),
+  const existente = await prisma.categoriaPersonalizada.findFirst({
+    where: { id: parseInt(id, 10), userId, activa: true },
+  });
+
+  if (!existente) {
+    throw new NotFoundError('Categoría');
+  }
+
+  await prisma.categoriaPersonalizada.update({
+    where: { id: existente.id },
+    data: { activa: false },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Categoría desactivada exitosamente',
+  });
+});
+
+exports.obtenerEstadisticasPorCategoria = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const { fechaInicio, fechaFin } = req.query;
+
+  if ((fechaInicio && !fechaFin) || (!fechaInicio && fechaFin)) {
+    throw new ValidationError('fechaInicio y fechaFin deben enviarse juntas');
+  }
+
+  const filtroFecha = {};
+  if (fechaInicio && fechaFin) {
+    filtroFecha.fecha = {
+      gte: startOfDayUTC(fechaInicio),
+      lte: endOfDayUTC(fechaFin),
+    };
+  }
+
+  const estadisticas = await prisma.transaccion.groupBy({
+    by: ['categoria', 'tipo'],
+    where: {
+      userId,
+      categoria: { not: null },
+      ...filtroFecha,
+    },
+    _count: { categoria: true },
+    _sum: { monto: true },
+  });
+
+  const datosProcessados = {};
+  estadisticas.forEach((stat) => {
+    if (!datosProcessados[stat.categoria]) {
+      datosProcessados[stat.categoria] = {
+        categoria: stat.categoria,
+        ingresos: 0,
+        gastos: 0,
+        transacciones: 0,
       };
     }
 
-    const estadisticas = await prisma.transaccion.groupBy({
-      by: ['categoria', 'tipo'],
-      where: {
-        userId,
-        categoria: { not: null },
-        ...filtroFecha,
-      },
-      _count: { categoria: true },
-      _sum: { monto: true },
-    });
+    const monto = stat._sum.monto || 0;
+    const cantidad = stat._count.categoria || 0;
 
-    const datosProcessados = {};
-    estadisticas.forEach((stat) => {
-      if (!datosProcessados[stat.categoria]) {
-        datosProcessados[stat.categoria] = {
-          categoria: stat.categoria,
-          ingresos: 0,
-          gastos: 0,
-          transacciones: 0,
-        };
-      }
+    if (stat.tipo === 'INGRESO') {
+      datosProcessados[stat.categoria].ingresos += monto;
+    } else if (stat.tipo === 'GASTO') {
+      datosProcessados[stat.categoria].gastos += monto;
+    }
+    datosProcessados[stat.categoria].transacciones += cantidad;
+  });
 
-      const monto = stat._sum.monto || 0;
-      const cantidad = stat._count.categoria || 0;
-
-      if (stat.tipo === 'INGRESO') {
-        datosProcessados[stat.categoria].ingresos += monto;
-      } else if (stat.tipo === 'GASTO') {
-        datosProcessados[stat.categoria].gastos += monto;
-      }
-      datosProcessados[stat.categoria].transacciones += cantidad;
-    });
-
-    res.status(200).json({
-      estadisticas: Object.values(datosProcessados),
-      resumen: {
-        totalCategorias: Object.keys(datosProcessados).length,
-        fechaInicio,
-        fechaFin,
-      },
-    });
-  } catch (error) {
-    console.error('Error al obtener estadisticas:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-};
+  res.status(200).json({
+    success: true,
+    estadisticas: Object.values(datosProcessados),
+    resumen: {
+      totalCategorias: Object.keys(datosProcessados).length,
+      fechaInicio: fechaInicio || null,
+      fechaFin: fechaFin || null,
+    },
+  });
+});

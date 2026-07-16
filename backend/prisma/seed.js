@@ -93,18 +93,18 @@ async function seedDatabase() {
       {
         clave: 'categorias_predefinidas_gastos',
         valor: JSON.stringify([
-          'Alimentación', 'Transporte', 'Entretenimiento', 'Salud',
+          'Alimentación', 'Transporte', 'Vivienda', 'Entretenimiento', 'Salud',
           'Educación', 'Servicios', 'Compras', 'Viajes', 'Hogar', 'Otros'
         ]),
-        descripcion: 'Categorías predefinidas para gastos',
+        descripcion: 'Categorías predefinidas para gastos (alineadas con /api/categorias)',
         tipo: 'json'
       },
       {
         clave: 'categorias_predefinidas_ingresos',
         valor: JSON.stringify([
-          'Salario', 'Freelance', 'Inversiones', 'Bonos', 'Ventas', 'Otros'
+          'Salario', 'Freelance', 'Inversiones', 'Otros'
         ]),
-        descripcion: 'Categorías predefinidas para ingresos',
+        descripcion: 'Categorías predefinidas para ingresos (alineadas con /api/categorias)',
         tipo: 'json'
       },
       {
