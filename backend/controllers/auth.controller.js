@@ -1,10 +1,10 @@
 const bcrypt = require('bcryptjs');
-const jwt = require("jsonwebtoken");
 const prisma = require('../lib/prisma');
 const { catchAsync } = require('../middlewares/error.middleware');
-const { AppError, ConflictError, AuthenticationError } = require('../utils/errors');
+const { ConflictError, AuthenticationError } = require('../utils/errors');
 const { logUserAction, logSecurityEvent } = require('../utils/logger');
 const { parseDateOnly } = require('../utils/date');
+const { createUserSession } = require('../utils/sessions');
 
 // Registro de usuario
 exports.register = catchAsync(async (req, res, next) => {
@@ -32,12 +32,8 @@ exports.register = catchAsync(async (req, res, next) => {
     },
   });
 
-  // Generar token
-  const token = jwt.sign({ id: user.id, rol: user.rol }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-
-  // Log de registro exitoso
+  // Token + sesión en BD
+  const { token } = await createUserSession(user, req);
   logUserAction('USER_REGISTERED', user.id, {
     email: user.email,
     name: user.name,
@@ -119,10 +115,8 @@ exports.login = catchAsync(async (req, res, next) => {
     data: { ultimoAcceso: new Date() }
   });
 
-  // Generar token
-  const token = jwt.sign({ id: user.id, rol: user.rol }, process.env.JWT_SECRET, {
-    expiresIn: '7d',
-  });
+  // Token + sesión en BD
+  const { token } = await createUserSession(user, req);
 
   // Remover password de la respuesta
   const { password: userPassword, ...userWithoutPassword } = user;

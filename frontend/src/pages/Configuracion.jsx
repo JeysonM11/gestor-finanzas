@@ -7,6 +7,7 @@ import { Card, Button, Input, Alert, Badge } from '../components/ui'
 import { MONEDAS } from '../utils/currency'
 import { User, Lock, Bell, Download, Shield, Moon, Tags } from 'lucide-react'
 import CategoriasConfig from '../components/categorias/CategoriasConfig'
+import SesionesSeguridad from '../components/configuracion/SesionesSeguridad'
 
 const Configuracion = () => {
   const { user, setUser } = useAuth()
@@ -315,6 +316,7 @@ const Configuracion = () => {
 
           {/* Pestaña Seguridad */}
           {activeTab === 'seguridad' && (
+            <>
             <Card>
               <h2 className="text-xl font-bold text-ink mb-6">Cambiar Contraseña</h2>
               <form onSubmit={handleCambiarPassword} className="space-y-4">
@@ -359,6 +361,8 @@ const Configuracion = () => {
                 </div>
               </form>
             </Card>
+            <SesionesSeguridad />
+            </>
           )}
 
           {/* Pestaña Notificaciones */}

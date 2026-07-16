@@ -48,6 +48,20 @@ Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`
 | PUT | `/profile` | ✅ |
 | PUT | `/change-password` | ✅ |
 | PUT | `/preferences` | ✅ |
+| GET | `/sessions` | ✅ listar sesiones activas |
+| DELETE | `/sessions/:id` | ✅ cerrar sesión (ownership) |
+| DELETE | `/sessions/others` | ✅ cerrar todas menos la actual |
+| POST | `/logout` | ✅ cerrar sesión actual |
+
+### JWT y sesiones (Sprint D / v1.2 — eje D2)
+
+- Login/register crean fila en `SesionUsuario` y JWT incluye claim `sid` (id de sesión).
+- El token se guarda hasheado (SHA-256) en `SesionUsuario.token`.
+- `authMiddleware` rechaza tokens con `sid` si la sesión está `activa: false` o expirada (`code: SESSION_REVOKED`).
+- Tokens **legacy** sin `sid` siguen válidos hasta re-login (compatibilidad).
+- TTL sesión: 7 días (alineado con JWT `expiresIn`).
+
+**DTO sesión (GET `/sessions`):** `id`, `dispositivo`, `ip`, `activa`, `createdAt`, `fechaExpiracion`, `actual` (boolean).
 
 **User (respuesta pública):** `id`, `name`, `email`, `rol`, `telefono`, `ocupacion`, `salarioMensual`, `monedaPrincipal`, `puntosAcumulados`, `nivel`, …
 

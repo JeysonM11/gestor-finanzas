@@ -60,7 +60,8 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 | Metas de ahorro | ✅ |
 | Presupuestos + alertas | ✅ |
 | Recordatorios (API + cron + UI) | ✅ |
-| Sesiones / Email verify | ❌ backlog |
+| Sesiones (confianza) | ✅ |
+| Email verify | → v1.3 |
 
 ## Documentación
 

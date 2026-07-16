@@ -49,9 +49,9 @@ export const AuthProvider = ({ children }) => {
     return response
   }
 
-  const logout = () => {
+  const logout = async () => {
+    await authService.logout()
     setUser(null)
-    localStorage.removeItem('token')
   }
 
   const value = {

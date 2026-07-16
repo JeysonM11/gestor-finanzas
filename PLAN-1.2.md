@@ -19,7 +19,8 @@ Objetivo: hacer el producto **más útil día a día y más confiable**, sin abr
 | Gamificación básica | ✅ |
 | Categorías API | ✅ (UI Config + modales; fallback defaults) |
 | Recordatorios | ✅ API + cron + UI |
-| Sesiones / Email verify | ❌ schema listo, sin producto |
+| Sesiones (confianza) | ✅ Sprint D |
+| Email verify | → v1.3 (D1 diferido) |
 | Moneda principal | ✅ operativa en UI (trabajo reciente) |
 
 ---
@@ -160,7 +161,9 @@ Documentar en contratos:
 
 Implementar **uno** de los dos ejes en v1.2; el otro pasa a 1.3 salvo que sobre capacidad.
 
-### Opción D1 — Verificación de email
+**Implementado en v1.2: D2 (Sesiones).** D1 (email) → backlog 1.3.
+
+### Opción D1 — Verificación de email (diferido v1.3)
 
 Campo existente: `User.emailVerificado`.
 
@@ -170,15 +173,15 @@ Campo existente: `User.emailVerificado`.
 - [ ] UI: banner “verifica tu email” + pantalla de confirmación.
 - [ ] No bloquear el uso del resto de la app en v1.2 (soft gate).
 
-### Opción D2 — Sesiones básicas
+### Opción D2 — Sesiones básicas ✅
 
 Modelo existente: `SesionUsuario`.
 
-- [ ] Registrar sesión al login (token hash, dispositivo, IP, expiración).
-- [ ] `GET /api/auth/sessions` — listar sesiones activas del usuario.
-- [ ] `DELETE /api/auth/sessions/:id` — cerrar una; opcional “cerrar todas menos la actual”.
-- [ ] UI en Configuración → Seguridad.
-- [ ] Invalidar token si la sesión está `activa: false` (middleware).
+- [x] Registrar sesión al login (token hash, dispositivo, IP, expiración).
+- [x] `GET /api/auth/sessions` — listar sesiones activas del usuario.
+- [x] `DELETE /api/auth/sessions/:id` — cerrar una; `DELETE /api/auth/sessions/others` cierra el resto.
+- [x] UI en Configuración → Seguridad.
+- [x] Invalidar token si la sesión está `activa: false` (middleware).
 
 **Recomendación:** si el deploy es multi-dispositivo o compartido, priorizar **D2**. Si el dolor es onboarding/confianza de cuenta, **D1**.
 

@@ -31,8 +31,27 @@ export const authService = {
     return response.data
   },
 
+  async getSessions() {
+    const response = await api.get('/auth/sessions')
+    return response.data
+  },
+
+  async deleteSession(id) {
+    const response = await api.delete(`/auth/sessions/${id}`)
+    return response.data
+  },
+
+  async deleteOtherSessions() {
+    const response = await api.delete('/auth/sessions/others')
+    return response.data
+  },
+
   async logout() {
-    // Aquí podrías llamar a un endpoint de logout si existe
+    try {
+      await api.post('/auth/logout')
+    } catch {
+      // Si el token ya expiró, igual limpiamos local
+    }
     localStorage.removeItem('token')
-  }
+  },
 }

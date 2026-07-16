@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth.controller');
+const sessionController = require('../controllers/session.controller');
 const { authMiddleware: authenticateToken } = require('../middlewares/auth.middleware');
 const { validateBody } = require('../middlewares/validation.middleware');
 const { authLimiter } = require('../middlewares/rateLimit.middleware');
@@ -18,6 +19,12 @@ router.post('/login', authLimiter, validateBody(loginSchema), authController.log
 
 // Obtener usuario actual (protegido)
 router.get('/me', authenticateToken, authController.getCurrentUser);
+
+// Sesiones activas (Sprint D)
+router.get('/sessions', authenticateToken, sessionController.listarSesiones);
+router.delete('/sessions/others', authenticateToken, sessionController.revocarOtrasSesiones);
+router.delete('/sessions/:id', authenticateToken, sessionController.revocarSesion);
+router.post('/logout', authenticateToken, sessionController.logout);
 
 // Perfil y preferencias
 router.put(
