@@ -156,10 +156,47 @@ function proyectarPlan(deudas, presupuestoMensual, estrategia = 'AVALANCHE') {
   };
 }
 
+/**
+ * La IA recibe deudas anonimizadas (D1..Dn) y sus textos citan esas refs.
+ * Antes de persistir/mostrar, se traducen a los nombres reales del usuario.
+ * Esto ocurre solo en el backend local: los nombres nunca viajan a la IA.
+ */
+function desanonimizarConsejo(consejo, deudas) {
+  const nombres = new Map(
+    (deudas || []).map((d) => [d.ref, d.nombre]).filter(([, n]) => n)
+  );
+  if (!consejo || nombres.size === 0) return consejo;
+
+  const traducir = (texto) =>
+    typeof texto === 'string'
+      ? texto.replace(/\bD(\d+)\b/g, (match, num) => {
+          const nombre = nombres.get(`D${num}`);
+          return nombre ? `"${nombre}"` : match;
+        })
+      : texto;
+
+  return {
+    ...consejo,
+    diagnostico: consejo.diagnostico && {
+      ...consejo.diagnostico,
+      resumen: traducir(consejo.diagnostico.resumen),
+      alertas: (consejo.diagnostico.alertas || []).map(traducir),
+    },
+    tips: (consejo.tips || []).map((tip) => ({
+      ...tip,
+      titulo: traducir(tip.titulo),
+      detalle: traducir(tip.detalle),
+    })),
+    pasos: (consejo.pasos || []).map(traducir),
+    motivacion: traducir(consejo.motivacion),
+  };
+}
+
 module.exports = {
   ESTRATEGIAS,
   MAX_MESES,
   tasaMensualEquivalente,
   ordenarDeudas,
   proyectarPlan,
+  desanonimizarConsejo,
 };

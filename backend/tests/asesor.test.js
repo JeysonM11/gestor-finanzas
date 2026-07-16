@@ -2,6 +2,7 @@ const {
   tasaMensualEquivalente,
   ordenarDeudas,
   proyectarPlan,
+  desanonimizarConsejo,
 } = require('../services/asesor-deudas.service');
 const {
   resolverIngresosMensuales,
@@ -90,6 +91,50 @@ describe('asesor v1.3 — validadores', () => {
       motivacion: 'vamos',
     });
     expect(error).toBeUndefined();
+  });
+});
+
+describe('asesor v1.3 — desanonimizar refs', () => {
+  const deudas = [
+    { ref: 'D1', nombre: 'Tarjeta de credito' },
+    { ref: 'D3', nombre: 'Tienda' },
+    { ref: 'D12', nombre: 'American Express' },
+  ];
+
+  test('reemplaza D1..Dn por nombres reales en todos los textos', () => {
+    const consejo = desanonimizarConsejo(
+      {
+        diagnostico: {
+          nivelRiesgo: 'ALTO',
+          resumen: 'Prioriza D12 y luego D1.',
+          alertas: ['D3 tiene tasa del 20%.'],
+        },
+        tips: [{ titulo: 'Ataca D3', detalle: 'D3 es urgente', prioridad: 'ALTA' }],
+        pasos: ['Paga el mínimo de D1'],
+        motivacion: 'Tú puedes',
+      },
+      deudas
+    );
+
+    expect(consejo.diagnostico.resumen).toBe(
+      'Prioriza "American Express" y luego "Tarjeta de credito".'
+    );
+    expect(consejo.diagnostico.alertas[0]).toBe('"Tienda" tiene tasa del 20%.');
+    expect(consejo.tips[0].titulo).toBe('Ataca "Tienda"');
+    expect(consejo.pasos[0]).toBe('Paga el mínimo de "Tarjeta de credito"');
+  });
+
+  test('conserva refs desconocidas y no toca D seguida de letras', () => {
+    const consejo = desanonimizarConsejo(
+      {
+        diagnostico: { nivelRiesgo: 'BAJO', resumen: 'D99 y D3X no cambian', alertas: [] },
+        tips: [],
+        pasos: [],
+        motivacion: 'ok',
+      },
+      deudas
+    );
+    expect(consejo.diagnostico.resumen).toBe('D99 y D3X no cambian');
   });
 });
 

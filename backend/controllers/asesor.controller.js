@@ -1,6 +1,9 @@
 const prisma = require('../lib/prisma');
 const { construirSnapshot } = require('../services/asesor-snapshot.service');
-const { proyectarPlan } = require('../services/asesor-deudas.service');
+const {
+  proyectarPlan,
+  desanonimizarConsejo,
+} = require('../services/asesor-deudas.service');
 const {
   asesorDisponible,
   generarConsejo,
@@ -93,6 +96,9 @@ exports.generarPlan = async (req, res) => {
     if (!consejo) {
       consejo = consejoFallback(snapshot, planNumerico);
     }
+
+    // Traduce las refs D1..Dn de la IA a los nombres reales (solo local).
+    consejo = desanonimizarConsejo(consejo, deudasInternas);
 
     const planJson = {
       ...consejo,
