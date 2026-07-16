@@ -1,6 +1,6 @@
 # Plan v1.2 — Gestor de Finanzas
 
-Plan para la siguiente versión a partir del **MVP cerrado** (Sprints 0–6 + Metas/Presupuestos).  
+Plan activo a partir del **MVP cerrado** ([`PLAN-DE-TRABAJO.md`](PLAN-DE-TRABAJO.md)).  
 Objetivo: hacer el producto **más útil día a día y más confiable**, sin abrir dominios nuevos grandes.
 
 > Tema: **“Más útil + más confiable”** — no “más módulos”.  

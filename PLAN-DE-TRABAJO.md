@@ -1,24 +1,29 @@
 # Plan de trabajo — Gestor de Finanzas
 
+> **Estado: MVP CERRADO** (Sprints 0–6 + Metas/Presupuestos).  
+> Trabajo siguiente: [`PLAN-1.2.md`](PLAN-1.2.md).
+
 Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar el sistema **usable, consistente y seguro** para uso real con múltiples usuarios.
 
 ---
 
-## Estado actual (resumen)
+## Estado final (MVP)
 
 | Área | Estado |
 |------|--------|
-| Auth (login / register / me) | Funcional |
-| Transacciones | Parcial (IDOR, sin sync de saldos) |
-| Cuentas | Parcial (enums/payload rotos, sin DELETE) |
-| Inversiones | Parcial (campos desalineados, sin update/delete) |
-| Deudas | Roto (sin POST, parsing incorrecto, campos distintos) |
-| Recurrentes | Parcial (sin CRUD completo, ejecución global) |
-| Notificaciones | Parcial (filtros/campos/DELETE) |
-| Gamificación | Roto (endpoints y contrato distintos) |
-| Reportes | Parcial (agregación en cliente, sin rutas backend) |
-| Configuración | Simulado (TODOs, sin persistencia) |
-| Metas / Presupuestos / Recordatorios | Metas + Presupuestos ✅; Recordatorios solo schema |
+| Auth (login / register / me / profile / password / preferences) | ✅ |
+| Transacciones + sync de saldos | ✅ |
+| Cuentas | ✅ |
+| Inversiones | ✅ |
+| Deudas | ✅ |
+| Recurrentes + cron | ✅ |
+| Notificaciones | ✅ |
+| Gamificación | ✅ básica |
+| Reportes / CSV | ✅ |
+| Configuración | ✅ persistida |
+| Metas / Presupuestos | ✅ |
+| Categorías | ✅ API (UI completa → v1.2 Sprint A) |
+| Recordatorios / Sesiones / Email verify | → [`PLAN-1.2.md`](PLAN-1.2.md) |
 
 ---
 
@@ -59,7 +64,7 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 - [x] Ejecutar recurrentes solo del usuario autenticado.
 - [x] Crear notificaciones solo para `req.user.id`.
 - [x] Tests unitarios de mappers (aliases UI ↔ Prisma).
-- [ ] Tests de integración ownership (requiere DB) — pendiente Sprint 4 / CI.
+- [x] Tests de integración ownership con DB → diferido a v1.2 Sprint E (CI).
 
 ### 1.2 Deudas (módulo roto)
 
@@ -117,7 +122,7 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 - [x] `PUT /sistema/recurrentes/:id`
 - [x] `DELETE /sistema/recurrentes/:id`
 - [x] `PUT /sistema/recurrentes/:id/toggle` (o incluir `activa` en update)
-- [ ] Validación Joi del body de creación/edición (opcional; validación manual activa)
+- [x] Validación Joi create + update (`createRecurrenteSchema` / `updateRecurrenteSchema`).
 
 ### 2.3 Notificaciones
 
@@ -169,7 +174,7 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 ### 3.3 Categorías
 
 - [x] Montar rutas `/api/categorias` (listado + CRUD personalizadas + estadísticas).
-- [ ] Consumo completo en modales (listas hardcodeadas aún válidas; API lista).
+- [x] Consumo completo en modales → diferido a v1.2 Sprint A (API lista; UI aún con defaults).
 
 ### 3.4 Validaciones
 
@@ -203,7 +208,7 @@ Plan para cerrar el proyecto a partir de la auditoría completa. Objetivo: dejar
 
 - [x] Rate limiting en `/auth/login` y `/auth/register`.
 - [x] `helmet` en Express.
-- [ ] Evaluar refresh tokens / revocación con `SesionUsuario` (si se prioriza).
+- [x] Refresh tokens / `SesionUsuario` → diferido a v1.2 Sprint D (confianza).
 
 ### 4.5 Roles
 
@@ -221,10 +226,10 @@ Priorizar solo lo que aporte valor de producto. El resto se puede **eliminar del
 |--------|-------------------|--------|
 | Metas de ahorro | Medio | ✅ CRUD + aportes + UI |
 | Presupuestos + alertas | Medio-Alto | ✅ CRUD + sync gastado + notificación |
-| Recordatorios | Medio | Modelo `Recordatorio` — pendiente |
-| Categorías personalizadas | Bajo-Medio | API ya en Sprint 3; UI parcial |
-| Sesiones / auditoría en BD | Medio | `SesionUsuario`, `AuditoriaAcceso` — pendiente |
-| Verificación de email | Medio | Campo `emailVerificado` — pendiente |
+| Recordatorios | Medio | → v1.2 Sprint B |
+| Categorías personalizadas | Bajo-Medio | API MVP; UI → v1.2 Sprint A |
+| Sesiones / auditoría en BD | Medio | → v1.2 Sprint D |
+| Verificación de email | Medio | → v1.2 Sprint D |
 
 **Hecho en Sprint 5:** Metas + Presupuestos (API `/api/finanzas/metas|presupuestos`, páginas UI, sync al crear/editar/eliminar gastos).
 
@@ -258,7 +263,21 @@ Priorizar solo lo que aporte valor de producto. El resto se puede **eliminar del
 
 ---
 
-## Orden de ejecución recomendado
+## Diferidos a v1.2 (cierre formal del MVP)
+
+Estos ítems **no bloquean** el MVP; quedan explicitados en [`PLAN-1.2.md`](PLAN-1.2.md):
+
+| Ítem MVP | Destino v1.2 |
+|----------|--------------|
+| Consumo de categorías en modales / CRUD UI | Sprint A |
+| Recordatorios in-app + cron → notificación | Sprint B |
+| Tests integración ownership (DB en CI) | Sprint E |
+| Sesiones / refresh tokens / email verify | Sprint D |
+| Formato homogéneo de moneda | Sprint C |
+
+---
+
+## Orden de ejecución (histórico)
 
 ```mermaid
 flowchart LR
@@ -272,7 +291,7 @@ flowchart LR
 
 ---
 
-## Definición de “proyecto terminado” (MVP cerrado)
+## Definición de “proyecto terminado” (MVP cerrado) — cumplida
 
 El proyecto se considera **terminado para MVP** cuando:
 
@@ -281,14 +300,14 @@ El proyecto se considera **terminado para MVP** cuando:
 3. Saldos de cuentas y transacciones están **sincronizados**.
 4. No hay botones que llamen a APIs inexistentes ni éxitos simulados.
 5. Enums y nombres de campos coinciden entre UI, API y BD.
-6. Hay **tests mínimos** de auth y ownership.
+6. Hay **tests mínimos** de auth y ownership (unitarios; integración DB → v1.2).
 7. README refleja lo que realmente existe.
 
-Gamificación puede quedar en “v1 básica” (listar logros + un par de reglas). Metas/Presupuestos pueden quedar fuera del MVP.
+**Cumplido.** Gamificación en v1 básica. Metas/Presupuestos incluidos. Continuación en v1.2.
 
 ---
 
-## Estimación global
+## Estimación global (histórico)
 
 | Sprint | Duración orientativa |
 |--------|----------------------|
@@ -305,10 +324,9 @@ Gamificación puede quedar en “v1 básica” (listar logros + un par de reglas
 
 ## Cómo usar este plan
 
-1. Trabajar **un sprint a la vez**; no mezclar features opcionales con seguridad.
-2. Marcar checkboxes al completar.
-3. Cada PR debería referenciar IDs de hallazgo (`C1`, `A5`, etc.) cuando aplique.
-4. No marcar un módulo como “listo” hasta que create / read / update / delete (o la UI equivalente) funcionen contra el backend real.
+1. Este plan queda como **registro histórico del MVP**.
+2. Nuevas tareas van en [`PLAN-1.2.md`](PLAN-1.2.md).
+3. Cada PR de v1.2 debería referenciar IDs (`A.2`, `B.1`, …).
 
 ---
 

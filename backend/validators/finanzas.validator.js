@@ -72,30 +72,44 @@ const createDeudaSchema = Joi.object({
   notas: Joi.string().trim().max(1000).allow('', null).optional(),
 }).or('montoInicial', 'montoTotal');
 
+const frecuenciaRecurrente = Joi.string().valid(
+  'DIARIA',
+  'SEMANAL',
+  'QUINCENAL',
+  'MENSUAL',
+  'BIMESTRAL',
+  'TRIMESTRAL',
+  'SEMESTRAL',
+  'ANUAL'
+);
+
 const createRecurrenteSchema = Joi.object({
   nombre: Joi.string().trim().min(1).max(100).required(),
   descripcion: Joi.string().trim().max(500).allow('', null).optional(),
   tipo: Joi.string().valid('INGRESO', 'GASTO', 'TRANSFERENCIA').required(),
   monto: Joi.number().positive().required(),
   categoria: Joi.string().trim().max(100).allow('', null).optional(),
-  frecuencia: Joi.string()
-    .valid(
-      'DIARIA',
-      'SEMANAL',
-      'QUINCENAL',
-      'MENSUAL',
-      'BIMESTRAL',
-      'TRIMESTRAL',
-      'SEMESTRAL',
-      'ANUAL'
-    )
-    .required(),
+  frecuencia: frecuenciaRecurrente.required(),
   diaEjecucion: Joi.number().integer().min(1).max(31).allow(null).optional(),
   diaSemana: Joi.number().integer().min(0).max(6).allow(null).optional(),
   fechaInicio: Joi.date().required(),
   fechaFin: Joi.date().allow(null, '').optional(),
   activa: Joi.boolean().optional(),
 });
+
+const updateRecurrenteSchema = Joi.object({
+  nombre: Joi.string().trim().min(1).max(100).optional(),
+  descripcion: Joi.string().trim().max(500).allow('', null).optional(),
+  tipo: Joi.string().valid('INGRESO', 'GASTO', 'TRANSFERENCIA').optional(),
+  monto: Joi.number().positive().optional(),
+  categoria: Joi.string().trim().max(100).allow('', null).optional(),
+  frecuencia: frecuenciaRecurrente.optional(),
+  diaEjecucion: Joi.number().integer().min(1).max(31).allow(null).optional(),
+  diaSemana: Joi.number().integer().min(0).max(6).allow(null).optional(),
+  fechaInicio: Joi.date().optional(),
+  fechaFin: Joi.date().allow(null, '').optional(),
+  activa: Joi.boolean().optional(),
+}).min(1);
 
 const createMetaSchema = Joi.object({
   titulo: Joi.string().trim().min(1).max(150).required(),
@@ -133,6 +147,7 @@ module.exports = {
   createInversionSchema,
   createDeudaSchema,
   createRecurrenteSchema,
+  updateRecurrenteSchema,
   createMetaSchema,
   aporteMetaSchema,
   createPresupuestoSchema,

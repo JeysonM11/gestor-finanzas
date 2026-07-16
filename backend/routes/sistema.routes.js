@@ -4,7 +4,10 @@ const transaccionesRecurrentesController = require('../controllers/transacciones
 const { authMiddleware: authenticateToken, requireRole } = require('../middlewares/auth.middleware');
 const { cronAuthMiddleware } = require('../middlewares/cronAuth.middleware');
 const { validateBody } = require('../middlewares/validation.middleware');
-const { createRecurrenteSchema } = require('../validators/finanzas.validator');
+const {
+  createRecurrenteSchema,
+  updateRecurrenteSchema,
+} = require('../validators/finanzas.validator');
 
 // ============= RUTAS DE TRANSACCIONES RECURRENTES =============
 router.get('/recurrentes', authenticateToken, transaccionesRecurrentesController.obtenerTransaccionesRecurrentes);
@@ -14,7 +17,12 @@ router.post(
   validateBody(createRecurrenteSchema),
   transaccionesRecurrentesController.crearTransaccionRecurrente
 );
-router.put('/recurrentes/:id', authenticateToken, transaccionesRecurrentesController.actualizarTransaccionRecurrente);
+router.put(
+  '/recurrentes/:id',
+  authenticateToken,
+  validateBody(updateRecurrenteSchema),
+  transaccionesRecurrentesController.actualizarTransaccionRecurrente
+);
 router.delete('/recurrentes/:id', authenticateToken, transaccionesRecurrentesController.eliminarTransaccionRecurrente);
 router.put('/recurrentes/:id/toggle', authenticateToken, transaccionesRecurrentesController.toggleTransaccionRecurrente);
 // Forzar ahora (usuario autenticado, solo sus recurrentes)

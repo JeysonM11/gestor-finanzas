@@ -2,7 +2,7 @@
 
 Aplicación full-stack de finanzas personales: autenticación JWT, transacciones con sync de saldos, cuentas, inversiones, deudas, recurrentes (cron), notificaciones, reportes/CSV, gamificación básica y configuración real.
 
-> **MVP + Sprint 5:** Metas y Presupuestos implementados. Recordatorios / sesiones / email verification siguen en backlog.
+> **MVP cerrado.** Continuación en [PLAN-1.2.md](PLAN-1.2.md) (categorías UI, recordatorios, moneda, confianza).
 
 ## Arquitectura
 
@@ -66,8 +66,8 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 - [backend/README.md](backend/README.md) — endpoints, env, seed, deploy
 - [frontend/README.md](frontend/README.md) — estructura UI
 - [docs/CONTRATOS-API.md](docs/CONTRATOS-API.md) — enums y contratos de campos
-- [PLAN-DE-TRABAJO.md](PLAN-DE-TRABAJO.md) — sprints y criterios de cierre (MVP)
-- [PLAN-1.2.md](PLAN-1.2.md) — plan de la versión 1.2 (categorías, recordatorios, moneda, confianza)
+- [PLAN-DE-TRABAJO.md](PLAN-DE-TRABAJO.md) — MVP cerrado (histórico Sprints 0–6)
+- [PLAN-1.2.md](PLAN-1.2.md) — plan activo v1.2 (categorías, recordatorios, moneda, confianza)
 
 ## Checklist de despliegue
 
