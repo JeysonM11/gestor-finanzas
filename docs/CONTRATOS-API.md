@@ -206,16 +206,48 @@ El JWT incluye `rol` (`ADMIN` | `USUARIO`). `requireRole('ADMIN')` se usa en rut
 
 ---
 
-## Reportes / Categorías
+## Reportes
 
 | Recurso | Estado |
 |---------|--------|
 | `/api/reportes` (mensual, agregados, export) | ✅ |
-| `/api/categorias` (CRUD + estadísticas) | ✅ |
-| Frontend reportes | Usa `/reportes/agregados` |
-| Frontend categorías en modales | Lista default (`constants.js`); service listo |
+| Frontend reportes | Usa `/reportes/agregados`; breakdown por categoría de transacciones (incluye personalizadas usadas) |
 
 Enums en agregaciones: siempre `INGRESO` / `GASTO` (nunca minúsculas).
+
+---
+
+## Categorías — `/api/categorias`
+
+Modelo Prisma: `CategoriaPersonalizada` (`nombre`, `tipo` `INGRESO|GASTO`, `color`, `icono`, `descripcion`, `activa`, `orden`, `userId`).  
+Las transacciones / presupuestos / recurrentes / metas guardan `categoria` como **string** (sin FK).
+
+### Predefinidas (catálogo del servidor)
+
+Lista canónica en `backend/utils/categorias.js` (con acentos), unida al listado GET.  
+Tipos: `INGRESO` | `GASTO` | `AMBOS` (solo predefinidas; personalizadas solo `INGRESO`|`GASTO`).
+
+### Endpoints (todos con JWT)
+
+| Método | Ruta | Notas |
+|--------|------|--------|
+| GET | `/` | Catálogo: personalizadas activas + usadas en transacciones + predefinidas. Query `soloPersonalizadas=true` → solo CRUD del usuario. |
+| GET | `/estadisticas` | Query opcional `fechaInicio` + `fechaFin` (juntos). Agrega ingresos/gastos por categoría. |
+| POST | `/` | Body: `{ nombre, tipo, color?, icono?, descripcion? }`. 409 si nombre activo duplicado; reactiva si existía soft-deleted. |
+| PUT | `/:id` | Body parcial: `nombre?`, `tipo?`, `color?`, `icono?`, `descripcion?`, `activa?`. Ownership por `userId`. |
+| DELETE | `/:id` | **Soft-delete** (`activa: false`). Históricos por string no se modifican. |
+
+Ítem de catálogo (GET `/`):
+
+| Campo | Notas |
+|-------|--------|
+| `nombre` | string |
+| `origen` | `personalizada` \| `transaccion` \| `predefinida` |
+| `tipo` | presente en personalizada/predefinida |
+| `id`, `color`, `icono` | solo personalizada |
+| `count`, `total` | uso en transacciones del usuario |
+
+Frontend: Configuración → pestaña Categorías (CRUD); modales de transacciones/presupuestos/recurrentes usan API con fallback a `CATEGORIAS_DEFAULT`.
 
 ---
 

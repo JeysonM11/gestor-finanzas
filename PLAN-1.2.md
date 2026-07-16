@@ -17,7 +17,7 @@ Objetivo: hacer el producto **más útil día a día y más confiable**, sin abr
 | Notificaciones, reportes/CSV, configuración real | ✅ |
 | Metas, presupuestos + alertas | ✅ |
 | Gamificación básica | ✅ |
-| Categorías API | ✅ (UI aún con listas default) |
+| Categorías API | ✅ (UI Config + modales; fallback defaults) |
 | Recordatorios / Sesiones / Email verify | ❌ schema listo, sin producto |
 | Moneda principal | ✅ operativa en UI (trabajo reciente) |
 
@@ -51,22 +51,22 @@ Objetivo: hacer el producto **más útil día a día y más confiable**, sin abr
 
 ### A.1 Backend (verificar / completar)
 
-- [ ] Revisar CRUD `/api/categorias` vs contrato real (listado, personalizadas, estadísticas).
-- [ ] Seed o endpoint de categorías sistema/default para no depender solo del frontend.
-- [ ] Ownership: categorías personalizadas solo del `req.user.id`.
-- [ ] Tests unitarios/integración mínimos de create/list/delete.
+- [x] Revisar CRUD `/api/categorias` vs contrato real (listado, personalizadas, estadísticas).
+- [x] Seed o endpoint de categorías sistema/default para no depender solo del frontend.
+- [x] Ownership: categorías personalizadas solo del `req.user.id`.
+- [x] Tests unitarios/integración mínimos de create/list/delete.
 
 ### A.2 Frontend
 
-- [ ] Página o sección en Configuración: CRUD de categorías personalizadas.
-- [ ] Reemplazar usos de `CATEGORIAS_DEFAULT` en modales (`ModalTransaccion`, presupuestos, filtros) por carga desde API + fallback seguro.
-- [ ] Usar categorías del usuario en reportes (filtros / breakdown).
-- [ ] Toasts de error/éxito reales (sin éxito simulado).
+- [x] Página o sección en Configuración: CRUD de categorías personalizadas.
+- [x] Reemplazar usos de `CATEGORIAS_DEFAULT` en modales (`ModalTransaccion`, presupuestos, filtros) por carga desde API + fallback seguro.
+- [x] Usar categorías del usuario en reportes (filtros / breakdown).
+- [x] Toasts de error/éxito reales (sin éxito simulado).
 
 ### A.3 Docs
 
-- [ ] Ampliar sección Categorías en `docs/CONTRATOS-API.md`.
-- [ ] Actualizar tabla de módulos en `README.md`.
+- [x] Ampliar sección Categorías en `docs/CONTRATOS-API.md`.
+- [x] Actualizar tabla de módulos en `README.md`.
 
 **Criterio de salida:** crear/editar/eliminar categoría personalizada y usarla al crear un gasto; aparece en listados y reportes.
 

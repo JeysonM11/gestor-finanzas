@@ -55,7 +55,7 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 | Recurrentes + cron horario | ✅ |
 | Notificaciones | ✅ |
 | Reportes / agregados / export CSV | ✅ |
-| Categorías API | ✅ (UI usa lista default; service listo) |
+| Categorías (API + UI Config + modales) | ✅ |
 | Gamificación (logros/resumen/historial) | ✅ básica |
 | Metas de ahorro | ✅ |
 | Presupuestos + alertas | ✅ |
