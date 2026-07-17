@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual de Usuario — Gestor de Finanzas</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --note-bg: #eff6ff;
+      --note-border: #93c5fd;
+      --warn-bg: #fffbeb;
+      --warn-border: #fcd34d;
+      --success: #059669;
+      --danger: #dc2626;
+      --nav-width: 280px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: var(--nav-width) 1fr;
+      min-height: 100vh;
+    }
+
+    nav.sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+    }
+
+    nav.sidebar h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    nav.sidebar h2:first-child { margin-top: 0; }
+
+    nav.sidebar a {
+      display: block;
+      padding: 0.35rem 0.75rem;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.9rem;
+      border-radius: 6px;
+    }
+
+    nav.sidebar a:hover {
+      background: #eff6ff;
+      color: var(--primary);
+    }
+
+    main {
+      max-width: 900px;
+      padding: 2.5rem 3rem 4rem;
+    }
+
+    header.doc-header {
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    header.doc-header h1 {
+      margin: 0 0 0.5rem;
+      font-size: 2rem;
+      color: var(--primary-dark);
+    }
+
+    header.doc-header p { margin: 0.25rem 0; color: var(--muted); }
+
+    section { margin-bottom: 3rem; }
+
+    h2 {
+      font-size: 1.5rem;
+      color: var(--primary-dark);
+      margin: 0 0 1rem;
+      padding-top: 0.5rem;
+      border-top: 3px solid var(--primary);
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      margin: 1.75rem 0 0.75rem;
+      color: var(--text);
+    }
+
+    h4 { font-size: 1rem; margin: 1.25rem 0 0.5rem; }
+
+    p { margin: 0.75rem 0; }
+
+    ul, ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+
+    li { margin: 0.35rem 0; }
+
+    code, .route {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.88em;
+      background: #f1f5f9;
+      padding: 0.15em 0.45em;
+      border-radius: 4px;
+      color: #334155;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.92rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .note, .warning {
+      padding: 1rem 1.15rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+
+    .note {
+      background: var(--note-bg);
+      border-color: var(--note-border);
+    }
+
+    .warning {
+      background: var(--warn-bg);
+      border-color: var(--warn-border);
+    }
+
+    .note strong, .warning strong { display: block; margin-bottom: 0.35rem; }
+
+    .faq dt {
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+
+    .faq dd {
+      margin: 0.35rem 0 0 0;
+      color: #334155;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2rem 0;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.875rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .print-btn {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgb(37 99 235 / 0.35);
+    }
+
+    .print-btn:hover { background: var(--primary-dark); }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav.sidebar {
+        position: relative;
+        height: auto;
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      main { padding: 1.5rem 1.25rem 3rem; }
+      .print-btn { display: none; }
+    }
+
+    @media print {
+      .layout { display: block; }
+      nav.sidebar, .print-btn { display: none; }
+      main { max-width: none; padding: 0; }
+      section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="sidebar" aria-label="Índice del manual">
+      <h2>Contenido</h2>
+      <a href="#intro">1. Introducción</a>
+      <a href="#requisitos">2. Requisitos</a>
+      <a href="#acceso">3. Acceso al sistema</a>
+      <a href="#dashboard">4. Dashboard</a>
+      <a href="#transacciones">5. Transacciones</a>
+      <a href="#categorias">6. Categorías</a>
+      <a href="#cuentas">7. Cuentas</a>
+      <a href="#deudas">8. Deudas</a>
+      <a href="#recurrentes">9. Recurrentes</a>
+      <a href="#reportes">10. Reportes</a>
+      <a href="#configuracion">11. Configuración</a>
+      <a href="#validaciones">12. Validaciones</a>
+      <a href="#mensajes">13. Mensajes del sistema</a>
+      <a href="#faq">14. Preguntas frecuentes</a>
+      <a href="#buenas-practicas">15. Buenas prácticas</a>
+      <h2>Anexos</h2>
+      <a href="#anexo-a">Anexo A — Otros módulos</a>
+      <a href="#anexo-b">Anexo B — Funciones internas</a>
+    </nav>
+
+    <main>
+      <header class="doc-header">
+        <h1>Manual de Usuario</h1>
+        <p><strong>Gestor de Finanzas Personales</strong></p>
+        <p>Versión documentada según el código actual del proyecto.</p>
+      </header>
+
+      <!-- 1. INTRODUCCIÓN -->
+      <section id="intro">
+        <h2>1. Introducción</h2>
+
+        <h3>Objetivo del sistema</h3>
+        <p>Gestor de Finanzas es una aplicación web para registrar, organizar y analizar tus finanzas personales. Permite controlar ingresos y gastos, administrar cuentas bancarias, hacer seguimiento de deudas e inversiones, planificar presupuestos, automatizar movimientos recurrentes y consultar reportes con gráficos.</p>
+
+        <h3>Público objetivo</h3>
+        <p>Personas que desean llevar un control ordenado de su dinero: hogares, freelancers, estudiantes o cualquier usuario que necesite registrar movimientos, revisar saldos y tomar decisiones con información clara.</p>
+
+        <h3>Principales funcionalidades</h3>
+        <table>
+          <thead>
+            <tr><th>Módulo</th><th>Ruta</th><th>Qué permite</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Dashboard</td><td><span class="route">/dashboard</span></td><td>Resumen financiero, KPIs, gráficos y actividad reciente</td></tr>
+            <tr><td>Transacciones</td><td><span class="route">/transacciones</span></td><td>Registrar ingresos, gastos, transferencias y pagos de deuda</td></tr>
+            <tr><td>Recurrentes</td><td><span class="route">/recurrentes</span></td><td>Automatizar ingresos/gastos periódicos</td></tr>
+            <tr><td>Cuentas</td><td><span class="route">/cuentas</span></td><td>Gestionar cuentas y saldos</td></tr>
+            <tr><td>Inversiones</td><td><span class="route">/inversiones</span></td><td>Registrar y seguir inversiones</td></tr>
+            <tr><td>Deudas</td><td><span class="route">/deudas</span></td><td>Controlar préstamos, pagos y asesor de deudas</td></tr>
+            <tr><td>Asesor IA</td><td><span class="route">/asesor</span></td><td>Ver historial de planes para pagar deudas</td></tr>
+            <tr><td>Metas</td><td><span class="route">/metas</span></td><td>Objetivos de ahorro con aportes</td></tr>
+            <tr><td>Presupuestos</td><td><span class="route">/presupuestos</span></td><td>Límites e ingresos esperados por mes</td></tr>
+            <tr><td>Reportes</td><td><span class="route">/reportes</span></td><td>Análisis, gráficos y exportación CSV</td></tr>
+            <tr><td>Gamificación</td><td><span class="route">/gamificacion</span></td><td>Niveles, logros y puntos (solo lectura)</td></tr>
+            <tr><td>Recordatorios</td><td><span class="route">/recordatorios</span></td><td>Avisos programados</td></tr>
+            <tr><td>Notificaciones</td><td><span class="route">/notificaciones</span></td><td>Bandeja de mensajes del sistema</td></tr>
+            <tr><td>Configuración</td><td><span class="route">/configuracion</span></td><td>Perfil, seguridad, preferencias y categorías</td></tr>
+          </tbody>
+        </table>
+
+        <div class="note">
+          <strong>Nota</strong>
+          Las rutas son directas (por ejemplo <code>https://tudominio.com/dashboard</code>). En producción, el servidor debe reescribir todas las rutas hacia <code>index.html</code> para que al recargar la página no aparezca un error 404.
+        </div>
+      </section>
+
+      <!-- 2. REQUISITOS -->
+      <section id="requisitos">
+        <h2>2. Requisitos</h2>
+
+        <h3>Navegadores compatibles</h3>
+        <p>La aplicación es una web moderna. Se recomienda usar la <strong>última versión</strong> de:</p>
+        <table>
+          <thead><tr><th>Navegador</th><th>Compatibilidad</th></tr></thead>
+          <tbody>
+            <tr><td>Google Chrome</td><td>Recomendado</td></tr>
+            <tr><td>Microsoft Edge</td><td>Compatible</td></tr>
+            <tr><td>Mozilla Firefox</td><td>Compatible</td></tr>
+            <tr><td>Safari (macOS/iOS)</td><td>Compatible</td></tr>
+          </tbody>
+        </table>
+        <p>No se documenta soporte para navegadores obsoletos (Internet Explorer u otros sin soporte de JavaScript ES6+).</p>
+
+        <h3>Resolución recomendada</h3>
+        <table>
+          <thead><tr><th>Dispositivo</th><th>Experiencia</th></tr></thead>
+          <tbody>
+            <tr><td>Escritorio (≥ 1280 px)</td><td>Menú lateral fijo, tablas y gráficos amplios</td></tr>
+            <tr><td>Tablet (768 px – 1279 px)</td><td>Menú lateral en panel deslizable; tablas adaptadas</td></tr>
+            <tr><td>Móvil (&lt; 768 px)</td><td>Menú hamburguesa; listas en formato de tarjetas</td></tr>
+          </tbody>
+        </table>
+        <p>La interfaz está en <strong>español</strong> y adaptada a pantallas pequeñas.</p>
+
+        <h3>Requisitos de conexión</h3>
+        <ul>
+          <li>Conexión a <strong>internet</strong> activa para comunicarse con el servidor.</li>
+          <li>El servicio debe estar desplegado y accesible (backend API + frontend).</li>
+          <li>Si la sesión expira o el servidor no responde, verás mensajes de error o serás redirigido al inicio de sesión.</li>
+        </ul>
+      </section>
+
+      <!-- 3. ACCESO -->
+      <section id="acceso">
+        <h2>3. Acceso al sistema</h2>
+
+        <h3>Inicio de sesión</h3>
+        <ol>
+          <li>Abre la aplicación en tu navegador.</li>
+          <li>Ve a <strong>Iniciar sesión</strong> (<span class="route">/login</span>).</li>
+          <li>Ingresa tu <strong>correo electrónico</strong> y <strong>contraseña</strong>.</li>
+          <li>Pulsa <strong>Iniciar sesión</strong>.</li>
+        </ol>
+        <p>Si las credenciales son correctas, entrarás al Dashboard. En la pantalla de login puedes alternar entre modo claro y oscuro.</p>
+
+        <h3>Registro de usuario</h3>
+        <ol>
+          <li>Desde el login, pulsa <strong>Regístrate aquí</strong> o ve a <span class="route">/register</span>.</li>
+          <li>Completa el formulario:</li>
+        </ol>
+        <table>
+          <thead><tr><th>Campo</th><th>Obligatorio</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td>Nombre</td><td>Sí</td><td>Tu nombre</td></tr>
+            <tr><td>Email</td><td>Sí</td><td>Correo único para la cuenta</td></tr>
+            <tr><td>Contraseña</td><td>Sí</td><td>Ver requisitos abajo</td></tr>
+            <tr><td>Confirmar contraseña</td><td>Sí</td><td>Debe coincidir con la contraseña</td></tr>
+          </tbody>
+        </table>
+        <ol start="3">
+          <li>Pulsa <strong>Crear cuenta</strong>.</li>
+        </ol>
+        <p><strong>Requisitos de contraseña:</strong> mínimo 6 caracteres, al menos una mayúscula, una minúscula y un número.</p>
+
+        <h3>Recuperación o cambio de contraseña</h3>
+        <table>
+          <thead><tr><th>Función</th><th>¿Disponible?</th></tr></thead>
+          <tbody>
+            <tr><td>Recuperar contraseña olvidada por correo</td><td><strong>No</strong> — no existe en la aplicación</td></tr>
+            <tr><td>Cambiar contraseña estando conectado</td><td><strong>Sí</strong> — en Configuración → Seguridad</td></tr>
+          </tbody>
+        </table>
+        <p>Para cambiar tu contraseña: ve a <strong>Configuración → Seguridad</strong>, completa contraseña actual, nueva y confirmación, y pulsa <strong>Cambiar Contraseña</strong>.</p>
+
+        <h3>Cierre de sesión</h3>
+        <ol>
+          <li>En la barra superior, pulsa el botón <strong>Salir</strong>.</li>
+          <li>Serás enviado a la pantalla de login.</li>
+        </ol>
+        <p>También puedes cerrar sesiones en otros dispositivos desde <strong>Configuración → Seguridad → Sesiones activas</strong>.</p>
+      </section>
+
+      <!-- 4. DASHBOARD -->
+      <section id="dashboard">
+        <h2>4. Pantalla principal (Dashboard)</h2>
+        <p>Acceso: menú lateral → <strong>Dashboard</strong> (<span class="route">/dashboard</span>).</p>
+
+        <h3>Qué información muestra</h3>
+        <ul>
+          <li>Saludo personalizado con tu nombre.</li>
+          <li>Cuatro indicadores (KPIs) del mes en curso.</li>
+          <li>Dos gráficos: tendencia mensual y gastos por categoría.</li>
+          <li>Actividad reciente: últimas transacciones.</li>
+          <li>Acciones rápidas hacia Transacciones, Reportes, Cuentas y Metas.</li>
+          <li>Widgets: estado del sistema, notificaciones y alertas.</li>
+        </ul>
+
+        <h3>Cómo interpretar los indicadores</h3>
+        <table>
+          <thead><tr><th>Indicador</th><th>Significado</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Total ingresos</strong></td><td>Suma de transacciones tipo Ingreso del periodo</td></tr>
+            <tr><td><strong>Total gastos</strong></td><td>Suma de gastos y pagos de deuda</td></tr>
+            <tr><td><strong>Balance</strong></td><td>Ingresos − Gastos</td></tr>
+            <tr><td><strong>Movimientos</strong></td><td>Cantidad total de transacciones registradas</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Gráficas</h3>
+        <ol>
+          <li><strong>Tendencia mensual (últimos 6 meses):</strong> ingresos (verde) vs gastos (rojo).</li>
+          <li><strong>Gastos por categoría:</strong> gráfico circular con la distribución de gastos.</li>
+        </ol>
+        <div class="warning">
+          <strong>Advertencia</strong>
+          Si aún no tienes datos suficientes, los gráficos muestran <strong>datos de ejemplo</strong> claramente etiquetados. En cuanto registres transacciones reales, se reemplazan por tu información.
+        </div>
+
+        <h3>Últimos movimientos</h3>
+        <p>Las <strong>5 transacciones más recientes</strong> con descripción, categoría, fecha y monto. Pulsa <strong>Ver todas</strong> para ir a Transacciones.</p>
+      </section>
+
+      <!-- 5. TRANSACCIONES -->
+      <section id="transacciones">
+        <h2>5. Gestión de Transacciones</h2>
+        <p>Acceso: menú → <strong>Transacciones</strong> (<span class="route">/transacciones</span>).</p>
+
+        <h3>Tipos de transacción</h3>
+        <table>
+          <thead><tr><th>Tipo</th><th>Uso</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Ingreso</strong></td><td>Dinero que entra (salario, ventas, etc.)</td></tr>
+            <tr><td><strong>Gasto</strong></td><td>Dinero que sale (compras, servicios, etc.)</td></tr>
+            <tr><td><strong>Transferencia</strong></td><td>Mover dinero entre dos cuentas propias</td></tr>
+            <tr><td><strong>Pagar deuda</strong></td><td>Abonar una deuda desde una cuenta</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Campos dinámicos según el tipo</h3>
+        <table>
+          <thead>
+            <tr><th>Campo</th><th>Ingreso</th><th>Gasto</th><th>Transferencia</th><th>Pagar deuda</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Descripción</td><td>Sí *</td><td>Sí *</td><td>No (automática)</td><td>No (automática)</td></tr>
+            <tr><td>Cuenta</td><td>Destino *</td><td>Origen *</td><td>Origen * y Destino *</td><td>Cuenta de pago *</td></tr>
+            <tr><td>Método de pago</td><td>No</td><td>Sí</td><td>No</td><td>No</td></tr>
+            <tr><td>Categoría</td><td>Opcional</td><td>Opcional</td><td>No</td><td>No</td></tr>
+            <tr><td>Deuda</td><td>No</td><td>No</td><td>No</td><td>Sí *</td></tr>
+            <tr><td>Fecha / Monto</td><td>Sí *</td><td>Sí *</td><td>Sí *</td><td>Sí *</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Registrar un ingreso</h3>
+        <ol>
+          <li>Pulsa <strong>Nueva Transacción</strong>.</li>
+          <li>Selecciona tipo <strong>Ingreso</strong>.</li>
+          <li>Ingresa monto (mínimo 0,01), descripción y cuenta destino.</li>
+          <li>Opcional: categoría, notas. Confirma la fecha (no futura).</li>
+          <li>Pulsa <strong>Crear Transacción</strong>.</li>
+        </ol>
+
+        <h3>Registrar un gasto</h3>
+        <ol>
+          <li>Pulsa <strong>Nueva Transacción</strong> → tipo <strong>Gasto</strong>.</li>
+          <li>Ingresa monto, descripción y cuenta de origen.</li>
+          <li>Opcional: método de pago, categoría, notas.</li>
+          <li>Pulsa <strong>Crear Transacción</strong>.</li>
+        </ol>
+
+        <h3>Registrar una transferencia</h3>
+        <ol>
+          <li>Tipo <strong>Transferencia</strong>.</li>
+          <li>Elige cuenta origen y destino (distintas).</li>
+          <li>Ingresa monto y fecha → <strong>Crear Transacción</strong>.</li>
+        </ol>
+
+        <h3>Registrar un pago de deuda</h3>
+        <p><strong>Opción A — Desde Transacciones</strong> (afecta cuenta y deuda): tipo Pagar deuda, elige deuda, cuenta y monto.</p>
+        <p><strong>Opción B — Desde Deudas</strong> (solo actualiza la deuda): Registrar Pago con monto y fecha.</p>
+        <div class="note">
+          <strong>Nota</strong>
+          La opción B <strong>no descuenta</strong> dinero de ninguna cuenta bancaria. Para reflejar el movimiento en una cuenta, usa la opción A.
+        </div>
+
+        <h3>Editar / Eliminar transacción</h3>
+        <p>Usa el icono de <strong>lápiz</strong> para editar o <strong>papelera</strong> para eliminar (acción irreversible). Mensaje de éxito: «Transacción eliminada».</p>
+
+        <h3>Buscar y filtrar</h3>
+        <ul>
+          <li><strong>Buscar:</strong> escribe en el campo Buscar (descripción o notas) y pulsa el botón Buscar.</li>
+          <li><strong>Fecha:</strong> campos Fecha Inicio y Fecha Fin (se actualizan al cambiar).</li>
+          <li><strong>Tipo:</strong> Todos, Ingresos, Gastos, Transferencias, Pagos de deuda.</li>
+          <li><strong>Categoría:</strong> <em>no disponible</em> en esta pantalla; usa Reportes para análisis por categoría.</li>
+        </ul>
+
+        <div class="warning">
+          <strong>Advertencia</strong>
+          Necesitas al menos <strong>una cuenta activa</strong> para registrar transacciones (excepto pagos directos desde Deudas).
+        </div>
+      </section>
+
+      <!-- 6. CATEGORÍAS -->
+      <section id="categorias">
+        <h2>6. Categorías</h2>
+        <p>Existen categorías <strong>predefinidas</strong> y <strong>personalizadas</strong> (Configuración → Categorías).</p>
+
+        <h3>Predefinidas</h3>
+        <p><strong>Gastos:</strong> Alimentación, Transporte, Vivienda, Entretenimiento, Salud, Educación, Servicios, Compras, Viajes, Hogar.</p>
+        <p><strong>Ingresos:</strong> Salario, Freelance, Inversiones. <strong>Ambos:</strong> Otros.</p>
+
+        <h3>Crear / Editar / Eliminar</h3>
+        <ol>
+          <li>Ve a <strong>Configuración → Categorías</strong>.</li>
+          <li><strong>Nueva:</strong> nombre *, tipo (Gasto/Ingreso) *, color, descripción opcional.</li>
+          <li><strong>Editar:</strong> solo categorías personalizadas.</li>
+          <li><strong>Eliminar:</strong> desactiva la categoría; el historial se conserva.</li>
+        </ol>
+      </section>
+
+      <!-- 7. CUENTAS -->
+      <section id="cuentas">
+        <h2>7. Cuentas</h2>
+        <p>Acceso: <span class="route">/cuentas</span>. Muestra totales por moneda y tarjetas de cada cuenta.</p>
+
+        <h3>Crear cuenta</h3>
+        <table>
+          <thead><tr><th>Campo</th><th>Obligatorio</th><th>Detalle</th></tr></thead>
+          <tbody>
+            <tr><td>Nombre</td><td>Sí</td><td>Ej.: Cuenta principal</td></tr>
+            <tr><td>Tipo</td><td>Sí</td><td>Ahorro, Corriente, Tarjeta crédito/débito, Inversión, Efectivo, Crypto, Otro</td></tr>
+            <tr><td>Banco</td><td>No</td><td>Nombre de la entidad</td></tr>
+            <tr><td>Moneda</td><td>Sí</td><td>USD, EUR, MXN, COP, ARS, PEN, CLP, BOB</td></tr>
+            <tr><td>Saldo actual</td><td>Sí</td><td>Saldo inicial</td></tr>
+            <tr><td>Color</td><td>No</td><td>Solo al crear</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Editar / Eliminar</h3>
+        <p>Al editar solo puedes cambiar <strong>saldo actual</strong> y <strong>moneda</strong>. Nombre, tipo y banco quedan bloqueados.</p>
+        <p>Al eliminar, la cuenta se desactiva. El sistema no impide eliminar cuentas con saldo distinto de cero.</p>
+      </section>
+
+      <!-- 8. DEUDAS -->
+      <section id="deudas">
+        <h2>8. Deudas</h2>
+        <p>Acceso: <span class="route">/deudas</span>.</p>
+
+        <h3>Indicadores globales</h3>
+        <p>Total adeudado, total pagado, total restante y progreso total (%).</p>
+
+        <h3>Crear deuda</h3>
+        <p>Campos principales: nombre *, tipo *, monto total *, acreedor, tasa, plazo, fechas. Calculadora en vivo si indicas monto + tasa + plazo.</p>
+
+        <h3>Registrar pagos</h3>
+        <ul>
+          <li><strong>Desde Deudas:</strong> Registrar Pago (monto y fecha).</li>
+          <li><strong>Desde Transacciones:</strong> Pagar deuda (también descuenta de cuenta).</li>
+        </ul>
+
+        <h3>Estados</h3>
+        <table>
+          <thead><tr><th>Estado</th><th>Condición</th></tr></thead>
+          <tbody>
+            <tr><td>Activa</td><td>Saldo pendiente &gt; 0</td></tr>
+            <tr><td>Pagada</td><td>Saldo pendiente = 0</td></tr>
+            <tr><td>Vencida</td><td>Fecha de vencimiento pasada y aún con saldo</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Asesor de deudas</h3>
+        <p>Estrategias Avalancha o Bola de nieve. Historial en <span class="route">/asesor</span>.</p>
+      </section>
+
+      <!-- 9. RECURRENTES -->
+      <section id="recurrentes">
+        <h2>9. Recurrentes</h2>
+        <p>Acceso: <span class="route">/recurrentes</span>. Solo tipos <strong>Ingreso</strong> y <strong>Gasto</strong>.</p>
+
+        <h3>Frecuencias</h3>
+        <table>
+          <thead><tr><th>Frecuencia</th><th>Comportamiento</th></tr></thead>
+          <tbody>
+            <tr><td>Diaria</td><td>Cada día</td></tr>
+            <tr><td>Semanal</td><td>Cada 7 días</td></tr>
+            <tr><td>Quincenal</td><td>Cada 15 días</td></tr>
+            <tr><td>Mensual</td><td>Cada mes, en el día indicado (1–31)</td></tr>
+            <tr><td>Anual</td><td>Cada año, en el día indicado</td></tr>
+          </tbody>
+        </table>
+
+        <p>Ejecución automática cada hora. Botón <strong>Forzar ahora</strong> para ejecutar pendientes manualmente.</p>
+
+        <div class="warning">
+          <strong>Advertencia importante</strong>
+          Las transacciones generadas por recurrentes <strong>no están vinculadas a ninguna cuenta</strong> y <strong>no modifican saldos</strong> bancarios.
+        </div>
+      </section>
+
+      <!-- 10. REPORTES -->
+      <section id="reportes">
+        <h2>10. Reportes</h2>
+        <p>Acceso: <span class="route">/reportes</span>.</p>
+
+        <h3>Periodo</h3>
+        <p>Selector <strong>3M / 6M / 12M</strong> para gráficos. KPIs anuales del año en curso.</p>
+
+        <h3>Gráficas</h3>
+        <ol>
+          <li>Gastos por categoría (donut).</li>
+          <li>Top categorías (barras).</li>
+          <li>Evolución mensual (área: ingresos vs gastos).</li>
+        </ol>
+
+        <h3>Exportar</h3>
+        <p>Botón <strong>Exportar CSV</strong> → archivo <code>transacciones-AAAA-MM-DD.csv</code>.</p>
+      </section>
+
+      <!-- 11. CONFIGURACIÓN -->
+      <section id="configuracion">
+        <h2>11. Configuración</h2>
+        <p>Acceso: <span class="route">/configuracion</span>. Pestañas: Perfil, Seguridad, Preferencias, Categorías, Datos.</p>
+
+        <table>
+          <thead><tr><th>Pestaña</th><th>Acciones</th></tr></thead>
+          <tbody>
+            <tr><td>Perfil</td><td>Nombre, teléfono, ocupación (email no editable)</td></tr>
+            <tr><td>Seguridad</td><td>Cambiar contraseña, gestionar sesiones</td></tr>
+            <tr><td>Preferencias</td><td>Tema, notificaciones, moneda principal</td></tr>
+            <tr><td>Categorías</td><td>CRUD de categorías personalizadas</td></tr>
+            <tr><td>Datos</td><td>Exportar CSV; eliminar cuenta (deshabilitado)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="note">
+          <strong>Nota</strong>
+          El botón <strong>Eliminar mi cuenta</strong> está visible pero deshabilitado. Funcionalidad pendiente en el servidor.
+        </div>
+      </section>
+
+      <!-- 12. VALIDACIONES -->
+      <section id="validaciones">
+        <h2>12. Validaciones</h2>
+        <p>Campos con * son obligatorios en pantalla.</p>
+
+        <h3>Autenticación</h3>
+        <table>
+          <thead><tr><th>Regla</th><th>Detalle</th></tr></thead>
+          <tbody>
+            <tr><td>Nombre</td><td>2–50 caracteres</td></tr>
+            <tr><td>Email</td><td>Válido y único</td></tr>
+            <tr><td>Contraseña</td><td>6–100 caracteres; mayúscula + minúscula + número</td></tr>
+            <tr><td>Fecha transacción</td><td>No puede ser futura</td></tr>
+            <tr><td>Monto transacción</td><td>Mayor a 0; hasta 2 decimales</td></tr>
+            <tr><td>Pago de deuda</td><td>Monto ≤ saldo pendiente</td></tr>
+            <tr><td>Transferencia</td><td>Origen y destino distintos</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 13. MENSAJES -->
+      <section id="mensajes">
+        <h2>13. Mensajes del sistema</h2>
+
+        <h3>Toasts (notificaciones temporales)</h3>
+        <table>
+          <thead><tr><th>Tipo</th><th>Color</th><th>Ejemplos</th></tr></thead>
+          <tbody>
+            <tr><td>Éxito</td><td>Verde</td><td>«Transacción eliminada», «Datos exportados correctamente»</td></tr>
+            <tr><td>Error</td><td>Rojo</td><td>«Error al cargar transacciones»</td></tr>
+            <tr><td>Info</td><td>Azul</td><td>Mensajes informativos</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Confirmaciones</h3>
+        <p>Diálogos antes de eliminar transacciones, cuentas, deudas, recurrentes, presupuestos o desactivar categorías/recordatorios.</p>
+
+        <h3>Autenticación</h3>
+        <p>Ejemplos: «Email o contraseña incorrectos», «Las contraseñas no coinciden», «Contraseña actualizada exitosamente».</p>
+      </section>
+
+      <!-- 14. FAQ -->
+      <section id="faq">
+        <h2>14. Preguntas frecuentes</h2>
+        <dl class="faq">
+          <dt>¿Qué pasa si recargo una página y veo un error 404?</dt>
+          <dd>El hosting debe tener un rewrite hacia <code>index.html</code>. El proyecto incluye <code>frontend/public/_redirects</code> para Render y Netlify (acción: Rewrite, no Redirect).</dd>
+
+          <dt>¿Puedo recuperar mi contraseña si la olvidé?</dt>
+          <dd>No. Solo puedes cambiarla desde Configuración → Seguridad si recuerdas la contraseña actual.</dd>
+
+          <dt>¿Las recurrentes actualizan el saldo de mis cuentas?</dt>
+          <dd>No. Crean registros en el historial sin vincular cuenta.</dd>
+
+          <dt>¿Diferencia entre «Registrar Pago» y «Pagar deuda»?</dt>
+          <dd>Registrar Pago solo reduce la deuda. Pagar deuda en Transacciones también descuenta de la cuenta bancaria.</dd>
+
+          <dt>¿Puedo filtrar transacciones por categoría?</dt>
+          <dd>No en la lista de Transacciones. Usa Reportes.</dd>
+
+          <dt>¿El Asesor IA siempre usa inteligencia artificial?</dt>
+          <dd>Intenta usar Gemini; si no está disponible, genera un plan con reglas internas.</dd>
+        </dl>
+      </section>
+
+      <!-- 15. BUENAS PRÁCTICAS -->
+      <section id="buenas-practicas">
+        <h2>15. Buenas prácticas</h2>
+        <ol>
+          <li><strong>Crea tus cuentas primero</strong> con saldo actual antes de registrar transacciones.</li>
+          <li><strong>Registra con regularidad</strong> ingresos y gastos.</li>
+          <li><strong>Usa categorías</strong> para mejorar reportes y presupuestos.</li>
+          <li><strong>Revisa el Dashboard semanalmente.</strong></li>
+          <li><strong>Para deudas,</strong> elige el método de pago adecuado (Transacciones vs Deudas).</li>
+          <li><strong>Configura presupuestos</strong> y sincroniza cada mes.</li>
+          <li><strong>No confíes en recurrentes para saldos</strong> — verifica manualmente.</li>
+          <li><strong>Exporta tus datos</strong> periódicamente en CSV.</li>
+          <li><strong>Protege tu sesión</strong> en equipos compartidos.</li>
+          <li><strong>Programa recordatorios</strong> para pagos y metas.</li>
+        </ol>
+      </section>
+
+      <!-- ANEXO A -->
+      <section id="anexo-a">
+        <h2>Anexo A — Otros módulos disponibles</h2>
+        <h3>Inversiones (<span class="route">/inversiones</span>)</h3>
+        <p>Portafolio con tipos de inversión, montos, rendimiento y ganancia/pérdida.</p>
+        <h3>Metas (<span class="route">/metas</span>)</h3>
+        <p>Objetivos de ahorro con aportes y progreso porcentual.</p>
+        <h3>Presupuestos (<span class="route">/presupuestos</span>)</h3>
+        <p>Límites de gasto o ingresos esperados por categoría y mes, con sincronización y alertas.</p>
+        <h3>Recordatorios (<span class="route">/recordatorios</span>)</h3>
+        <p>Avisos programados con repetición y vínculo a deudas o metas.</p>
+        <h3>Notificaciones (<span class="route">/notificaciones</span>)</h3>
+        <p>Bandeja con filtros Todas / No leídas / Leídas.</p>
+        <h3>Gamificación (<span class="route">/gamificacion</span>)</h3>
+        <p>Niveles, logros y puntos (solo lectura).</p>
+        <h3>Asesor IA (<span class="route">/asesor</span>)</h3>
+        <p>Historial de planes para pagar deudas.</p>
+      </section>
+
+      <!-- ANEXO B -->
+      <section id="anexo-b">
+        <h2>Anexo B — Funcionalidades internas no expuestas al usuario</h2>
+        <table>
+          <thead><tr><th>Funcionalidad</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td>Recuperación de contraseña por email</td><td>No implementada</td></tr>
+            <tr><td>Eliminación de cuenta de usuario</td><td>Botón visible, deshabilitado</td></tr>
+            <tr><td>Estadísticas de categorías</td><td>Disponible internamente, no expuesta al usuario</td></tr>
+            <tr><td>Reporte mensual detallado</td><td>Disponible internamente; la UI usa agregados</td></tr>
+            <tr><td>Campos avanzados de transacción</td><td>API sí; formulario simplificado en UI</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <footer>
+        Documento generado a partir del análisis del código fuente del proyecto Gestor de Finanzas. Última revisión: julio 2026.
+      </footer>
+    </main>
+  </div>
+
+  <button class="print-btn" type="button" onclick="window.print()">Imprimir / PDF</button>
+</body>
+</html>

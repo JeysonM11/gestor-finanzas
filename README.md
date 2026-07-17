@@ -67,6 +67,7 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 ## Documentación
 
 - [docs/MANUAL-USUARIO.md](docs/MANUAL-USUARIO.md) — manual de usuario (guía funcional)
+- [docs/MANUAL-USUARIO.html](docs/MANUAL-USUARIO.html) — mismo manual en HTML (imprimible)
 - [backend/README.md](backend/README.md) — endpoints, env, seed, deploy
 - [frontend/README.md](frontend/README.md) — estructura UI
 - [docs/CONTRATOS-API.md](docs/CONTRATOS-API.md) — enums y contratos de campos
