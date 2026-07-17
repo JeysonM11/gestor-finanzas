@@ -47,6 +47,8 @@ paths:
       responses:
         '200':
           description: Token renovado
+        '204':
+          description: Sin sesión (no hay cookie refresh)
         '401':
           description: Refresh inválido
   /auth/logout:

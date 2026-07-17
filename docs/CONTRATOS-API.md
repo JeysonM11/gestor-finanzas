@@ -69,7 +69,7 @@ Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`
 
 - Login/register crean `SesionUsuario` con access JWT corto (`type=access`, `sid`) + refresh opaco hasheado.
 - Access TTL: `JWT_ACCESS_TTL_SECONDS` (default 900). Refresh TTL: `REFRESH_TOKEN_TTL_DAYS` (default 30).
-- Refresh en cookie HttpOnly (`gf_refresh`); `POST /auth/refresh` rota el refresh (replay → revoke).
+- Refresh en cookie HttpOnly (`gf_refresh`); `POST /auth/refresh` rota el refresh (replay → revoke). Sin cookie → `204` (sin sesión).
 - `authMiddleware` **rechaza** tokens sin `sid` (`code: LEGACY_TOKEN`) — re-login obligatorio.
 - Access expirado: `code: ACCESS_TOKEN_EXPIRED` (el frontend renueva una vez).
 - TTL de sesión = vida del refresh; el hash del access actual vive en `SesionUsuario.token`.

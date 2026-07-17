@@ -34,6 +34,9 @@ export const AuthProvider = ({ children }) => {
           {},
           { withCredentials: true }
         )
+        // 204 = sin sesión (visitante en login)
+        if (refreshed.status === 204 || !refreshed.data) return
+
         const token = refreshed.data.accessToken || refreshed.data.token
         if (token) setAccessToken(token)
         if (refreshed.data.user) {
