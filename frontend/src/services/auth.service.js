@@ -58,11 +58,16 @@ export const authService = {
 
   async logout() {
     try {
+      // withCredentials limpia cookie refresh aunque el access haya expirado
       await api.post('/auth/logout')
     } catch {
-      // Si el token ya expiró, igual limpiamos local
+      // Si falla la red, igual limpiamos memoria local
     }
     clearAccessToken()
-    localStorage.removeItem('token')
+    try {
+      localStorage.removeItem('token')
+    } catch {
+      /* ignore */
+    }
   },
 }

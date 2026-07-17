@@ -23,7 +23,8 @@ router.get('/me', authenticateToken, authController.getCurrentUser);
 router.get('/sessions', authenticateToken, sessionController.listarSesiones);
 router.delete('/sessions/others', authenticateToken, sessionController.revocarOtrasSesiones);
 router.delete('/sessions/:id', authenticateToken, sessionController.revocarSesion);
-router.post('/logout', authenticateToken, sessionController.logout);
+// Logout no exige access token: puede revocar con cookie refresh
+router.post('/logout', sessionController.logout);
 
 router.put(
   '/profile',

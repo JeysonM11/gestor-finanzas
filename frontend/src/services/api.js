@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 
-/** Access token en memoria (no localStorage) */
+/** Access token solo en memoria (refresh vía cookie HttpOnly) */
 let accessTokenMemory = null
 let refreshPromise = null
 
@@ -28,7 +28,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = accessTokenMemory || localStorage.getItem('token')
+    const token = accessTokenMemory
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -44,8 +44,6 @@ async function refreshAccessToken() {
       .then((res) => {
         const token = res.data.accessToken || res.data.token
         setAccessToken(token)
-        // Compat temporal durante migración
-        if (token) localStorage.setItem('token', token)
         return token
       })
       .finally(() => {
@@ -68,17 +66,17 @@ api.interceptors.response.use(
       !original._retry &&
       !String(original.url || '').includes('/auth/refresh') &&
       !String(original.url || '').includes('/auth/login') &&
+      !String(original.url || '').includes('/auth/logout') &&
       (code === 'ACCESS_TOKEN_EXPIRED' || code === 'TOKEN_INVALID' || !code)
     ) {
-      // No reintentar si es legacy o sesión revocada definitivamente
       if (
         code === 'LEGACY_TOKEN' ||
         code === 'SESSION_REVOKED' ||
         code === 'REFRESH_REUSED' ||
+        code === 'REFRESH_CONFLICT' ||
         code === 'ACCOUNT_INACTIVE'
       ) {
         clearAccessToken()
-        localStorage.removeItem('token')
         window.location.href = '/#/login'
         return Promise.reject(error)
       }
@@ -92,15 +90,13 @@ api.interceptors.response.use(
         }
       } catch (_) {
         clearAccessToken()
-        localStorage.removeItem('token')
         window.location.href = '/#/login'
         return Promise.reject(error)
       }
     }
 
-    if (status === 401) {
+    if (status === 401 && !String(original?.url || '').includes('/auth/logout')) {
       clearAccessToken()
-      localStorage.removeItem('token')
       window.location.href = '/#/login'
     }
 

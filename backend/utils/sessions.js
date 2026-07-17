@@ -195,15 +195,29 @@ async function rotateRefreshToken(refreshToken) {
 
   const accessToken = buildAccessToken(session.user, session.id);
   const newRefresh = buildRefreshToken(session.id);
+  const newAccessHash = hashToken(accessToken);
+  const newRefreshHash = hashToken(newRefresh);
 
-  await prisma.sesionUsuario.update({
-    where: { id: session.id },
+  // Rotación atómica (CAS): solo gana un refresh concurrente
+  const rotated = await prisma.sesionUsuario.updateMany({
+    where: {
+      id: session.id,
+      activa: true,
+      refreshTokenHash: incomingHash,
+    },
     data: {
-      token: hashToken(accessToken),
-      refreshTokenHash: hashToken(newRefresh),
+      token: newAccessHash,
+      refreshTokenHash: newRefreshHash,
       lastUsedAt: new Date(),
     },
   });
+
+  if (rotated.count === 0) {
+    const err = new Error('Refresh token ya rotado; reintenta con el nuevo');
+    err.statusCode = 401;
+    err.code = 'REFRESH_CONFLICT';
+    throw err;
+  }
 
   return {
     token: accessToken,

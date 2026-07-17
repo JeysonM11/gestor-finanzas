@@ -6,6 +6,7 @@ const {
   revokeSession,
   clearRefreshCookie,
   readRefreshFromRequest,
+  hashToken,
 } = require('../utils/sessions');
 const { registrarAuditoria } = require('../services/auditoria-acceso.service');
 
@@ -89,20 +90,28 @@ exports.revocarOtrasSesiones = catchAsync(async (req, res) => {
 });
 
 exports.logout = catchAsync(async (req, res) => {
-  const userId = req.user?.id;
+  let userId = req.user?.id ?? null;
   const currentSessionId = req.sessionId;
 
   if (currentSessionId) {
     await revokeSession(currentSessionId, userId);
   } else {
-    // Permitir logout con refresh aunque el access haya expirado
+    // Access expirado: revocar con cookie refresh (CAS por hash)
     try {
       const refreshToken = readRefreshFromRequest(req);
       if (refreshToken) {
         const [sidRaw] = refreshToken.split('.');
         const sid = parseInt(sidRaw, 10);
         if (Number.isFinite(sid)) {
-          await revokeSession(sid);
+          const incomingHash = hashToken(refreshToken);
+          const session = await prisma.sesionUsuario.findFirst({
+            where: { id: sid, activa: true, refreshTokenHash: incomingHash },
+            select: { id: true, userId: true },
+          });
+          if (session) {
+            userId = session.userId;
+            await revokeSession(session.id, session.userId);
+          }
         }
       }
     } catch (_) {

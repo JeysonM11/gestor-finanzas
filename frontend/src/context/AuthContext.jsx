@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, useEffect } from 'react'
 import axios from 'axios'
 import { authService } from '../services/auth.service'
-import { setAccessToken, clearAccessToken, getAccessToken } from '../services/api'
+import { setAccessToken, clearAccessToken } from '../services/api'
 
 const AuthContext = createContext(null)
 
@@ -21,6 +21,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const bootstrap = async () => {
+      // Limpia access legacy de localStorage (v1.4: solo memoria)
+      try {
+        localStorage.removeItem('token')
+      } catch {
+        /* ignore */
+      }
+
       try {
         const refreshed = await axios.post(
           `${API_URL}/auth/refresh`,
@@ -28,28 +35,15 @@ export const AuthProvider = ({ children }) => {
           { withCredentials: true }
         )
         const token = refreshed.data.accessToken || refreshed.data.token
-        if (token) {
-          setAccessToken(token)
-          localStorage.setItem('token', token)
-        }
+        if (token) setAccessToken(token)
         if (refreshed.data.user) {
           setUser(refreshed.data.user)
           return
         }
-      } catch {
-        const legacy = localStorage.getItem('token')
-        if (legacy) setAccessToken(legacy)
-      }
-
-      const token = getAccessToken() || localStorage.getItem('token')
-      if (!token) return
-
-      try {
-        const response = await authService.getCurrentUser()
-        if (response.user) setUser(response.user)
+        const me = await authService.getCurrentUser()
+        if (me.user) setUser(me.user)
       } catch {
         clearAccessToken()
-        localStorage.removeItem('token')
       }
     }
 
@@ -60,7 +54,6 @@ export const AuthProvider = ({ children }) => {
     const response = await authService.login(email, password)
     const token = response.accessToken || response.token
     setAccessToken(token)
-    localStorage.setItem('token', token)
     setUser(response.user)
     return response
   }
@@ -69,7 +62,6 @@ export const AuthProvider = ({ children }) => {
     const response = await authService.register(userData)
     const token = response.accessToken || response.token
     setAccessToken(token)
-    localStorage.setItem('token', token)
     setUser(response.user)
     return response
   }

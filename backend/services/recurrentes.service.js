@@ -73,7 +73,6 @@ async function ejecutarPendientes({ userId } = {}) {
     activa: true,
     proximaEjecucion: { lte: ahora },
     OR: [{ fechaFin: null }, { fechaFin: { gte: ahora } }],
-    cuentaOrigenId: { not: null },
   };
   if (userId != null) {
     where.userId = userId;
@@ -84,12 +83,32 @@ async function ejecutarPendientes({ userId } = {}) {
 
   for (const tr of pendientes) {
     if (requiereConfiguracion(tr)) {
+      // Avanzar agenda para no reintentar eternamente la misma ocurrencia
+      const siguienteEjecucion = calcularProximaEjecucion(
+        tr.frecuencia,
+        tr.proximaEjecucion,
+        tr.diaEjecucion,
+        tr.diaSemana
+      );
+      await prisma.transaccionRecurrente.updateMany({
+        where: {
+          id: tr.id,
+          activa: true,
+          proximaEjecucion: tr.proximaEjecucion,
+        },
+        data: { proximaEjecucion: siguienteEjecucion },
+      });
+      logger.warn('Recurrente omitida: requiere configuración', {
+        recurrenteId: tr.id,
+        userId: tr.userId,
+      });
       resultados.push({
         id: tr.id,
         userId: tr.userId,
         transaccionRecurrente: tr.nombre,
         error: 'Requiere configuracion de cuenta',
         omitida: true,
+        siguienteEjecucion,
       });
       continue;
     }

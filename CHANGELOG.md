@@ -28,9 +28,10 @@ Tema: estabilizar y unificar módulos existentes (sin módulos nuevos).
 - Eliminar cuenta (borrado lógico + contraseña + revocación de sesiones).
 
 ### Sprint 5 — Seguridad
-- Access JWT corto + refresh opaco en cookie HttpOnly (rotación / replay revoke).
+- Access JWT corto + refresh opaco en cookie HttpOnly (rotación atómica / replay revoke).
 - Rechazo inmediato de JWT legacy sin `sid` (re-login global).
 - Auditoría persistida: login, logout, password, profile, delete account.
+- Logout con cookie refresh aunque el access haya expirado; access solo en memoria en FE.
 
 ### Sprint 6 — Calidad
 - Tests ampliados (89 unitarios) + `coverageThreshold` progresivo en Jest/CI.

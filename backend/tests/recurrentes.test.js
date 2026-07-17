@@ -41,4 +41,21 @@ describe('recurrentes service v1.4', () => {
       })
     ).toBe(true);
   });
+
+  test('requiereConfiguracion TRANSFERENCIA exige destino', () => {
+    expect(
+      requiereConfiguracion({
+        tipo: 'TRANSFERENCIA',
+        cuentaOrigenId: 1,
+        cuentaDestinoId: null,
+      })
+    ).toBe(true);
+    expect(
+      requiereConfiguracion({
+        tipo: 'TRANSFERENCIA',
+        cuentaOrigenId: 1,
+        cuentaDestinoId: 2,
+      })
+    ).toBe(false);
+  });
 });
