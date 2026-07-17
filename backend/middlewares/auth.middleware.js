@@ -9,6 +9,7 @@ const authMiddleware = async (req, res, next) => {
     return res.status(401).json({
       success: false,
       message: 'Formato de token inválido. Debe ser "Bearer <token>"',
+      code: 'TOKEN_MISSING',
     });
   }
 
@@ -18,6 +19,7 @@ const authMiddleware = async (req, res, next) => {
     return res.status(401).json({
       success: false,
       message: 'Token no proporcionado',
+      code: 'TOKEN_MISSING',
     });
   }
 
@@ -31,6 +33,22 @@ const authMiddleware = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!decoded.sid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Sesión inválida. Inicia sesión de nuevo.',
+        code: 'LEGACY_TOKEN',
+      });
+    }
+
+    if (decoded.type && decoded.type !== 'access') {
+      return res.status(401).json({
+        success: false,
+        message: 'Tipo de token inválido',
+        code: 'TOKEN_TYPE_INVALID',
+      });
+    }
 
     const sessionValid = await validateUserSession(decoded, token);
     if (!sessionValid) {
@@ -47,16 +65,19 @@ const authMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     logger.warn('Error al verificar token', { reason: error.name });
+    const code =
+      error.name === 'TokenExpiredError' ? 'ACCESS_TOKEN_EXPIRED' : 'TOKEN_INVALID';
     return res.status(401).json({
       success: false,
-      message: 'Token inválido',
+      message:
+        code === 'ACCESS_TOKEN_EXPIRED'
+          ? 'Access token expirado'
+          : 'Token inválido',
+      code,
     });
   }
 };
 
-/**
- * Middleware para verificar que el usuario tenga uno de los roles permitidos
- */
 const requireRole = (...rolesPermitidos) => {
   return (req, res, next) => {
     if (!req.user) {

@@ -1,4 +1,4 @@
-import api from './api'
+import api, { clearAccessToken } from './api'
 
 export const authService = {
   async login(email, password) {
@@ -8,6 +8,11 @@ export const authService = {
 
   async register(userData) {
     const response = await api.post('/auth/register', userData)
+    return response.data
+  },
+
+  async refresh() {
+    const response = await api.post('/auth/refresh')
     return response.data
   },
 
@@ -46,12 +51,23 @@ export const authService = {
     return response.data
   },
 
+  async deleteAccount({ password }) {
+    const response = await api.delete('/auth/account', { data: { password } })
+    return response.data
+  },
+
   async logout() {
     try {
+      // withCredentials limpia cookie refresh aunque el access haya expirado
       await api.post('/auth/logout')
     } catch {
-      // Si el token ya expiró, igual limpiamos local
+      // Si falla la red, igual limpiamos memoria local
     }
-    localStorage.removeItem('token')
+    clearAccessToken()
+    try {
+      localStorage.removeItem('token')
+    } catch {
+      /* ignore */
+    }
   },
 }

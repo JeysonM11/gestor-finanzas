@@ -26,8 +26,12 @@ export const deudaService = {
     return response.data
   },
 
-  async registrarPago(deudaId, monto, fecha) {
-    const response = await api.post(`/finanzas/deudas/${deudaId}/pagos`, { monto, fecha })
+  async registrarPago(deudaId, monto, fecha, cuentaOrigenId) {
+    const response = await api.post(`/finanzas/deudas/${deudaId}/pagos`, {
+      monto,
+      fecha,
+      ...(cuentaOrigenId != null ? { cuentaOrigenId } : {}),
+    })
     return response.data
   },
 

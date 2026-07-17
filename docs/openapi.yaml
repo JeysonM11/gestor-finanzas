@@ -1,0 +1,172 @@
+openapi: 3.0.3
+info:
+  title: Gestor de Finanzas API
+  version: 1.4.0
+  description: API del gestor de finanzas personales (Express + Prisma + PostgreSQL).
+servers:
+  - url: /api
+    description: Prefijo API
+tags:
+  - name: Auth
+  - name: Health
+  - name: Transacciones
+  - name: Finanzas
+  - name: Sistema
+  - name: Reportes
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check (API + base de datos)
+      responses:
+        '200':
+          description: Operativo
+        '503':
+          description: Base de datos no disponible
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login (access + refresh cookie)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renueva access token con refresh cookie
+      responses:
+        '200':
+          description: Token renovado
+        '401':
+          description: Refresh inválido
+  /auth/logout:
+    post:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      summary: Cierra sesión actual
+      responses:
+        '200':
+          description: Sesión cerrada
+  /auth/account:
+    delete:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      summary: Borrado lógico de cuenta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        '200':
+          description: Cuenta desactivada
+  /transacciones:
+    get:
+      tags: [Transacciones]
+      security: [{ bearerAuth: [] }]
+      summary: Listar transacciones
+      parameters:
+        - in: query
+          name: montoMin
+          schema: { type: number }
+        - in: query
+          name: montoMax
+          schema: { type: number }
+        - in: query
+          name: tipo
+          schema: { type: string }
+      responses:
+        '200':
+          description: Listado
+    post:
+      tags: [Transacciones]
+      security: [{ bearerAuth: [] }]
+      summary: Crear movimiento (INGRESO/GASTO/TRANSFERENCIA/PAGO_DEUDA)
+      responses:
+        '201':
+          description: Creada
+  /finanzas/cuentas/{id}:
+    put:
+      tags: [Finanzas]
+      security: [{ bearerAuth: [] }]
+      summary: Edición completa de cuenta
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Actualizada
+  /finanzas/deudas/{deudaId}/pagos:
+    post:
+      tags: [Finanzas]
+      security: [{ bearerAuth: [] }]
+      summary: Pago de deuda (delega a PAGO_DEUDA)
+      parameters:
+        - in: path
+          name: deudaId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monto, cuentaOrigenId]
+              properties:
+                monto: { type: number }
+                cuentaOrigenId: { type: integer }
+                fecha: { type: string, format: date }
+      responses:
+        '201':
+          description: Pago registrado
+  /sistema/recurrentes/ejecutar:
+    post:
+      tags: [Sistema]
+      security: [{ bearerAuth: [] }]
+      summary: Ejecutar recurrentes pendientes del usuario
+      responses:
+        '200':
+          description: Resumen de ejecución
+  /sistema/recordatorios/ejecutar:
+    post:
+      tags: [Sistema]
+      security: [{ bearerAuth: [] }]
+      summary: Procesar recordatorios vencidos
+      responses:
+        '200':
+          description: Resumen
+  /reportes/agregados:
+    get:
+      tags: [Reportes]
+      security: [{ bearerAuth: [] }]
+      summary: Agregados (incluye PAGO_DEUDA como gasto)
+      parameters:
+        - in: query
+          name: meses
+          schema: { type: integer, default: 6 }
+      responses:
+        '200':
+          description: Series y categorías
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

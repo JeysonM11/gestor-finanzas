@@ -23,6 +23,7 @@ export function ToastProvider({ children }) {
       success: (texto) => showToast(texto, 'success'),
       error: (texto) => showToast(texto, 'error'),
       info: (texto) => showToast(texto, 'info'),
+      warning: (texto) => showToast(texto, 'warning'),
     }),
     [showToast]
   )
@@ -42,7 +43,9 @@ export function ToastProvider({ children }) {
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                 : t.tipo === 'info'
                   ? 'bg-blue-50 text-blue-800 border-blue-200'
-                  : 'bg-red-50 text-red-800 border-red-200'
+                  : t.tipo === 'warning'
+                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                    : 'bg-red-50 text-red-800 border-red-200'
             }`}
           >
             <div className="flex items-start justify-between gap-3">

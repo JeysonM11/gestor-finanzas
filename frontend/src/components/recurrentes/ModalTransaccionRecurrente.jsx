@@ -3,13 +3,17 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { transaccionRecurrenteService } from '../../services/transaccion-recurrente.service'
+import { cuentaService } from '../../services/cuenta.service'
+import { deudaService } from '../../services/deuda.service'
 import { useCategorias } from '../../hooks/useCategorias'
+import { useCurrency } from '../../hooks/useCurrency'
 import { todayDateInput, toDateInputValue } from '../../utils/date'
 
 const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = null }) => {
   const isEditing = !!transaccion
+  const { formatMoney } = useCurrency()
   const { categorias, categoriasParaTipo } = useCategorias({ enabled: isOpen })
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
@@ -20,10 +24,70 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
     diaEjecucion: new Date().getDate(),
     fechaInicio: todayDateInput(),
     fechaFin: '',
-    activa: true
+    activa: true,
+    cuentaOrigenId: '',
+    cuentaDestinoId: '',
+    deudaId: '',
   })
+  const [cuentas, setCuentas] = useState([])
+  const [deudas, setDeudas] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingCuentas, setLoadingCuentas] = useState(false)
+  const [loadingDeudas, setLoadingDeudas] = useState(false)
   const [error, setError] = useState('')
+
+  const showCategoria = formData.tipo === 'INGRESO' || formData.tipo === 'GASTO'
+  const showDestino = formData.tipo === 'TRANSFERENCIA'
+  const showDeuda = formData.tipo === 'PAGO_DEUDA'
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const cargarCuentas = async () => {
+      try {
+        setLoadingCuentas(true)
+        const data = await cuentaService.getAll()
+        setCuentas(data.cuentas || data || [])
+      } catch (err) {
+        console.error('Error al cargar cuentas:', err)
+        setCuentas([])
+      } finally {
+        setLoadingCuentas(false)
+      }
+    }
+
+    cargarCuentas()
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || formData.tipo !== 'PAGO_DEUDA') return
+
+    const cargarDeudas = async () => {
+      try {
+        setLoadingDeudas(true)
+        const data = await deudaService.getAll()
+        const lista = data.deudas || data || []
+        const pagables = lista.filter(
+          (d) => !d.pagada && Number(d.montoActual) > 0
+        )
+        if (
+          transaccion?.deudaId &&
+          !pagables.some((d) => d.id === transaccion.deudaId)
+        ) {
+          const vinculada = lista.find((d) => d.id === transaccion.deudaId)
+          if (vinculada) pagables.push(vinculada)
+        }
+        setDeudas(pagables)
+      } catch (err) {
+        console.error('Error al cargar deudas:', err)
+        setDeudas([])
+      } finally {
+        setLoadingDeudas(false)
+      }
+    }
+
+    cargarDeudas()
+  }, [isOpen, formData.tipo, transaccion])
 
   useEffect(() => {
     if (transaccion && isOpen) {
@@ -37,7 +101,10 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
         diaEjecucion: transaccion.diaEjecucion || new Date().getDate(),
         fechaInicio: transaccion.fechaInicio ? toDateInputValue(transaccion.fechaInicio) : todayDateInput(),
         fechaFin: transaccion.fechaFin ? toDateInputValue(transaccion.fechaFin) : '',
-        activa: transaccion.activa !== undefined ? transaccion.activa : true
+        activa: transaccion.activa !== undefined ? transaccion.activa : true,
+        cuentaOrigenId: transaccion.cuentaOrigenId ? String(transaccion.cuentaOrigenId) : '',
+        cuentaDestinoId: transaccion.cuentaDestinoId ? String(transaccion.cuentaDestinoId) : '',
+        deudaId: transaccion.deudaId ? String(transaccion.deudaId) : '',
       })
     } else if (!isOpen) {
       setFormData({
@@ -50,7 +117,10 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
         diaEjecucion: new Date().getDate(),
         fechaInicio: todayDateInput(),
         fechaFin: '',
-        activa: true
+        activa: true,
+        cuentaOrigenId: '',
+        cuentaDestinoId: '',
+        deudaId: '',
       })
       setError('')
     }
@@ -58,10 +128,18 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }))
+    setFormData((prev) => {
+      const next = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      }
+      if (name === 'tipo') {
+        if (value !== 'TRANSFERENCIA') next.cuentaDestinoId = ''
+        if (value !== 'PAGO_DEUDA') next.deudaId = ''
+        if (value !== 'INGRESO' && value !== 'GASTO') next.categoria = ''
+      }
+      return next
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -71,9 +149,26 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
 
     try {
       const dataToSend = {
-        ...formData,
+        nombre: formData.nombre,
+        descripcion: formData.descripcion,
+        tipo: formData.tipo,
         monto: parseFloat(formData.monto),
-        diaEjecucion: parseInt(formData.diaEjecucion)
+        frecuencia: formData.frecuencia,
+        diaEjecucion: parseInt(formData.diaEjecucion),
+        fechaInicio: formData.fechaInicio,
+        fechaFin: formData.fechaFin || null,
+        activa: formData.activa,
+        cuentaOrigenId: Number(formData.cuentaOrigenId),
+      }
+
+      if (showCategoria && formData.categoria) {
+        dataToSend.categoria = formData.categoria
+      }
+      if (showDestino) {
+        dataToSend.cuentaDestinoId = Number(formData.cuentaDestinoId)
+      }
+      if (showDeuda) {
+        dataToSend.deudaId = Number(formData.deudaId)
       }
 
       if (isEditing) {
@@ -81,7 +176,7 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
       } else {
         await transaccionRecurrenteService.create(dataToSend)
       }
-      
+
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -90,6 +185,11 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
     } finally {
       setLoading(false)
     }
+  }
+
+  const etiquetaCuenta = (cuenta) => {
+    const saldo = formatMoney(cuenta.saldoActual ?? 0)
+    return `${cuenta.nombre} (${saldo})`
   }
 
   return (
@@ -134,6 +234,8 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
             >
               <option value="INGRESO">Ingreso</option>
               <option value="GASTO">Gasto</option>
+              <option value="TRANSFERENCIA">Transferencia</option>
+              <option value="PAGO_DEUDA">Pagar deuda</option>
             </select>
           </div>
 
@@ -150,31 +252,108 @@ const ModalTransaccionRecurrente = ({ isOpen, onClose, onSuccess, transaccion = 
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-ink-muted mb-2">
+            Cuenta origen *
+          </label>
+          <select
+            name="cuentaOrigenId"
+            value={formData.cuentaOrigenId}
+            onChange={handleChange}
+            className="w-full input-field"
+            required
+            disabled={loadingCuentas}
+          >
+            <option value="">
+              {loadingCuentas ? 'Cargando cuentas...' : 'Seleccionar cuenta'}
+            </option>
+            {cuentas.map((cuenta) => (
+              <option key={cuenta.id} value={cuenta.id}>
+                {etiquetaCuenta(cuenta)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {showDestino && (
           <div>
             <label className="block text-sm font-medium text-ink-muted mb-2">
-              Categoría
+              Cuenta destino *
             </label>
             <select
-              name="categoria"
-              value={formData.categoria}
+              name="cuentaDestinoId"
+              value={formData.cuentaDestinoId}
               onChange={handleChange}
               className="w-full input-field"
+              required
+              disabled={loadingCuentas}
             >
-              <option value="">Sin categoría</option>
-              {categoriasParaTipo(formData.tipo).map((c) => (
-                <option key={c.id || c.nombre} value={c.nombre}>
-                  {c.nombre}
-                </option>
-              ))}
-              {formData.categoria &&
-                !categorias.some((c) => c.nombre === formData.categoria) && (
-                  <option value={formData.categoria}>{formData.categoria}</option>
-                )}
+              <option value="">
+                {loadingCuentas ? 'Cargando cuentas...' : 'Seleccionar cuenta'}
+              </option>
+              {cuentas
+                .filter((c) => String(c.id) !== String(formData.cuentaOrigenId))
+                .map((cuenta) => (
+                  <option key={cuenta.id} value={cuenta.id}>
+                    {etiquetaCuenta(cuenta)}
+                  </option>
+                ))}
             </select>
           </div>
+        )}
 
+        {showDeuda && (
           <div>
+            <label className="block text-sm font-medium text-ink-muted mb-2">
+              Deuda *
+            </label>
+            <select
+              name="deudaId"
+              value={formData.deudaId}
+              onChange={handleChange}
+              className="w-full input-field"
+              required
+              disabled={loadingDeudas}
+            >
+              <option value="">
+                {loadingDeudas ? 'Cargando deudas...' : 'Seleccionar deuda'}
+              </option>
+              {deudas.map((deuda) => (
+                <option key={deuda.id} value={deuda.id}>
+                  {deuda.nombre} — pendiente {formatMoney(deuda.montoActual)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {showCategoria && (
+            <div>
+              <label className="block text-sm font-medium text-ink-muted mb-2">
+                Categoría
+              </label>
+              <select
+                name="categoria"
+                value={formData.categoria}
+                onChange={handleChange}
+                className="w-full input-field"
+              >
+                <option value="">Sin categoría</option>
+                {categoriasParaTipo(formData.tipo).map((c) => (
+                  <option key={c.id || c.nombre} value={c.nombre}>
+                    {c.nombre}
+                  </option>
+                ))}
+                {formData.categoria &&
+                  !categorias.some((c) => c.nombre === formData.categoria) && (
+                    <option value={formData.categoria}>{formData.categoria}</option>
+                  )}
+              </select>
+            </div>
+          )}
+
+          <div className={showCategoria ? '' : 'md:col-span-2'}>
             <label className="block text-sm font-medium text-ink-muted mb-2">
               Frecuencia *
             </label>

@@ -2,13 +2,51 @@ import { useState, useEffect } from 'react'
 import { Card, Button, Spinner, EmptyState } from '../components/ui'
 import { notificacionService } from '../services/notificacion.service'
 import { useToast } from '../context/ToastContext'
-import { Bell, Check, CheckCheck, Trash2, AlertCircle, Info, CheckCircle } from 'lucide-react'
+import { Bell, Check, CheckCheck, Trash2, AlertCircle, Info, CheckCircle, AlertTriangle } from 'lucide-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/es'
 
 dayjs.extend(relativeTime)
 dayjs.locale('es')
+
+/** Normaliza tipo o datos.variant a success | warning | error | info | recordatorio */
+function resolveNotifVariant(notif) {
+  const raw = (notif?.datos?.variant || notif?.tipo || 'INFO').toString().toUpperCase()
+  if (['SUCCESS', 'EXITO', 'ÉXITO', 'LOGRO'].includes(raw)) return 'success'
+  if (['WARNING', 'ADVERTENCIA', 'ALERTA'].includes(raw)) return 'warning'
+  if (raw === 'ERROR') return 'error'
+  if (raw === 'RECORDATORIO') return 'recordatorio'
+  return 'info'
+}
+
+const VARIANT_STYLES = {
+  success: {
+    icon: CheckCircle,
+    iconClass: 'text-green-600',
+    bg: 'bg-green-50 border-green-200',
+  },
+  warning: {
+    icon: AlertTriangle,
+    iconClass: 'text-amber-600',
+    bg: 'bg-amber-50 border-amber-200',
+  },
+  error: {
+    icon: AlertCircle,
+    iconClass: 'text-red-600',
+    bg: 'bg-red-50 border-red-200',
+  },
+  recordatorio: {
+    icon: AlertCircle,
+    iconClass: 'text-orange-600',
+    bg: 'bg-orange-50 border-orange-200',
+  },
+  info: {
+    icon: Info,
+    iconClass: 'text-blue-600',
+    bg: 'bg-blue-50 border-blue-200',
+  },
+}
 
 const Notificaciones = () => {
   const toast = useToast()
@@ -55,38 +93,6 @@ const Notificaciones = () => {
       cargarNotificaciones()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al eliminar notificación')
-    }
-  }
-
-  const getTipoIcon = (tipo) => {
-    switch(tipo) {
-      case 'LOGRO':
-      case 'EXITO':
-        return <CheckCircle className="h-5 w-5 text-green-600" />
-      case 'ALERTA':
-      case 'ADVERTENCIA':
-      case 'ERROR':
-        return <AlertCircle className="h-5 w-5 text-yellow-600" />
-      case 'RECORDATORIO':
-        return <AlertCircle className="h-5 w-5 text-orange-600" />
-      default:
-        return <Info className="h-5 w-5 text-blue-600" />
-    }
-  }
-
-  const getTipoBgColor = (tipo) => {
-    switch(tipo) {
-      case 'LOGRO':
-      case 'EXITO':
-        return 'bg-green-50 border-green-200'
-      case 'ALERTA':
-      case 'ADVERTENCIA':
-      case 'ERROR':
-        return 'bg-yellow-50 border-yellow-200'
-      case 'RECORDATORIO':
-        return 'bg-orange-50 border-orange-200'
-      default:
-        return 'bg-blue-50 border-blue-200'
     }
   }
 
@@ -157,14 +163,18 @@ const Notificaciones = () => {
       {/* Lista de notificaciones */}
       {notificacionesFiltradas.length > 0 ? (
         <div className="space-y-3">
-          {notificacionesFiltradas.map((notif) => (
+          {notificacionesFiltradas.map((notif) => {
+            const variant = resolveNotifVariant(notif)
+            const style = VARIANT_STYLES[variant] || VARIANT_STYLES.info
+            const Icon = style.icon
+            return (
             <Card
               key={notif.id}
-              className={`${getTipoBgColor(notif.tipo)} border ${!notif.leida ? 'border-l-4' : ''}`}
+              className={`${style.bg} border ${!notif.leida ? 'border-l-4' : ''}`}
             >
               <div className="flex items-start gap-4">
                 <div className="mt-1">
-                  {getTipoIcon(notif.tipo)}
+                  <Icon className={`h-5 w-5 ${style.iconClass}`} />
                 </div>
                 
                 <div className="flex-1">
@@ -204,7 +214,8 @@ const Notificaciones = () => {
                 </div>
               </div>
             </Card>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <Card>

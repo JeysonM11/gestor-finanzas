@@ -2,7 +2,7 @@
 
 Aplicación full-stack de finanzas personales: autenticación JWT, transacciones con sync de saldos, cuentas, inversiones, deudas, recurrentes (cron), notificaciones, reportes/CSV, gamificación básica y configuración real.
 
-> **MVP y v1.2 cerrados.** Plan activo: [PLAN-1.3.md](PLAN-1.3.md) (Asesor IA de deudas con Gemini). Histórico: [PLAN-1.2.md](PLAN-1.2.md).
+> **MVP, v1.2 y v1.3 cerrados.** Plan activo/cerrado: [PLAN-1.4.md](PLAN-1.4.md) (estabilizar y unificar). Histórico: [PLAN-1.3.md](PLAN-1.3.md), [PLAN-1.2.md](PLAN-1.2.md).
 
 ## Arquitectura
 
@@ -47,22 +47,22 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 
 | Módulo | Estado |
 |--------|--------|
-| Auth (register/login/me/profile/password/preferences) | ✅ |
-| Transacciones + sync saldos | ✅ |
-| Cuentas | ✅ |
-| Inversiones | ✅ |
-| Deudas + pagos | ✅ |
-| Recurrentes + cron horario | ✅ |
-| Notificaciones | ✅ |
+| Auth + refresh HttpOnly + auditoría | ✅ v1.4 |
+| Transacciones + sync saldos + filtros monto | ✅ |
+| Cuentas (CRUD + edición completa) | ✅ |
+| Inversiones (métricas + historial) | ✅ |
+| Deudas + pagos unificados (`PAGO_DEUDA`) | ✅ |
+| Recurrentes + cron (con cuenta y saldos) | ✅ |
+| Notificaciones (SUCCESS/WARNING/ERROR) | ✅ |
 | Reportes / agregados / export CSV | ✅ |
-| Categorías (API + UI Config + modales) | ✅ |
-| Gamificación (logros/resumen/historial) | ✅ básica |
-| Metas de ahorro | ✅ |
+| Categorías (icono/color/orden/búsqueda) | ✅ |
+| Gamificación automática idempotente | ✅ |
+| Metas (aportes con cuenta opcional) | ✅ |
 | Presupuestos + alertas | ✅ |
-| Recordatorios (API + cron + UI) | ✅ |
-| Sesiones (confianza) | ✅ |
-| Email verify | → backlog (post v1.3) |
-| Asesor IA de deudas (Gemini) | 🚧 v1.3 |
+| Recordatorios (API + cron + Ejecutar ahora) | ✅ |
+| Dashboard (sin mocks + health real) | ✅ |
+| Asesor IA de deudas (Gemini) | ✅ v1.3 |
+| Email verify | → backlog |
 
 ## Documentación
 
@@ -71,7 +71,9 @@ npm run dev           # http://localhost:5173 (o 5174 si está ocupado)
 - [docs/CONTRATOS-API.md](docs/CONTRATOS-API.md) — enums y contratos de campos
 - [PLAN-DE-TRABAJO.md](PLAN-DE-TRABAJO.md) — MVP cerrado (histórico Sprints 0–6)
 - [PLAN-1.2.md](PLAN-1.2.md) — v1.2 cerrada (categorías, recordatorios, moneda, sesiones, CI)
-- [PLAN-1.3.md](PLAN-1.3.md) — plan activo v1.3 (Asesor IA de deudas)
+- [PLAN-1.3.md](PLAN-1.3.md) — v1.3 Asesor IA
+- [PLAN-1.4.md](PLAN-1.4.md) — v1.4 estabilización/unificación
+- [docs/openapi.yaml](docs/openapi.yaml) — OpenAPI 3
 - [CHANGELOG.md](CHANGELOG.md) — historial de versiones
 
 ## Checklist de despliegue

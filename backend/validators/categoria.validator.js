@@ -8,6 +8,7 @@ const createCategoriaSchema = Joi.object({
     .required(),
   color: Joi.string().trim().max(30).allow('', null).optional(),
   icono: Joi.string().trim().max(50).allow('', null).optional(),
+  orden: Joi.number().integer().min(0).allow(null).optional(),
   descripcion: Joi.string().trim().max(500).allow('', null).optional(),
 });
 
@@ -18,6 +19,7 @@ const updateCategoriaSchema = Joi.object({
     .optional(),
   color: Joi.string().trim().max(30).allow('', null).optional(),
   icono: Joi.string().trim().max(50).allow('', null).optional(),
+  orden: Joi.number().integer().min(0).allow(null).optional(),
   descripcion: Joi.string().trim().max(500).allow('', null).optional(),
   activa: Joi.boolean().optional(),
 }).min(1);

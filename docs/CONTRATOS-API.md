@@ -3,7 +3,7 @@
 Documento de referencia para alinear **frontend**, **backend** y **Prisma**.  
 Fuente de verdad de nombres de campos y enums: `backend/prisma/schema.prisma`.
 
-> Estado: contratos vigentes al cierre de **v1.2** (MVP Sprints 0–6 + v1.2 Sprints A–E). Fuente de verdad: Prisma + este documento.
+> Estado: contratos vigentes al cierre de **v1.4** (estabilización + unificación). Fuente de verdad: Prisma + este documento + [`docs/openapi.yaml`](openapi.yaml).
 
 ---
 
@@ -49,12 +49,14 @@ Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`
 
 | Método | Ruta               | Estado                         |
 | ------ | ------------------ | ------------------------------ |
-| POST   | `/register`        | ✅                              |
-| POST   | `/login`           | ✅                              |
+| POST   | `/register`        | ✅ access + refresh cookie      |
+| POST   | `/login`           | ✅ access + refresh cookie      |
+| POST   | `/refresh`         | ✅ rota refresh (v1.4)          |
 | GET    | `/me`              | ✅                              |
-| PUT    | `/profile`         | ✅                              |
-| PUT    | `/change-password` | ✅                              |
+| PUT    | `/profile`         | ✅ + auditoría                  |
+| PUT    | `/change-password` | ✅ revoca otras sesiones        |
 | PUT    | `/preferences`     | ✅                              |
+| DELETE | `/account`         | ✅ borrado lógico + password    |
 | GET    | `/sessions`        | ✅ listar sesiones activas      |
 | DELETE | `/sessions/:id`    | ✅ cerrar sesión (ownership)    |
 | DELETE | `/sessions/others` | ✅ cerrar todas menos la actual |
@@ -63,13 +65,14 @@ Códigos de catálogo UI: `USD`, `EUR`, `MXN`, `COP`, `ARS`, `PEN`, `CLP`, `BOB`
 
 
 
-### JWT y sesiones (Sprint D / v1.2 — eje D2)
+### JWT y sesiones (v1.4)
 
-- Login/register crean fila en `SesionUsuario` y JWT incluye claim `sid` (id de sesión).
-- El token se guarda hasheado (SHA-256) en `SesionUsuario.token`.
-- `authMiddleware` rechaza tokens con `sid` si la sesión está `activa: false` o expirada (`code: SESSION_REVOKED`).
-- Tokens **legacy** sin `sid` siguen válidos hasta re-login (compatibilidad).
-- TTL sesión: 7 días (alineado con JWT `expiresIn`).
+- Login/register crean `SesionUsuario` con access JWT corto (`type=access`, `sid`) + refresh opaco hasheado.
+- Access TTL: `JWT_ACCESS_TTL_SECONDS` (default 900). Refresh TTL: `REFRESH_TOKEN_TTL_DAYS` (default 30).
+- Refresh en cookie HttpOnly (`gf_refresh`); `POST /auth/refresh` rota el refresh (replay → revoke).
+- `authMiddleware` **rechaza** tokens sin `sid` (`code: LEGACY_TOKEN`) — re-login obligatorio.
+- Access expirado: `code: ACCESS_TOKEN_EXPIRED` (el frontend renueva una vez).
+- TTL de sesión = vida del refresh; el hash del access actual vive en `SesionUsuario.token`.
 
 **DTO sesión (GET** `/sessions`**):** `id`, `dispositivo`, `ip`, `activa`, `createdAt`, `fechaExpiracion`, `actual` (boolean).
 

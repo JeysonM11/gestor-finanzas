@@ -8,7 +8,7 @@ function mockRes() {
   return res;
 }
 
-describe('auth middleware Sprint 4 + D', () => {
+describe('auth middleware Sprint 4 + v1.4', () => {
   test('rechaza sin Bearer token', async () => {
     const req = { headers: {} };
     const res = mockRes();
@@ -18,15 +18,17 @@ describe('auth middleware Sprint 4 + D', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  test('acepta token legacy sin sid (compatibilidad)', async () => {
+  test('rechaza token legacy sin sid (force re-login)', async () => {
     const token = jwt.sign({ id: 7, rol: 'USUARIO' }, process.env.JWT_SECRET);
     const req = { headers: { authorization: `Bearer ${token}` } };
     const res = mockRes();
     const next = jest.fn();
     await authMiddleware(req, res, next);
-    expect(next).toHaveBeenCalled();
-    expect(req.user.id).toBe(7);
-    expect(req.user.rol).toBe('USUARIO');
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'LEGACY_TOKEN' })
+    );
   });
 
   test('requireRole bloquea rol incorrecto', () => {

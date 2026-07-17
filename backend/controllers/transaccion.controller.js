@@ -9,60 +9,13 @@ const {
 } = require('../utils/saldo');
 const { sincronizarPorTransaccion } = require('../utils/presupuesto');
 const { parseDateOnly, startOfDayUTC, endOfDayUTC } = require('../utils/date');
-
-const TRANSACCION_FIELDS = [
-  'tipo',
-  'monto',
-  'descripcion',
-  'categoria',
-  'subcategoria',
-  'fecha',
-  'ubicacion',
-  'notas',
-  'etiquetas',
-  'montoOriginal',
-  'monedaOriginal',
-  'tasaCambio',
-  'comprobante',
-  'metodoPago',
-  'cuentaOrigenId',
-  'cuentaDestinoId',
-  'deudaId',
-  'transaccionRecurrenteId',
-  'verificada',
-];
-
-function pickTransaccionData(body = {}) {
-  const data = {};
-  for (const key of TRANSACCION_FIELDS) {
-    if (body[key] !== undefined) data[key] = body[key];
-  }
-  return data;
-}
-
-function normalizarPayloadPorTipo(data) {
-  const next = { ...data };
-
-  if (next.tipo === 'TRANSFERENCIA') {
-    next.metodoPago = next.metodoPago || 'TRANSFERENCIA';
-    next.categoria = null;
-    next.deudaId = null;
-    if (!next.descripcion) next.descripcion = 'Transferencia entre cuentas';
-  } else if (next.tipo === 'PAGO_DEUDA') {
-    next.metodoPago = null;
-    next.categoria = null;
-    next.cuentaDestinoId = null;
-    if (!next.descripcion) next.descripcion = 'Pago de deuda';
-  } else if (next.tipo === 'INGRESO') {
-    next.cuentaDestinoId = null;
-    next.deudaId = null;
-  } else if (next.tipo === 'GASTO') {
-    next.cuentaDestinoId = null;
-    next.deudaId = null;
-  }
-
-  return next;
-}
+const { buildWhere } = require('../utils/transaccion-filtros');
+const {
+  pickTransaccionData,
+  normalizarPayloadPorTipo,
+  sincronizarPagoDeuda,
+  crearMovimientoFinanciero,
+} = require('../services/movimiento.service');
 
 async function calcularResumen(where) {
   const [ingresos, gastos] = await Promise.all([
@@ -90,30 +43,6 @@ async function calcularResumen(where) {
   };
 }
 
-function buildWhere(userId, query = {}) {
-  const { tipo, categoria, fechaInicio, fechaFin, search } = query;
-  const where = {
-    userId,
-    ...(tipo && { tipo }),
-    ...(categoria && { categoria }),
-  };
-
-  if (fechaInicio || fechaFin) {
-    where.fecha = {};
-    if (fechaInicio) where.fecha.gte = startOfDayUTC(fechaInicio);
-    if (fechaFin) where.fecha.lte = endOfDayUTC(fechaFin);
-  }
-
-  if (search) {
-    where.OR = [
-      { descripcion: { contains: search, mode: 'insensitive' } },
-      { notas: { contains: search, mode: 'insensitive' } },
-    ];
-  }
-
-  return where;
-}
-
 function toAppError(error) {
   if (error instanceof AppError) return error;
   if (error.statusCode) {
@@ -122,75 +51,12 @@ function toAppError(error) {
   return error;
 }
 
-async function sincronizarPagoDeuda(tx, transaccion, { crear = true } = {}) {
-  if (transaccion.tipo !== 'PAGO_DEUDA' || !transaccion.deudaId) return;
-
-  const existente = await tx.pagoDeuda.findFirst({
-    where: { transaccionId: transaccion.id },
-  });
-
-  if (!crear) {
-    if (existente) {
-      await tx.pagoDeuda.delete({ where: { id: existente.id } });
-    }
-    return;
-  }
-
-  const payload = {
-    monto: Number(transaccion.monto),
-    capital: Number(transaccion.monto),
-    interes: 0,
-    fecha: transaccion.fecha,
-    notas: transaccion.notas || null,
-    deudaId: Number(transaccion.deudaId),
-    transaccionId: transaccion.id,
-  };
-
-  if (existente) {
-    await tx.pagoDeuda.update({
-      where: { id: existente.id },
-      data: payload,
-    });
-  } else {
-    await tx.pagoDeuda.create({ data: payload });
-  }
-}
-
 exports.crearTransaccion = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const body = normalizarPayloadPorTipo(pickTransaccionData(req.body));
 
   try {
-    const transaccion = await prisma.$transaction(async (tx) => {
-      await validarCuentasTransaccion(tx, userId, body);
-
-      if (body.tipo === 'PAGO_DEUDA') {
-        const deuda = await validarDeudaParaPago(tx, userId, body.deudaId, body.monto);
-        if (!body.descripcion || body.descripcion === 'Pago de deuda') {
-          body.descripcion = `Pago de deuda: ${deuda.nombre}`;
-        }
-      }
-
-      const creada = await tx.transaccion.create({
-        data: {
-          ...body,
-          userId,
-          fecha: body.fecha ? parseDateOnly(body.fecha) : undefined,
-          esTransferencia: body.tipo === 'TRANSFERENCIA',
-        },
-      });
-
-      await aplicarEfectoSaldo(tx, creada, 1);
-
-      if (creada.tipo === 'PAGO_DEUDA') {
-        await aplicarEfectoDeuda(tx, creada.deudaId, creada.monto, 1);
-        await sincronizarPagoDeuda(tx, creada, { crear: true });
-      }
-
-      return creada;
-    });
-
-    await sincronizarPorTransaccion(userId, transaccion).catch(() => {});
+    const transaccion = await crearMovimientoFinanciero(prisma, userId, body);
 
     res.status(201).json({
       success: true,
@@ -332,7 +198,6 @@ exports.actualizarTransaccion = catchAsync(async (req, res) => {
         );
       }
 
-      // Revertir efectos previos
       await aplicarEfectoSaldo(tx, existente, -1);
       if (existente.tipo === 'PAGO_DEUDA' && existente.deudaId) {
         await aplicarEfectoDeuda(tx, existente.deudaId, existente.monto, -1);
@@ -416,3 +281,8 @@ exports.obtenerResumen = catchAsync(async (req, res) => {
     cantidadTransacciones: total,
   });
 });
+
+// Re-export helpers for tests / adapters
+exports.buildWhere = buildWhere;
+exports._startOfDayUTC = startOfDayUTC;
+exports._endOfDayUTC = endOfDayUTC;

@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { authService } from '../services/auth.service'
 import { reporteService } from '../services/reporte.service'
 import { Card, Button, Input, Alert, Badge } from '../components/ui'
+import Modal from '../components/common/Modal'
 import { MONEDAS } from '../utils/currency'
 import { User, Lock, Bell, Download, Shield, Moon, Tags } from 'lucide-react'
 import CategoriasConfig from '../components/categorias/CategoriasConfig'
 import SesionesSeguridad from '../components/configuracion/SesionesSeguridad'
 
 const Configuracion = () => {
-  const { user, setUser } = useAuth()
+  const { user, setUser, logout } = useAuth()
   const { theme, setTheme } = useTheme()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('perfil')
   const [loading, setLoading] = useState(false)
   const [mensaje, setMensaje] = useState({ tipo: '', texto: '' })
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   // Estado para perfil
   const [perfilData, setPerfilData] = useState({
@@ -193,6 +199,30 @@ const Configuracion = () => {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleEliminarCuenta = async (e) => {
+    e.preventDefault()
+    if (!deletePassword) {
+      setMensaje({ tipo: 'error', texto: 'Ingresa tu contraseña para confirmar' })
+      return
+    }
+    setDeleting(true)
+    setMensaje({ tipo: '', texto: '' })
+    try {
+      await authService.deleteAccount({ password: deletePassword })
+      setDeleteModalOpen(false)
+      setDeletePassword('')
+      await logout()
+      navigate('/login', { replace: true })
+    } catch (error) {
+      setMensaje({
+        tipo: 'error',
+        texto: error.response?.data?.message || 'Error al eliminar la cuenta',
+      })
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -501,10 +531,18 @@ const Configuracion = () => {
                 <Alert variant="error">
                   <h3 className="font-medium mb-2">Zona de peligro</h3>
                   <p className="mb-4">
-                    La eliminación de cuenta aún no está implementada en el backend.
+                    Eliminar tu cuenta es permanente. Se borrarán tus datos asociados.
                   </p>
-                  <Button variant="danger" disabled className="w-full sm:w-auto">
-                    Eliminar mi cuenta (próximamente)
+                  <Button
+                    variant="danger"
+                    className="w-full sm:w-auto"
+                    onClick={() => {
+                      setDeletePassword('')
+                      setDeleteModalOpen(true)
+                      setMensaje({ tipo: '', texto: '' })
+                    }}
+                  >
+                    Eliminar mi cuenta
                   </Button>
                 </Alert>
               </div>
@@ -512,6 +550,56 @@ const Configuracion = () => {
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          if (!deleting) {
+            setDeleteModalOpen(false)
+            setDeletePassword('')
+          }
+        }}
+        title="Eliminar mi cuenta"
+        size="sm"
+      >
+        <form onSubmit={handleEliminarCuenta} className="space-y-4">
+          <p className="text-sm text-ink-muted">
+            Esta acción no se puede deshacer. Confirma con tu contraseña.
+          </p>
+          <Input
+            label="Contraseña"
+            type="password"
+            name="deletePassword"
+            value={deletePassword}
+            onChange={(e) => setDeletePassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            autoComplete="current-password"
+          />
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={deleting}
+              onClick={() => {
+                setDeleteModalOpen(false)
+                setDeletePassword('')
+              }}
+              className="w-full sm:w-auto"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="danger"
+              disabled={deleting || !deletePassword}
+              className="w-full sm:w-auto"
+            >
+              {deleting ? 'Eliminando...' : 'Eliminar definitivamente'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

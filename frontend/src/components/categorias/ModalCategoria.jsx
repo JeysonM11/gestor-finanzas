@@ -3,11 +3,40 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import Input from '../common/Input'
 import { categoriaService } from '../../services/categoria.service'
+import {
+  Wallet,
+  Home,
+  Car,
+  ShoppingCart,
+  Heart,
+  Briefcase,
+  Coffee,
+  Plane,
+  Tags,
+} from 'lucide-react'
+
+export const ICONOS_CATEGORIA = [
+  { value: 'Wallet', label: 'Wallet', Icon: Wallet },
+  { value: 'Home', label: 'Home', Icon: Home },
+  { value: 'Car', label: 'Car', Icon: Car },
+  { value: 'ShoppingCart', label: 'ShoppingCart', Icon: ShoppingCart },
+  { value: 'Heart', label: 'Heart', Icon: Heart },
+  { value: 'Briefcase', label: 'Briefcase', Icon: Briefcase },
+  { value: 'Coffee', label: 'Coffee', Icon: Coffee },
+  { value: 'Plane', label: 'Plane', Icon: Plane },
+]
+
+export function resolveCategoriaIcon(name) {
+  const found = ICONOS_CATEGORIA.find((i) => i.value === name)
+  return found?.Icon || Tags
+}
 
 const initialForm = () => ({
   nombre: '',
   tipo: 'GASTO',
   color: '#6B7280',
+  icono: '',
+  orden: '',
   descripcion: '',
 })
 
@@ -23,6 +52,8 @@ const ModalCategoria = ({ isOpen, onClose, onSuccess, categoria = null }) => {
         nombre: categoria.nombre || '',
         tipo: categoria.tipo === 'INGRESO' ? 'INGRESO' : 'GASTO',
         color: categoria.color || '#6B7280',
+        icono: categoria.icono || '',
+        orden: categoria.orden != null ? String(categoria.orden) : '',
         descripcion: categoria.descripcion || '',
       })
     } else if (!isOpen) {
@@ -45,7 +76,12 @@ const ModalCategoria = ({ isOpen, onClose, onSuccess, categoria = null }) => {
         nombre: formData.nombre.trim(),
         tipo: formData.tipo,
         color: formData.color || '#6B7280',
+        icono: formData.icono?.trim() || null,
         descripcion: formData.descripcion?.trim() || null,
+      }
+      if (formData.orden !== '' && formData.orden != null) {
+        const n = Number(formData.orden)
+        if (!Number.isNaN(n)) payload.orden = n
       }
       if (isEditing) {
         await categoriaService.update(categoria.id, payload)
@@ -112,6 +148,43 @@ const ModalCategoria = ({ isOpen, onClose, onSuccess, categoria = null }) => {
             <span className="text-sm text-ink-muted">{formData.color}</span>
           </div>
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-ink-muted mb-2">Icono</label>
+          <select
+            name="icono"
+            value={formData.icono}
+            onChange={handleChange}
+            className="w-full input-field"
+          >
+            <option value="">Sin icono</option>
+            {ICONOS_CATEGORIA.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          {formData.icono && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
+              {(() => {
+                const Icon = resolveCategoriaIcon(formData.icono)
+                return <Icon className="h-5 w-5" style={{ color: formData.color }} />
+              })()}
+              <span>{formData.icono}</span>
+            </div>
+          )}
+        </div>
+
+        <Input
+          label="Orden"
+          type="number"
+          name="orden"
+          value={formData.orden}
+          onChange={handleChange}
+          placeholder="Ej: 1"
+          min={0}
+          step={1}
+        />
 
         <Input
           label="Descripción"

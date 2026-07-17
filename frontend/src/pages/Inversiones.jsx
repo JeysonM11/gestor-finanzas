@@ -266,6 +266,26 @@ const Inversiones = () => {
                     </div>
                   )}
 
+                  {Array.isArray(inversion.historial) && inversion.historial.length > 0 && (
+                    <div className="pt-2 border-t border-line">
+                      <p className="text-xs font-semibold text-ink-muted mb-2">Historial de valor</p>
+                      <ul className="space-y-1 max-h-28 overflow-y-auto text-sm text-ink-muted">
+                        {[...inversion.historial]
+                          .slice()
+                          .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+                          .slice(0, 5)
+                          .map((punto) => (
+                            <li key={punto.id || `${punto.fecha}-${punto.valor}`} className="flex justify-between gap-2">
+                              <span>{formatDate(punto.fecha)}</span>
+                              <span className="font-medium text-ink">
+                                {formatMoney(Number(punto.valor) || 0)}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between pt-3 border-t border-line">
                     <span className="text-xs text-ink-subtle">
                       Comprado: {formatDate(inversion.fechaCompra)}

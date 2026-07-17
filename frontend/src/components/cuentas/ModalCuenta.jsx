@@ -16,7 +16,8 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
     banco: '',
     moneda: MONEDA_DEFAULT,
     saldoActual: '',
-    color: '#3B82F6'
+    color: '#3B82F6',
+    icono: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -28,8 +29,9 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
         tipo: cuenta.tipo || 'BANCO_AHORROS',
         banco: cuenta.banco || '',
         moneda: cuenta.moneda || monedaPrincipal || MONEDA_DEFAULT,
-        saldoActual: cuenta.saldoActual || '',
-        color: cuenta.color || '#3B82F6'
+        saldoActual: cuenta.saldoActual ?? '',
+        color: cuenta.color || '#3B82F6',
+        icono: cuenta.icono || '',
       })
     } else if (isOpen && !cuenta) {
       setFormData({
@@ -38,7 +40,8 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
         banco: '',
         moneda: monedaPrincipal || MONEDA_DEFAULT,
         saldoActual: '',
-        color: '#3B82F6'
+        color: '#3B82F6',
+        icono: '',
       })
       setError('')
     } else if (!isOpen) {
@@ -48,7 +51,8 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
         banco: '',
         moneda: monedaPrincipal || MONEDA_DEFAULT,
         saldoActual: '',
-        color: '#3B82F6'
+        color: '#3B82F6',
+        icono: '',
       })
       setError('')
     }
@@ -71,7 +75,21 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
       const saldo = parseFloat(formData.saldoActual) || 0
 
       if (isEditing) {
-        await cuentaService.updateSaldo(cuenta.id, saldo, undefined, formData.moneda)
+        const updateData = {
+          nombre: formData.nombre,
+          tipo: formData.tipo,
+          banco: formData.banco,
+          color: formData.color,
+          moneda: formData.moneda,
+        }
+        if (formData.icono) updateData.icono = formData.icono
+
+        await cuentaService.update(cuenta.id, updateData)
+
+        const saldoOriginal = Number(cuenta.saldoActual) || 0
+        if (saldo !== saldoOriginal) {
+          await cuentaService.updateSaldo(cuenta.id, saldo, undefined, formData.moneda)
+        }
       } else {
         await cuentaService.create({
           nombre: formData.nombre,
@@ -79,7 +97,8 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
           banco: formData.banco,
           moneda: formData.moneda,
           saldoInicial: saldo,
-          color: formData.color
+          color: formData.color,
+          ...(formData.icono ? { icono: formData.icono } : {}),
         })
       }
       
@@ -119,7 +138,6 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
           onChange={handleChange}
           placeholder="Ej: Cuenta Principal"
           required
-          disabled={isEditing}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,7 +151,6 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
               onChange={handleChange}
               className="w-full input-field"
               required
-              disabled={isEditing}
             >
               <option value="BANCO_AHORROS">Ahorro</option>
               <option value="BANCO_CORRIENTE">Corriente</option>
@@ -153,7 +170,6 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
             value={formData.banco}
             onChange={handleChange}
             placeholder="Nombre del banco"
-            disabled={isEditing}
           />
         </div>
 
@@ -189,27 +205,34 @@ const ModalCuenta = ({ isOpen, onClose, onSuccess, cuenta = null }) => {
           />
         </div>
 
-        {!isEditing && (
-          <div>
-            <label className="block text-sm font-medium text-ink-muted mb-2">
-              Color
-            </label>
-            <div className="grid grid-cols-6 gap-2">
-              {coloresDisponibles.map((color) => (
-                <button
-                  key={color.valor}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, color: color.valor }))}
-                  className={`h-10 rounded-lg transition-all ${
-                    formData.color === color.valor ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''
-                  }`}
-                  style={{ backgroundColor: color.valor }}
-                  title={color.nombre}
-                />
-              ))}
-            </div>
+        <Input
+          label="Icono (opcional)"
+          type="text"
+          name="icono"
+          value={formData.icono}
+          onChange={handleChange}
+          placeholder="Ej: wallet"
+        />
+
+        <div>
+          <label className="block text-sm font-medium text-ink-muted mb-2">
+            Color
+          </label>
+          <div className="grid grid-cols-6 gap-2">
+            {coloresDisponibles.map((color) => (
+              <button
+                key={color.valor}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, color: color.valor }))}
+                className={`h-10 rounded-lg transition-all ${
+                  formData.color === color.valor ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''
+                }`}
+                style={{ backgroundColor: color.valor }}
+                title={color.nombre}
+              />
+            ))}
           </div>
-        )}
+        </div>
 
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-line">
           <Button

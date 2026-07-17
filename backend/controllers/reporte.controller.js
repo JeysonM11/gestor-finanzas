@@ -1,6 +1,47 @@
 const prisma = require('../lib/prisma');
 const { startOfDayUTC, endOfDayUTC } = require('../utils/date');
 
+const TIPOS_GASTO = ['GASTO', 'PAGO_DEUDA'];
+
+function esGasto(tipo) {
+  return TIPOS_GASTO.includes(tipo);
+}
+
+function categoriaLabel(t) {
+  if (t.tipo === 'PAGO_DEUDA') return t.categoria || 'Pago de deuda';
+  return t.categoria || 'Sin categoria';
+}
+
+function mesKeyUTC(fecha) {
+  const d = new Date(fecha);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
+function mesLabelUTC(fecha) {
+  const d = new Date(fecha);
+  return d.toLocaleDateString('es-ES', {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+function rangoMesUTC(anio, mes) {
+  const fechaInicio = new Date(Date.UTC(anio, mes - 1, 1, 0, 0, 0, 0));
+  const fechaFin = new Date(Date.UTC(anio, mes, 0, 23, 59, 59, 999));
+  return { fechaInicio, fechaFin };
+}
+
+function escapeCsv(value) {
+  const s = String(value ?? '');
+  if (/[",\n\r]/.test(s) || /^[=+\-@]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
 // Generar reporte mensual
 exports.generarReporteMensual = async (req, res) => {
   try {
@@ -14,8 +55,7 @@ exports.generarReporteMensual = async (req, res) => {
       });
     }
 
-    const fechaInicio = new Date(anio, mes - 1, 1);
-    const fechaFin = new Date(anio, mes, 0, 23, 59, 59);
+    const { fechaInicio, fechaFin } = rangoMesUTC(anio, mes);
 
     const transacciones = await prisma.transaccion.findMany({
       where: {
@@ -33,19 +73,19 @@ exports.generarReporteMensual = async (req, res) => {
       .reduce((sum, t) => sum + t.monto, 0);
 
     const gastos = transacciones
-      .filter((t) => t.tipo === 'GASTO')
+      .filter((t) => esGasto(t.tipo))
       .reduce((sum, t) => sum + t.monto, 0);
 
     const porCategoria = {};
     transacciones.forEach((t) => {
-      const key = t.categoria || 'Sin categoria';
+      const key = categoriaLabel(t);
       if (!porCategoria[key]) {
         porCategoria[key] = { ingresos: 0, gastos: 0, cantidad: 0 };
       }
 
       if (t.tipo === 'INGRESO') {
         porCategoria[key].ingresos += t.monto;
-      } else if (t.tipo === 'GASTO') {
+      } else if (esGasto(t.tipo)) {
         porCategoria[key].gastos += t.monto;
       }
       porCategoria[key].cantidad++;
@@ -53,16 +93,14 @@ exports.generarReporteMensual = async (req, res) => {
 
     const mesAnterior = mes === 1 ? 12 : mes - 1;
     const anioAnterior = mes === 1 ? anio - 1 : anio;
-
-    const fechaInicioAnterior = new Date(anioAnterior, mesAnterior - 1, 1);
-    const fechaFinAnterior = new Date(anioAnterior, mesAnterior, 0, 23, 59, 59);
+    const prev = rangoMesUTC(anioAnterior, mesAnterior);
 
     const transaccionesAnterior = await prisma.transaccion.findMany({
       where: {
         userId,
         fecha: {
-          gte: fechaInicioAnterior,
-          lte: fechaFinAnterior,
+          gte: prev.fechaInicio,
+          lte: prev.fechaFin,
         },
       },
     });
@@ -72,7 +110,7 @@ exports.generarReporteMensual = async (req, res) => {
       .reduce((sum, t) => sum + t.monto, 0);
 
     const gastosAnterior = transaccionesAnterior
-      .filter((t) => t.tipo === 'GASTO')
+      .filter((t) => esGasto(t.tipo))
       .reduce((sum, t) => sum + t.monto, 0);
 
     res.status(200).json({
@@ -111,16 +149,20 @@ exports.obtenerAgregados = async (req, res) => {
   try {
     const userId = req.user.id;
     const meses = parseInt(req.query.meses || '6', 10);
-    const anio = parseInt(req.query.anio || new Date().getFullYear(), 10);
+    const anio = parseInt(req.query.anio || new Date().getUTCFullYear(), 10);
 
-    const fechaFin = new Date();
-    const fechaInicio = new Date();
-    fechaInicio.setMonth(fechaInicio.getMonth() - meses);
+    const ahora = new Date();
+    const finMesActual = new Date(
+      Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth() + 1, 0, 23, 59, 59, 999)
+    );
+    const inicioRango = new Date(
+      Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth() - (Math.max(meses, 1) - 1), 1, 0, 0, 0, 0)
+    );
 
     const transacciones = await prisma.transaccion.findMany({
       where: {
         userId,
-        fecha: { gte: fechaInicio, lte: fechaFin },
+        fecha: { gte: inicioRango, lte: finMesActual },
       },
       select: { tipo: true, monto: true, categoria: true, fecha: true },
     });
@@ -129,28 +171,24 @@ exports.obtenerAgregados = async (req, res) => {
     const evolucion = {};
 
     transacciones.forEach((t) => {
-      const fecha = new Date(t.fecha);
-      const mesKey = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-      const mesLabel = fecha.toLocaleDateString('es-ES', {
-        month: 'short',
-        year: 'numeric',
-      });
+      const key = mesKeyUTC(t.fecha);
+      const label = mesLabelUTC(t.fecha);
 
-      if (!evolucion[mesKey]) {
-        evolucion[mesKey] = { mesKey, mes: mesLabel, ingresos: 0, gastos: 0 };
+      if (!evolucion[key]) {
+        evolucion[key] = { mesKey: key, mes: label, ingresos: 0, gastos: 0 };
       }
 
       if (t.tipo === 'INGRESO') {
-        evolucion[mesKey].ingresos += t.monto;
-      } else if (t.tipo === 'GASTO') {
-        evolucion[mesKey].gastos += t.monto;
-        const cat = t.categoria || 'Sin categoria';
+        evolucion[key].ingresos += t.monto;
+      } else if (esGasto(t.tipo)) {
+        evolucion[key].gastos += t.monto;
+        const cat = categoriaLabel(t);
         gastosPorCategoria[cat] = (gastosPorCategoria[cat] || 0) + t.monto;
       }
     });
 
-    const inicioAnio = new Date(anio, 0, 1);
-    const finAnio = new Date(anio, 11, 31, 23, 59, 59);
+    const inicioAnio = new Date(Date.UTC(anio, 0, 1, 0, 0, 0, 0));
+    const finAnio = new Date(Date.UTC(anio, 11, 31, 23, 59, 59, 999));
     const anuales = await prisma.transaccion.findMany({
       where: {
         userId,
@@ -163,7 +201,7 @@ exports.obtenerAgregados = async (req, res) => {
       .filter((t) => t.tipo === 'INGRESO')
       .reduce((s, t) => s + t.monto, 0);
     const totalGastos = anuales
-      .filter((t) => t.tipo === 'GASTO')
+      .filter((t) => esGasto(t.tipo))
       .reduce((s, t) => s + t.monto, 0);
 
     res.status(200).json({
@@ -172,20 +210,16 @@ exports.obtenerAgregados = async (req, res) => {
         .sort((a, b) => b.value - a.value),
       evolucionMensual: (() => {
         const serie = [];
-        const cursor = new Date();
-        cursor.setDate(1);
-        cursor.setHours(0, 0, 0, 0);
         for (let i = Math.max(meses, 1) - 1; i >= 0; i--) {
-          const d = new Date(cursor.getFullYear(), cursor.getMonth() - i, 1);
-          const mesKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-          const mesLabel = d.toLocaleDateString('es-ES', {
-            month: 'short',
-            year: 'numeric',
-          });
-          const existente = evolucion[mesKey];
+          const d = new Date(
+            Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth() - i, 1)
+          );
+          const key = mesKeyUTC(d);
+          const label = mesLabelUTC(d);
+          const existente = evolucion[key];
           serie.push({
-            mesKey,
-            mes: mesLabel,
+            mesKey: key,
+            mes: label,
             ingresos: existente?.ingresos || 0,
             gastos: existente?.gastos || 0,
           });
@@ -229,7 +263,6 @@ exports.exportarCSV = async (req, res) => {
 
     const monedaPrincipal = user?.monedaPrincipal || 'USD';
 
-    // Moneda: preferencia del usuario; si la fila tiene monedaOriginal distinta, se indica.
     const headers = [
       'Fecha',
       'Tipo',
@@ -248,8 +281,8 @@ exports.exportarCSV = async (req, res) => {
         return [
           new Date(t.fecha).toISOString().split('T')[0],
           t.tipo,
-          `"${(t.descripcion || '').replace(/"/g, '""')}"`,
-          t.categoria || '',
+          escapeCsv(t.descripcion || ''),
+          escapeCsv(t.categoria || ''),
           t.monto,
           monedaFila,
         ].join(',');
@@ -261,7 +294,6 @@ exports.exportarCSV = async (req, res) => {
       'Content-Disposition',
       'attachment; filename=transacciones.csv'
     );
-    // Comentario de cabecera legible: moneda por defecto del export
     const bom = '\uFEFF';
     const meta = `# moneda_preferencia=${monedaPrincipal}\n`;
     res.send(bom + meta + csvData);
