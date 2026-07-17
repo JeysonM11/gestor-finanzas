@@ -77,7 +77,7 @@ api.interceptors.response.use(
         code === 'ACCOUNT_INACTIVE'
       ) {
         clearAccessToken()
-        window.location.href = '/#/login'
+        window.location.href = '/login'
         return Promise.reject(error)
       }
 
@@ -90,14 +90,14 @@ api.interceptors.response.use(
         }
       } catch (_) {
         clearAccessToken()
-        window.location.href = '/#/login'
+        window.location.href = '/login'
         return Promise.reject(error)
       }
     }
 
     if (status === 401 && !String(original?.url || '').includes('/auth/logout')) {
       clearAccessToken()
-      window.location.href = '/#/login'
+      window.location.href = '/login'
     }
 
     return Promise.reject(error)

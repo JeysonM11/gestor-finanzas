@@ -59,13 +59,14 @@ src/
 
 ## Deploy (Render Static Site)
 
-Si al recargar una ruta ves pantalla blanca o 404, el rewrite de Render a veces
-devuelve cuerpo vacío. Este proyecto usa **HashRouter** (`/#/dashboard`), así el
-servidor siempre sirve `/` y React maneja la ruta tras el `#`.
+La app usa **BrowserRouter** (rutas limpias, p. ej. `/dashboard`). En hosting
+estático hace falta un rewrite para que recargar rutas no devuelva 404.
 
-Opcional en Dashboard → Redirects/Rewrites (por si vuelves a BrowserRouter):
+El archivo `public/_redirects` ya incluye la regla para Render/Netlify:
 
-| Source | Destination | Action |
-|--------|-------------|--------|
-| `/*` | `/index.html` | Rewrite |
+```
+/*    /index.html   200
+```
+
+Si despliegas en otro host, configura el equivalente (todas las rutas → `index.html`).
 
