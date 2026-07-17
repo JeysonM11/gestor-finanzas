@@ -174,10 +174,15 @@ exports.login = catchAsync(async (req, res, next) => {
 exports.refresh = catchAsync(async (req, res, next) => {
   const refreshToken = readRefreshFromRequest(req);
 
-  // Sin cookie: no hay sesión (típico al abrir /login). 204 evita ruido 401 en consola.
-  if (!refreshToken) {
+  // Sin cookie o sesión no usable → 204 (visitante / cookie stale).
+  // Evita 401 rojo en consola al abrir /login.
+  const noSession = () => {
     clearRefreshCookie(res);
     return res.status(204).send();
+  };
+
+  if (!refreshToken) {
+    return noSession();
   }
 
   try {
@@ -194,10 +199,8 @@ exports.refresh = catchAsync(async (req, res, next) => {
       user: userWithoutPassword,
     });
   } catch (error) {
-    clearRefreshCookie(res);
-    return next(
-      new AuthenticationError(error.message || 'No se pudo renovar la sesión')
-    );
+    // Cookie inválida/expirada/reutilizada: ya se revocó si aplica; limpiar y callar.
+    return noSession();
   }
 });
 

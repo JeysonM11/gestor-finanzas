@@ -48,9 +48,9 @@ paths:
         '200':
           description: Token renovado
         '204':
-          description: Sin sesión (no hay cookie refresh)
+          description: Sin sesión usable (sin cookie, cookie inválida/expirada)
         '401':
-          description: Refresh inválido
+          description: Reservado (legacy); el bootstrap usa 204
   /auth/logout:
     post:
       tags: [Auth]
