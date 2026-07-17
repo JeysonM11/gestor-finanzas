@@ -172,8 +172,15 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.refresh = catchAsync(async (req, res, next) => {
+  const refreshToken = readRefreshFromRequest(req);
+
+  // Sin cookie: no hay sesión (típico al abrir /login). 204 evita ruido 401 en consola.
+  if (!refreshToken) {
+    clearRefreshCookie(res);
+    return res.status(204).send();
+  }
+
   try {
-    const refreshToken = readRefreshFromRequest(req);
     const rotated = await rotateRefreshToken(refreshToken);
     const { password, ...userWithoutPassword } = rotated.user;
 
