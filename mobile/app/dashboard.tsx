@@ -65,7 +65,11 @@ export default function Dashboard() {
             <Text style={styles.greeting}>Hola, Martín 👋</Text>
             <Text style={styles.headerSubtitle}>Así va tu mes</Text>
           </View>
-          <Pressable style={styles.bellButton} hitSlop={8}>
+          <Pressable
+            style={styles.bellButton}
+            hitSlop={8}
+            onPress={() => router.push('/notifications' as any)}
+          >
             <Bell size={20} color={COLORS.ink} />
             <View style={styles.bellDot} />
           </Pressable>
