@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import {
   Plus,
   Bell,
+  Menu,
   ArrowUpRight,
   ArrowDownRight,
   Wallet,
@@ -12,7 +14,8 @@ import {
   BarChart3,
   CreditCard,
 } from 'lucide-react-native'
-import BottomTabBar from '../components/Bottomtabbar'
+import BottomTabBar from '../components/BottomTabBar'
+import SideMenu from '../components/SideMenu'
 
 const COLORS = {
   primary: '#16a34a',
@@ -40,6 +43,7 @@ const recentTransactions = [
 
 export default function Dashboard() {
   const router = useRouter()
+  const [menuVisible, setMenuVisible] = useState(false)
 
   const income = 2500
   const expenses = 163.3
@@ -54,7 +58,10 @@ export default function Dashboard() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <Pressable onPress={() => setMenuVisible(true)} style={styles.menuButton} hitSlop={8}>
+            <Menu size={20} color={COLORS.ink} />
+          </Pressable>
+          <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={styles.greeting}>Hola, Martín 👋</Text>
             <Text style={styles.headerSubtitle}>Así va tu mes</Text>
           </View>
@@ -179,6 +186,7 @@ export default function Dashboard() {
       </ScrollView>
 
       <BottomTabBar activeTab="dashboard" />
+      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
     </View>
   )
 }
@@ -228,6 +236,16 @@ const styles = StyleSheet.create({
     width: 7,
     borderRadius: 4,
     backgroundColor: COLORS.expense,
+  },
+  menuButton: {
+    height: 42,
+    width: 42,
+    borderRadius: 14,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.line,
   },
   addButton: {
     flexDirection: 'row',

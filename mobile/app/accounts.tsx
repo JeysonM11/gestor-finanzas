@@ -12,7 +12,7 @@ import {
   EyeOff,
 } from 'lucide-react-native'
 import { useState } from 'react'
-import BottomTabBar from '../components/Bottomtabbar'
+import BottomTabBar from '../components/BottomTabBar'
 
 const COLORS = {
   primary: '#16a34a',

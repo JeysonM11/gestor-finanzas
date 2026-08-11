@@ -5,7 +5,6 @@ import {
   Receipt,
   CreditCard,
   BarChart3,
-  Menu,
 } from 'lucide-react-native'
 
 const COLORS = {
@@ -21,7 +20,6 @@ export const tabs = [
   { id: 'transactions', label: 'Transac.', icon: Receipt, route: '/transactions' },
   { id: 'accounts', label: 'Cuentas', icon: CreditCard, route: '/accounts' },
   { id: 'reports', label: 'Reportes', icon: BarChart3, route: '/reports' },
-  { id: 'more', label: 'Más', icon: Menu, route: '/more' },
 ] as const
 
 type TabId = (typeof tabs)[number]['id']
