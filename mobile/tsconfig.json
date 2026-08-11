@@ -7,5 +7,5 @@
     "**/*.ts",
     "**/*.tsx",
     "nativewind-env.d.ts"
-  ]
+, "app/index.tsx"  ]
 }
